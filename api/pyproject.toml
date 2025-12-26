@@ -1,0 +1,11 @@
+[project]
+name = "linked-eve"
+version = "0.1.0"
+description = "An EVE Wormhole Connectivity tracker"
+readme = "../README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "litestar[standard,uuid]>=2.19.0",
+    "psycopg>=3.3.2",
+    "sqlspec>=0.34.0",
+]
