@@ -78,7 +78,7 @@ class AuthController(Controller):
         return Redirect(path=auth_url)
 
     @get("/callback")
-    async def callback(self, request: Any, code: str, state: str) -> Redirect:
+    async def callback(self, request: Any, code: str, oauth_state: str) -> Redirect:
         """Handle EVE SSO callback.
 
         Validates state, exchanges code for tokens, and either:
@@ -88,7 +88,7 @@ class AuthController(Controller):
 
         Args:
             code: Authorization code from EVE SSO
-            state: State parameter for CSRF validation
+            oauth_state: State parameter for CSRF validation (named to avoid Litestar reserved 'state')
 
         Returns:
             Redirect to frontend
@@ -97,7 +97,7 @@ class AuthController(Controller):
 
         # Validate state parameter
         expected_state = request.session.get("oauth_state")
-        if not expected_state or state != expected_state:
+        if not expected_state or oauth_state != expected_state:
             raise NotAuthorizedException("Invalid state parameter")
 
         # Clear state from session
