@@ -6,9 +6,11 @@ readme = "../README.md"
 requires-python = ">=3.14"
 dependencies = [
     "asyncclick>=8.3.0.7",
+    "cryptography>=45.0.0",
     "httpx>=0.28.1",
-    "litestar[standard,brotli]>=2.19.0",
+    "litestar[standard,brotli,valkey]>=2.19.0",
     "pydantic-settings>=2.12.0",
+    "PyJWT>=2.10.0",
     "pyyaml>=6.0",
     "sqlspec[asyncpg,msgspec,litestar]>=0.34.0",
 ]
@@ -21,4 +23,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/cli", "src/config", "src/database", "src/api", "src/esi_client"]
+packages = ["src/cli", "src/config", "src/database", "src/api", "src/esi_client", "src/services"]
