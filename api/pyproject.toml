@@ -5,7 +5,20 @@ description = "An EVE Wormhole Connectivity tracker"
 readme = "../README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "litestar[standard,uuid]>=2.19.0",
-    "psycopg>=3.3.2",
-    "sqlspec>=0.34.0",
+    "asyncclick>=8.3.0.7",
+    "httpx>=0.28.1",
+    "litestar[standard,brotli]>=2.19.0",
+    "pydantic-settings>=2.12.0",
+    "pyyaml>=6.0",
+    "sqlspec[asyncpg,msgspec,litestar]>=0.34.0",
 ]
+
+[project.scripts]
+linked = "cli:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cli", "src/config", "src/database", "src/api", "src/esi_client"]
