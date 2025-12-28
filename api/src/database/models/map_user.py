@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 import msgspec
 
 
 CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS map_user (
-    map_id INTEGER NOT NULL REFERENCES map(id) ON DELETE CASCADE,
-    user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    map_id UUID NOT NULL REFERENCES map(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     role TEXT NOT NULL DEFAULT 'viewer',
     PRIMARY KEY (map_id, user_id)
 );
@@ -30,6 +32,6 @@ WHERE map_id = $1 AND user_id = $2;
 class MapUser(msgspec.Struct):
     """Join table linking maps to user owners/collaborators."""
 
-    map_id: int
-    user_id: int
+    map_id: UUID
+    user_id: UUID
     role: str = "viewer"  # 'owner', 'editor', 'viewer'

@@ -10,7 +10,7 @@ from sqlspec.extensions.litestar import SQLSpecPlugin
 from api.auth import AuthenticationMiddleware
 from config import get_settings
 from database import sql
-from routes import AuthController
+from routes import AuthController, MapController, UserController
 
 
 def create_app() -> Litestar:
@@ -48,7 +48,7 @@ def create_app() -> Litestar:
     sqlspec_plugin = SQLSpecPlugin(sqlspec=sql)
 
     return Litestar(
-        route_handlers=[AuthController],
+        route_handlers=[AuthController, MapController, UserController],
         plugins=[sqlspec_plugin],
         stores={"sessions": ValkeyStore.with_client(url=settings.valkey_url)},
         middleware=[session_config.middleware, auth_middleware],

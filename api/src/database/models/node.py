@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
 import msgspec
 
 
 CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS node (
-    id SERIAL PRIMARY KEY,
-    map_id INTEGER NOT NULL REFERENCES map(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    map_id UUID NOT NULL REFERENCES map(id) ON DELETE CASCADE,
     system_id INTEGER NOT NULL REFERENCES system(id),
     pos_x REAL NOT NULL DEFAULT 0,
     pos_y REAL NOT NULL DEFAULT 0,
@@ -39,12 +40,12 @@ RETURNING id, map_id, system_id, pos_x, pos_y, label, created_at, updated_at;
 class Node(msgspec.Struct):
     """Represents a solar system node on a map."""
 
-    map_id: int
+    map_id: UUID
     system_id: int
     pos_x: float = 0.0
     pos_y: float = 0.0
     label: str | None = None
-    id: int | None = None
+    id: UUID | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 

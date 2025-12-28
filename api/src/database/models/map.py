@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
 import msgspec
 
 
 CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS map (
-    id SERIAL PRIMARY KEY,
-    owner_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
     is_public BOOLEAN NOT NULL DEFAULT FALSE,
@@ -39,11 +40,11 @@ RETURNING id, owner_id, name, description, is_public, created_at, updated_at;
 class Map(msgspec.Struct):
     """Represents a wormhole mapping session/map."""
 
-    owner_id: int
+    owner_id: UUID
     name: str
     description: str | None = None
     is_public: bool = False
-    id: int | None = None
+    id: UUID | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 

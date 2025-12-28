@@ -1,23 +1,23 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
 import msgspec
 
 
 CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS link (
-    id SERIAL PRIMARY KEY,
-    map_id INTEGER NOT NULL REFERENCES map(id) ON DELETE CASCADE,
-    source_node_id INTEGER NOT NULL REFERENCES node(id) ON DELETE CASCADE,
-    target_node_id INTEGER NOT NULL REFERENCES node(id) ON DELETE CASCADE,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    map_id UUID NOT NULL REFERENCES map(id) ON DELETE CASCADE,
+    source_node_id UUID NOT NULL REFERENCES node(id) ON DELETE CASCADE,
+    target_node_id UUID NOT NULL REFERENCES node(id) ON DELETE CASCADE,
     wormhole_id INTEGER REFERENCES wormhole(id),
     mass_remaining BIGINT,
     eol_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (map_id, source_node_id, target_node_id),
-    CHECK (source_node_id < target_node_id)
+    UNIQUE (map_id, source_node_id, target_node_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_link_map_id ON link(map_id);
@@ -44,13 +44,13 @@ RETURNING id, map_id, source_node_id, target_node_id, wormhole_id, mass_remainin
 class Link(msgspec.Struct):
     """Represents a wormhole connection between two nodes on a map."""
 
-    map_id: int
-    source_node_id: int
-    target_node_id: int
+    map_id: UUID
+    source_node_id: UUID
+    target_node_id: UUID
     wormhole_id: int | None = None  # The "outgoing" wormhole type (K162 is always remote)
     mass_remaining: int | None = None  # Current mass remaining in kg
     eol_at: datetime | None = None  # End-of-life timestamp
-    id: int | None = None
+    id: UUID | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 

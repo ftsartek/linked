@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Iterator
 from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import UUID
 
 import pytest
 from litestar import Litestar
@@ -23,6 +24,10 @@ os.environ.setdefault("LINKED_ESI_USER_AGENT", "test-agent")
 
 from api.auth import AuthenticationMiddleware
 from routes import AuthController
+
+# Test UUID constants
+TEST_USER_UUID = UUID("00000000-0000-0000-0000-000000000001")
+TEST_USER_UUID_2 = UUID("00000000-0000-0000-0000-000000000002")
 
 
 @dataclass
@@ -82,7 +87,8 @@ class MockDbSession(AsyncDriverAdapterBase):  # type: ignore[misc]
     def __init__(self) -> None:
         self.execute = AsyncMock(return_value=MagicMock(fetchall=AsyncMock(return_value=[])))
         self.select_one_or_none = AsyncMock(return_value=None)
-        self.select_value = AsyncMock(return_value=1)
+        self.select_value = AsyncMock(return_value=TEST_USER_UUID)
+        self.select = AsyncMock(return_value=[])
 
 
 @pytest.fixture

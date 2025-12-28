@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 import msgspec
 
 
 CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS map_alliance (
-    map_id INTEGER NOT NULL REFERENCES map(id) ON DELETE CASCADE,
+    map_id UUID NOT NULL REFERENCES map(id) ON DELETE CASCADE,
     alliance_id BIGINT NOT NULL REFERENCES alliance(id) ON DELETE CASCADE,
     role TEXT NOT NULL DEFAULT 'viewer',
     PRIMARY KEY (map_id, alliance_id)
@@ -30,6 +32,6 @@ WHERE map_id = $1 AND alliance_id = $2;
 class MapAlliance(msgspec.Struct):
     """Join table linking maps to alliance owners/collaborators."""
 
-    map_id: int
+    map_id: UUID
     alliance_id: int
     role: str = "viewer"  # 'owner', 'editor', 'viewer'

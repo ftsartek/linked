@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
 import msgspec
 
@@ -8,7 +9,7 @@ import msgspec
 CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS character (
     id BIGINT PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     corporation_id BIGINT,
     alliance_id BIGINT,
@@ -40,7 +41,7 @@ class Character(msgspec.Struct):
     """Represents an EVE Online character linked to a platform user."""
 
     id: int  # EVE character_id
-    user_id: int
+    user_id: UUID
     name: str
     corporation_id: int | None = None
     alliance_id: int | None = None
@@ -48,7 +49,7 @@ class Character(msgspec.Struct):
     updated_at: datetime | None = None
 
     @classmethod
-    def from_esi_data(cls, character_id: int, user_id: int, data: dict) -> Character:
+    def from_esi_data(cls, character_id: int, user_id: UUID, data: dict) -> Character:
         """Create a Character from ESI public character data."""
         return cls(
             id=character_id,

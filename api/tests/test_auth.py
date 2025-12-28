@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
 
 import pytest
 from litestar.testing import TestClient
 
-from tests.conftest import MockCharacterInfo, MockTokenResponse
+from routes.auth.service import CharacterInfo, CharacterUserInfo
+from tests.conftest import MockCharacterInfo, MockTokenResponse, TEST_USER_UUID, TEST_USER_UUID_2
 
 
 class TestLogin:
@@ -58,7 +60,7 @@ class TestCallback:
 
         # Mock: character doesn't exist, user insert returns new user id
         mock_db_session.select_one_or_none = AsyncMock(return_value=None)
-        mock_db_session.select_value = AsyncMock(return_value=1)  # new user_id
+        mock_db_session.select_value = AsyncMock(return_value=TEST_USER_UUID)  # new user_id
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
         response = client.get(
@@ -80,9 +82,12 @@ class TestCallback:
         client.get("/auth/login", follow_redirects=False)
         state = mock_sso_service.get_authorization_url.call_args[0][0]
 
-        # Mock: character exists with user_id=42
+        # Mock: character exists with user_id
         mock_db_session.select_one_or_none = AsyncMock(
-            return_value=(12345678, 42, "Test Pilot", None, None)
+            return_value=CharacterUserInfo(
+                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot",
+                corporation_id=None, alliance_id=None
+            )
         )
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
@@ -109,7 +114,10 @@ class TestLogout:
         state = mock_sso_service.get_authorization_url.call_args[0][0]
 
         mock_db_session.select_one_or_none = AsyncMock(
-            return_value=(12345678, 42, "Test Pilot", None, None)
+            return_value=CharacterUserInfo(
+                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot",
+                corporation_id=None, alliance_id=None
+            )
         )
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
@@ -144,27 +152,28 @@ class TestMe:
 
         # Mock callback: existing character
         mock_db_session.select_one_or_none = AsyncMock(
-            return_value=(12345678, 42, "Test Pilot", 98000001, None)
+            return_value=CharacterUserInfo(
+                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot",
+                corporation_id=98000001, alliance_id=None
+            )
         )
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
         client.get(f"/auth/callback?code=test&state={state}", follow_redirects=False)
 
-        # Now mock the /me query
-        mock_result_chars = MagicMock()
-        mock_result_chars.fetchall = AsyncMock(
+        # Now mock the /me query - mock select to return CharacterInfo list
+        mock_db_session.select = AsyncMock(
             return_value=[
-                (12345678, "Test Pilot", 98000001, None),
-                (87654321, "Alt Character", 98000002, 99000001),
+                CharacterInfo(id=12345678, name="Test Pilot", corporation_id=98000001, alliance_id=None),
+                CharacterInfo(id=87654321, name="Alt Character", corporation_id=98000002, alliance_id=99000001),
             ]
         )
-        mock_db_session.execute = AsyncMock(return_value=mock_result_chars)
 
         response = client.get("/auth/me")
 
         assert response.status_code == 200
         data = response.json()
-        assert data["id"] == 42
+        assert data["id"] == str(TEST_USER_UUID)
         assert len(data["characters"]) == 2
         assert data["characters"][0]["name"] == "Test Pilot"
         assert data["characters"][1]["name"] == "Alt Character"
@@ -191,7 +200,10 @@ class TestLink:
         state = mock_sso_service.get_authorization_url.call_args[0][0]
 
         mock_db_session.select_one_or_none = AsyncMock(
-            return_value=(12345678, 42, "Test Pilot", None, None)
+            return_value=CharacterUserInfo(
+                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot",
+                corporation_id=None, alliance_id=None
+            )
         )
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
@@ -217,7 +229,10 @@ class TestLink:
         state = mock_sso_service.get_authorization_url.call_args[0][0]
 
         mock_db_session.select_one_or_none = AsyncMock(
-            return_value=(12345678, 42, "Test Pilot", None, None)
+            return_value=CharacterUserInfo(
+                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot",
+                corporation_id=None, alliance_id=None
+            )
         )
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
@@ -252,12 +267,15 @@ class TestLink:
         mock_db_session: MagicMock,
     ) -> None:
         """Link should reject character already owned by another user."""
-        # Log in as user 42
+        # Log in as user
         client.get("/auth/login", follow_redirects=False)
         state = mock_sso_service.get_authorization_url.call_args[0][0]
 
         mock_db_session.select_one_or_none = AsyncMock(
-            return_value=(12345678, 42, "Test Pilot", None, None)
+            return_value=CharacterUserInfo(
+                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot",
+                corporation_id=None, alliance_id=None
+            )
         )
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
@@ -268,9 +286,12 @@ class TestLink:
         client.get("/auth/link", follow_redirects=False)
         link_state = mock_sso_service.get_authorization_url.call_args[0][0]
 
-        # Mock: character exists but belongs to user 99 (not us)
+        # Mock: character exists but belongs to different user (not us)
         mock_db_session.select_one_or_none = AsyncMock(
-            return_value=(87654321, 99, "Someone Else", None, None)  # user_id=99
+            return_value=CharacterUserInfo(
+                id=87654321, user_id=TEST_USER_UUID_2, name="Someone Else",
+                corporation_id=None, alliance_id=None
+            )
         )
 
         mock_sso_service.validate_jwt.return_value = MockCharacterInfo(

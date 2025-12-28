@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from uuid import UUID
 
 from litestar.connection import ASGIConnection
 from litestar.middleware import AbstractAuthenticationMiddleware, AuthenticationResult
@@ -12,7 +13,7 @@ from database.models.user import User
 class SessionUser:
     """User data stored in session and available via request.user."""
 
-    id: int
+    id: UUID
     character_id: int
     character_name: str
 
@@ -42,6 +43,10 @@ class AuthenticationMiddleware(AbstractAuthenticationMiddleware):
 
         character_id = session.get("character_id")
         character_name = session.get("character_name", "")
+
+        # Convert string UUID back to UUID object if needed
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
 
         user = SessionUser(
             id=user_id,

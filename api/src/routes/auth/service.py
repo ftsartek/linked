@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from uuid import UUID
 
 from sqlspec import AsyncDriverAdapterBase
 
@@ -24,7 +25,7 @@ class CharacterInfo:
 @dataclass
 class CharacterUserInfo:
     id: int
-    user_id: int
+    user_id: UUID
     name: str
     corporation_id: int | None
     alliance_id: int | None
@@ -34,7 +35,7 @@ class CharacterUserInfo:
 class UserInfo:
     """Current user information."""
 
-    id: int
+    id: UUID
     characters: list[CharacterInfo]
 
 
@@ -42,7 +43,7 @@ class UserInfo:
 class CallbackResult:
     """Result of SSO callback processing."""
 
-    user_id: int
+    user_id: UUID
     character_id: int
     character_name: str
 
@@ -65,7 +66,7 @@ class AuthService:
             schema_type=CharacterUserInfo
         )
 
-    async def create_user(self) -> int:
+    async def create_user(self) -> UUID:
         """Create a new user.
 
         Returns:
@@ -76,7 +77,7 @@ class AuthService:
     async def create_character(
         self,
         character_id: int,
-        user_id: int,
+        user_id: UUID,
         name: str,
         corporation_id: int | None = None,
         alliance_id: int | None = None,
@@ -99,17 +100,17 @@ class AuthService:
     ) -> None:
         """Store encrypted refresh token."""
         encryption = get_encryption_service()
-        encrypted_token = encryption.encrypt(refresh_token)
+        token = encryption.encrypt(refresh_token)
 
         await self.db_session.execute(
             REFRESH_TOKEN_UPSERT,
             character_id,
-            encrypted_token,
+            token,
             scopes,
             None,  # expires_at - refresh tokens don't have explicit expiry
         )
 
-    async def get_user_characters(self, user_id: int) -> list[CharacterInfo]:
+    async def get_user_characters(self, user_id: UUID) -> list[CharacterInfo]:
         """Get all characters for a user."""
         return await self.db_session.select(
             """
@@ -174,7 +175,7 @@ class AuthService:
         tokens: TokenResponse,
         current_user: SessionUser | None,
         is_linking: bool,
-    ) -> int:
+    ) -> UUID:
         """Internal: Process SSO callback - create/link user and store tokens.
 
         Args:
