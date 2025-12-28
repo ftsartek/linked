@@ -2,27 +2,27 @@ from sqlspec import SQLSpec
 from sqlspec.adapters.asyncpg import AsyncpgConfig, AsyncpgPoolConfig
 
 from config.settings import get_settings
+from database.models.alliance import CREATE_STMT as ALLIANCE_CREATE
+from database.models.character import CREATE_STMT as CHARACTER_CREATE
+from database.models.constellation import CREATE_STMT as CONSTELLATION_CREATE
+from database.models.corporation import CREATE_STMT as CORPORATION_CREATE
+from database.models.effect import CREATE_STMT as EFFECT_CREATE
+from database.models.link import CREATE_STMT as LINK_CREATE
+from database.models.map import CREATE_STMT as MAP_CREATE
+from database.models.map_alliance import CREATE_STMT as MAP_ALLIANCE_CREATE
+from database.models.map_corporation import CREATE_STMT as MAP_CORPORATION_CREATE
+from database.models.map_user import CREATE_STMT as MAP_USER_CREATE
+from database.models.node import CREATE_STMT as NODE_CREATE
+from database.models.refresh_token import CREATE_STMT as REFRESH_TOKEN_CREATE
 
 # Static EVE data tables
 from database.models.region import CREATE_STMT as REGION_CREATE
-from database.models.constellation import CREATE_STMT as CONSTELLATION_CREATE
-from database.models.effect import CREATE_STMT as EFFECT_CREATE
-from database.models.wormhole import CREATE_STMT as WORMHOLE_CREATE
 from database.models.system import CREATE_STMT as SYSTEM_CREATE
 from database.models.system_static import CREATE_STMT as SYSTEM_STATIC_CREATE
 
 # Dynamic application tables
 from database.models.user import CREATE_STMT as USER_CREATE
-from database.models.character import CREATE_STMT as CHARACTER_CREATE
-from database.models.refresh_token import CREATE_STMT as REFRESH_TOKEN_CREATE
-from database.models.corporation import CREATE_STMT as CORPORATION_CREATE
-from database.models.alliance import CREATE_STMT as ALLIANCE_CREATE
-from database.models.map import CREATE_STMT as MAP_CREATE
-from database.models.map_user import CREATE_STMT as MAP_USER_CREATE
-from database.models.map_corporation import CREATE_STMT as MAP_CORPORATION_CREATE
-from database.models.map_alliance import CREATE_STMT as MAP_ALLIANCE_CREATE
-from database.models.node import CREATE_STMT as NODE_CREATE
-from database.models.link import CREATE_STMT as LINK_CREATE
+from database.models.wormhole import CREATE_STMT as WORMHOLE_CREATE
 
 # Table creation order (respects foreign key dependencies)
 CREATE_STATEMENTS = [
@@ -34,17 +34,17 @@ CREATE_STATEMENTS = [
     SYSTEM_CREATE,
     SYSTEM_STATIC_CREATE,
     # Dynamic tables (order matters for FK dependencies)
-    USER_CREATE,             # No dependencies
-    CORPORATION_CREATE,      # No dependencies (alliance_id is not FK)
-    ALLIANCE_CREATE,         # No dependencies
-    CHARACTER_CREATE,        # Depends on: user
-    REFRESH_TOKEN_CREATE,    # Depends on: character
-    MAP_CREATE,              # No dependencies
-    MAP_USER_CREATE,         # Depends on: map, user
+    USER_CREATE,  # No dependencies
+    CORPORATION_CREATE,  # No dependencies (alliance_id is not FK)
+    ALLIANCE_CREATE,  # No dependencies
+    CHARACTER_CREATE,  # Depends on: user
+    REFRESH_TOKEN_CREATE,  # Depends on: character
+    MAP_CREATE,  # No dependencies
+    MAP_USER_CREATE,  # Depends on: map, user
     MAP_CORPORATION_CREATE,  # Depends on: map, corporation
-    MAP_ALLIANCE_CREATE,     # Depends on: map, alliance
-    NODE_CREATE,             # Depends on: map, system
-    LINK_CREATE,             # Depends on: map, node, wormhole
+    MAP_ALLIANCE_CREATE,  # Depends on: map, alliance
+    NODE_CREATE,  # Depends on: map, system
+    LINK_CREATE,  # Depends on: map, node, wormhole
 ]
 
 sql = SQLSpec()

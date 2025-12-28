@@ -1,21 +1,17 @@
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock
-from uuid import UUID
 
-import pytest
 from litestar.testing import TestClient
 
 from routes.auth.service import CharacterInfo, CharacterUserInfo
-from tests.conftest import MockCharacterInfo, MockTokenResponse, TEST_USER_UUID, TEST_USER_UUID_2
+from tests.conftest import TEST_USER_UUID, TEST_USER_UUID_2, MockCharacterInfo
 
 
 class TestLogin:
     """Tests for GET /auth/login endpoint."""
 
-    def test_login_redirects_to_eve_sso(
-        self, client: TestClient, mock_sso_service: MagicMock
-    ) -> None:
+    def test_login_redirects_to_eve_sso(self, client: TestClient, mock_sso_service: MagicMock) -> None:
         """Login should redirect to EVE SSO authorization URL."""
         response = client.get("/auth/login", follow_redirects=False)
 
@@ -23,9 +19,7 @@ class TestLogin:
         assert response.headers["location"] == "https://login.eveonline.com/v2/oauth/authorize?mock=true"
         mock_sso_service.get_authorization_url.assert_called_once()
 
-    def test_login_stores_state_in_session(
-        self, client: TestClient, mock_sso_service: MagicMock
-    ) -> None:
+    def test_login_stores_state_in_session(self, client: TestClient, mock_sso_service: MagicMock) -> None:
         """Login should store OAuth state in session for CSRF protection."""
         client.get("/auth/login", follow_redirects=False)
 
@@ -85,8 +79,7 @@ class TestCallback:
         # Mock: character exists with user_id
         mock_db_session.select_one_or_none = AsyncMock(
             return_value=CharacterUserInfo(
-                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot",
-                corporation_id=None, alliance_id=None
+                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot", corporation_id=None, alliance_id=None
             )
         )
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
@@ -115,8 +108,7 @@ class TestLogout:
 
         mock_db_session.select_one_or_none = AsyncMock(
             return_value=CharacterUserInfo(
-                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot",
-                corporation_id=None, alliance_id=None
+                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot", corporation_id=None, alliance_id=None
             )
         )
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
@@ -153,8 +145,7 @@ class TestMe:
         # Mock callback: existing character
         mock_db_session.select_one_or_none = AsyncMock(
             return_value=CharacterUserInfo(
-                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot",
-                corporation_id=98000001, alliance_id=None
+                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot", corporation_id=98000001, alliance_id=None
             )
         )
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
@@ -201,8 +192,7 @@ class TestLink:
 
         mock_db_session.select_one_or_none = AsyncMock(
             return_value=CharacterUserInfo(
-                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot",
-                corporation_id=None, alliance_id=None
+                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot", corporation_id=None, alliance_id=None
             )
         )
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
@@ -230,8 +220,7 @@ class TestLink:
 
         mock_db_session.select_one_or_none = AsyncMock(
             return_value=CharacterUserInfo(
-                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot",
-                corporation_id=None, alliance_id=None
+                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot", corporation_id=None, alliance_id=None
             )
         )
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
@@ -273,8 +262,7 @@ class TestLink:
 
         mock_db_session.select_one_or_none = AsyncMock(
             return_value=CharacterUserInfo(
-                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot",
-                corporation_id=None, alliance_id=None
+                id=12345678, user_id=TEST_USER_UUID, name="Test Pilot", corporation_id=None, alliance_id=None
             )
         )
         mock_db_session.execute = AsyncMock(return_value=MagicMock())
@@ -289,8 +277,7 @@ class TestLink:
         # Mock: character exists but belongs to different user (not us)
         mock_db_session.select_one_or_none = AsyncMock(
             return_value=CharacterUserInfo(
-                id=87654321, user_id=TEST_USER_UUID_2, name="Someone Else",
-                corporation_id=None, alliance_id=None
+                id=87654321, user_id=TEST_USER_UUID_2, name="Someone Else", corporation_id=None, alliance_id=None
             )
         )
 

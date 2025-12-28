@@ -5,6 +5,7 @@ from uuid import UUID
 
 import msgspec
 
+from utils.datetime import ensure_utc
 
 CREATE_STMT = """
 CREATE TABLE IF NOT EXISTS refresh_token (
@@ -13,8 +14,8 @@ CREATE TABLE IF NOT EXISTS refresh_token (
     token BYTEA NOT NULL,
     scopes TEXT[] NOT NULL DEFAULT '{}',
     expires_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    date_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(character_id)
 );
 
@@ -28,12 +29,12 @@ ON CONFLICT (character_id) DO UPDATE SET
     token = EXCLUDED.token,
     scopes = EXCLUDED.scopes,
     expires_at = EXCLUDED.expires_at,
-    updated_at = NOW()
-RETURNING id, character_id, token, scopes, expires_at, created_at, updated_at;
+    date_updated = NOW()
+RETURNING id, character_id, token, scopes, expires_at, date_created, date_updated;
 """
 
 SELECT_BY_CHARACTER_STMT = """
-SELECT id, character_id, token, scopes, expires_at, created_at, updated_at
+SELECT id, character_id, token, scopes, expires_at, date_created, date_updated
 FROM refresh_token
 WHERE character_id = $1;
 """
@@ -51,8 +52,8 @@ class RefreshToken(msgspec.Struct):
     token: bytes | None = None
     scopes: list[str] | None = None
     expires_at: datetime | None = None
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+    date_created: datetime | None = None
+    date_updated: datetime | None = None
 
     @classmethod
     def from_row(cls, row: tuple) -> RefreshToken:
@@ -62,7 +63,7 @@ class RefreshToken(msgspec.Struct):
             character_id=row[1],
             token=row[2],
             scopes=row[3] if row[3] else [],
-            expires_at=row[4],
-            created_at=row[5],
-            updated_at=row[6],
+            expires_at=ensure_utc(row[4]),
+            date_created=ensure_utc(row[5]),
+            date_updated=ensure_utc(row[6]),
         )

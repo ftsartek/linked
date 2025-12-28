@@ -25,18 +25,14 @@ async def import_effects(session: AsyncpgDriver, effects_data: dict) -> dict[str
     """Import effects and return name -> db_id mapping."""
     click.echo(f"Importing {len(effects_data)} effects...")
     rows = [
-        (name, json.dumps(data.get("buffs")), json.dumps(data.get("debuffs")))
-        for name, data in effects_data.items()
+        (name, json.dumps(data.get("buffs")), json.dumps(data.get("debuffs"))) for name, data in effects_data.items()
     ]
     await session.execute_many(
         """INSERT INTO effect (name, buffs, debuffs) VALUES ($1, $2, $3)
            ON CONFLICT (name) DO UPDATE SET buffs = EXCLUDED.buffs, debuffs = EXCLUDED.debuffs""",
         rows,
     )
-    return {
-        row["name"]: row["id"]
-        for row in await session.select("SELECT id, name FROM effect")
-    }
+    return {row["name"]: row["id"] for row in await session.select("SELECT id, name FROM effect")}
 
 
 async def import_regions(session: AsyncpgDriver, regions_data: list) -> None:
@@ -76,19 +72,13 @@ async def import_wormholes(session: AsyncpgDriver, wormholes_data: dict) -> dict
                lifetime = EXCLUDED.lifetime, is_static = EXCLUDED.is_static""",
         rows,
     )
-    return {
-        row["code"]: row["id"]
-        for row in await session.select("SELECT id, code FROM wormhole")
-    }
+    return {row["code"]: row["id"] for row in await session.select("SELECT id, code FROM wormhole")}
 
 
 async def import_constellations(session: AsyncpgDriver, constellations_data: list) -> None:
     """Import constellations."""
     click.echo(f"Importing {len(constellations_data)} constellations...")
-    rows = [
-        (c["constellation_id"], c["region_id"], c["name"])
-        for c in constellations_data
-    ]
+    rows = [(c["constellation_id"], c["region_id"], c["name"]) for c in constellations_data]
     await session.execute_many(
         """INSERT INTO constellation (id, region_id, name) VALUES ($1, $2, $3)
            ON CONFLICT (id) DO UPDATE SET region_id = EXCLUDED.region_id, name = EXCLUDED.name""",

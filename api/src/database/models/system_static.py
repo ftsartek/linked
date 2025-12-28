@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import msgspec
 
-
 CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS system_static (
     system_id INTEGER REFERENCES system(id) ON DELETE CASCADE,

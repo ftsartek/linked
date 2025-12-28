@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 from collections.abc import Awaitable, Callable
 from pathlib import Path
@@ -7,7 +9,7 @@ import asyncclick as click
 import msgspec
 import yaml
 
-from esi_client import Constellation, ESIClient, Region, System
+from esi_client import ESIClient
 
 T = TypeVar("T")
 
@@ -73,9 +75,7 @@ async def regions(user_agent: str) -> None:
     """Collect all region data."""
     async with ESIClient(user_agent) as client:
         region_ids = await client.get_regions()
-        region_list = await fetch_with_rate_limit(
-            region_ids, client.get_region, "regions"
-        )
+        region_list = await fetch_with_rate_limit(region_ids, client.get_region, "regions")
 
     # Sort by region_id for consistent output
     region_list.sort(key=lambda r: r.region_id)
@@ -94,9 +94,7 @@ async def constellations(user_agent: str) -> None:
     """Collect all constellation data."""
     async with ESIClient(user_agent) as client:
         constellation_ids = await client.get_constellations()
-        constellation_list = await fetch_with_rate_limit(
-            constellation_ids, client.get_constellation, "constellations"
-        )
+        constellation_list = await fetch_with_rate_limit(constellation_ids, client.get_constellation, "constellations")
 
     constellation_list.sort(key=lambda c: c.constellation_id)
     data = [struct_to_dict(c) for c in constellation_list]
@@ -114,9 +112,7 @@ async def systems(user_agent: str) -> None:
     """Collect all system data."""
     async with ESIClient(user_agent) as client:
         system_ids = await client.get_systems()
-        system_list = await fetch_with_rate_limit(
-            system_ids, client.get_system, "systems"
-        )
+        system_list = await fetch_with_rate_limit(system_ids, client.get_system, "systems")
 
     system_list.sort(key=lambda s: s.system_id)
     data = [struct_to_dict(s) for s in system_list]
@@ -135,23 +131,17 @@ async def all(user_agent: str) -> None:
     async with ESIClient(user_agent) as client:
         # Regions
         region_ids = await client.get_regions()
-        region_list = await fetch_with_rate_limit(
-            region_ids, client.get_region, "regions"
-        )
+        region_list = await fetch_with_rate_limit(region_ids, client.get_region, "regions")
         region_list.sort(key=lambda r: r.region_id)
 
         # Constellations
         constellation_ids = await client.get_constellations()
-        constellation_list = await fetch_with_rate_limit(
-            constellation_ids, client.get_constellation, "constellations"
-        )
+        constellation_list = await fetch_with_rate_limit(constellation_ids, client.get_constellation, "constellations")
         constellation_list.sort(key=lambda c: c.constellation_id)
 
         # Systems
         system_ids = await client.get_systems()
-        system_list = await fetch_with_rate_limit(
-            system_ids, client.get_system, "systems"
-        )
+        system_list = await fetch_with_rate_limit(system_ids, client.get_system, "systems")
         system_list.sort(key=lambda s: s.system_id)
 
     # Write all files

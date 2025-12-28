@@ -5,6 +5,7 @@ from uuid import UUID
 
 import msgspec
 
+from utils.datetime import ensure_utc
 
 CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS character (
@@ -13,8 +14,8 @@ CREATE TABLE IF NOT EXISTS character (
     name TEXT NOT NULL,
     corporation_id BIGINT,
     alliance_id BIGINT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    date_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_character_user_id ON character(user_id);
@@ -26,14 +27,14 @@ CREATE INDEX IF NOT EXISTS idx_character_name ON character(name);
 INSERT_STMT = """\
 INSERT INTO character (id, user_id, name, corporation_id, alliance_id)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING id, user_id, name, corporation_id, alliance_id, created_at, updated_at;
+RETURNING id, user_id, name, corporation_id, alliance_id, date_created, date_updated;
 """
 
 UPDATE_STMT = """\
 UPDATE character
-SET name = $2, corporation_id = $3, alliance_id = $4, updated_at = NOW()
+SET name = $2, corporation_id = $3, alliance_id = $4, date_updated = NOW()
 WHERE id = $1
-RETURNING id, user_id, name, corporation_id, alliance_id, created_at, updated_at;
+RETURNING id, user_id, name, corporation_id, alliance_id, date_created, date_updated;
 """
 
 
@@ -45,8 +46,8 @@ class Character(msgspec.Struct):
     name: str
     corporation_id: int | None = None
     alliance_id: int | None = None
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+    date_created: datetime | None = None
+    date_updated: datetime | None = None
 
     @classmethod
     def from_esi_data(cls, character_id: int, user_id: UUID, data: dict) -> Character:
@@ -68,6 +69,6 @@ class Character(msgspec.Struct):
             name=row[2],
             corporation_id=row[3],
             alliance_id=row[4],
-            created_at=row[5],
-            updated_at=row[6],
+            date_created=ensure_utc(row[5]),
+            date_updated=ensure_utc(row[6]),
         )

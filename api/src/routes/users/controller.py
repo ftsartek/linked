@@ -77,8 +77,7 @@ class UserController(Controller):
         """
         if not await user_service.can_delete_character(request.user.id):
             raise ClientException(
-                "Cannot delete your last character. "
-                "Link another character first or delete your account."
+                "Cannot delete your last character. Link another character first or delete your account."
             )
 
         deleted = await user_service.delete_character(character_id, request.user.id)

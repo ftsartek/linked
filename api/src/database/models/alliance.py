@@ -4,14 +4,15 @@ from datetime import datetime
 
 import msgspec
 
+from utils.datetime import ensure_utc
 
 CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS alliance (
     id BIGINT PRIMARY KEY,
     name TEXT NOT NULL,
     ticker TEXT NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    date_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_alliance_name ON alliance(name);
@@ -24,8 +25,8 @@ VALUES ($1, $2, $3)
 ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name,
     ticker = EXCLUDED.ticker,
-    updated_at = NOW()
-RETURNING id, name, ticker, created_at, updated_at;
+    date_updated = NOW()
+RETURNING id, name, ticker, date_created, date_updated;
 """
 
 
@@ -35,8 +36,8 @@ class Alliance(msgspec.Struct):
     id: int  # EVE alliance_id
     name: str
     ticker: str
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+    date_created: datetime | None = None
+    date_updated: datetime | None = None
 
     @classmethod
     def from_esi_data(cls, alliance_id: int, data: dict) -> Alliance:
@@ -54,6 +55,6 @@ class Alliance(msgspec.Struct):
             id=row[0],
             name=row[1],
             ticker=row[2],
-            created_at=row[3],
-            updated_at=row[4],
+            date_created=ensure_utc(row[3]),
+            date_updated=ensure_utc(row[4]),
         )

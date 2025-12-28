@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncclick as click
 
 from .collect import collect

@@ -1,19 +1,19 @@
-from routes.maps.controller import (
+from routes.maps.controller import MapController
+from routes.maps.dependencies import (
     AddAllianceAccessRequest,
     AddCorporationAccessRequest,
     AddUserAccessRequest,
-    CreateMapRequest,
-    MapController,
-    UpdateMapRequest,
-)
-from routes.maps.service import (
     CharacterContext,
-    LinkInfo,
+    CreateMapRequest,
+    EnrichedLinkInfo,
+    EnrichedNodeInfo,
     MapDetailResponse,
     MapInfo,
     MapListResponse,
+    UpdateMapRequest,
+)
+from routes.maps.service import (
     MapService,
-    NodeInfo,
     provide_map_service,
 )
 
@@ -23,13 +23,13 @@ __all__ = [
     "AddUserAccessRequest",
     "CharacterContext",
     "CreateMapRequest",
-    "LinkInfo",
+    "EnrichedLinkInfo",
+    "EnrichedNodeInfo",
     "MapController",
     "MapDetailResponse",
     "MapInfo",
     "MapListResponse",
     "MapService",
-    "NodeInfo",
     "UpdateMapRequest",
     "provide_map_service",
 ]

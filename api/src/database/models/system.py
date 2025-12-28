@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import msgspec
 
-
 CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS system (
     id INTEGER PRIMARY KEY,

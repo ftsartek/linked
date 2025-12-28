@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import base64
-import time
 from dataclasses import dataclass
 from urllib.parse import urlencode
 
@@ -10,7 +9,6 @@ import jwt
 from jwt import PyJWKClient
 
 from config import get_settings
-
 
 # EVE SSO endpoints
 EVE_SSO_AUTHORIZE_URL = "https://login.eveonline.com/v2/oauth/authorize"

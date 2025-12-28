@@ -10,7 +10,8 @@ from database.models.character import INSERT_STMT as CHARACTER_INSERT
 from database.models.refresh_token import UPSERT_STMT as REFRESH_TOKEN_UPSERT
 from database.models.user import INSERT_STMT as USER_INSERT
 from services.encryption import get_encryption_service
-from services.eve_sso import CharacterInfo as SSOCharacterInfo, TokenResponse, get_sso_service
+from services.eve_sso import CharacterInfo as SSOCharacterInfo
+from services.eve_sso import TokenResponse, get_sso_service
 
 
 @dataclass
@@ -21,6 +22,7 @@ class CharacterInfo:
     name: str
     corporation_id: int | None
     alliance_id: int | None
+
 
 @dataclass
 class CharacterUserInfo:
@@ -63,7 +65,7 @@ class AuthService:
         return await self.db_session.select_one_or_none(
             "SELECT id, user_id, name, corporation_id, alliance_id FROM character WHERE id = $1",
             character_id,
-            schema_type=CharacterUserInfo
+            schema_type=CharacterUserInfo,
         )
 
     async def create_user(self) -> UUID:
@@ -120,7 +122,7 @@ class AuthService:
             ORDER BY name
             """,
             user_id,
-            schema_type=CharacterInfo
+            schema_type=CharacterInfo,
         )
 
     async def get_current_user(self, session_user: SessionUser) -> UserInfo:

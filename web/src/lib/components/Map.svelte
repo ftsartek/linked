@@ -5,8 +5,8 @@
 	import { apiClient } from '$lib/client/client';
 	import type { components } from '$lib/client/schema';
 
-	type NodeInfo = components['schemas']['NodeInfo'];
-	type LinkInfo = components['schemas']['LinkInfo'];
+	type NodeInfo = components['schemas']['EnrichedNodeInfo'];
+	type LinkInfo = components['schemas']['EnrichedLinkInfo'];
 
 	interface Props {
 		map_id: string;
@@ -24,7 +24,7 @@
 			id: node.id,
 			position: { x: node.pos_x, y: node.pos_y },
 			data: {
-				label: node.label ?? `System ${node.system_id}`,
+				label: node.system_name ?? `System ${node.system_id}`,
 				system_id: node.system_id
 			}
 		}));
@@ -36,9 +36,10 @@
 			source: link.source_node_id,
 			target: link.target_node_id,
 			data: {
-				wormhole_id: link.wormhole_id,
-				mass_remaining: link.mass_remaining,
-				eol_at: link.eol_at
+				wormhole_id: link.wormhole_code,
+				mass_remaining: link.mass_usage,
+				status: link.lifetime_status,
+				static: link.wormhole_is_static
 			}
 		}));
 	}
@@ -70,10 +71,10 @@
 	});
 </script>
 
-<div class="w-full h-full min-h-[400px]">
+<div class="h-full min-h-100 w-full">
 	{#if loading}
-		<div class="flex items-center justify-center h-full min-h-[400px]">
-			<Progress value={null} class="items-center w-fit">
+		<div class="flex h-full min-h-100 items-center justify-center">
+			<Progress value={null} class="w-fit items-center">
 				<Progress.Circle>
 					<Progress.CircleTrack />
 					<Progress.CircleRange />
@@ -81,13 +82,13 @@
 			</Progress>
 		</div>
 	{:else if error}
-		<div class="flex items-center justify-center h-full min-h-[400px]">
-			<div class="p-4 rounded-lg bg-error-500/20 text-error-500">
+		<div class="flex h-full min-h-100 items-center justify-center">
+			<div class="rounded-lg bg-error-500/20 p-4 text-error-500">
 				{error}
 			</div>
 		</div>
 	{:else}
-		<SvelteFlow bind:nodes bind:edges fitView colorMode="dark">
+		<SvelteFlow bind:nodes bind:edges fitView colorMode="dark" snapGrid={[1, 1]}>
 			<Background />
 			<Controls />
 		</SvelteFlow>

@@ -1,6 +1,6 @@
 T405:
-  source:
-  - c3
+  sources:
+    - c3
   destination: c4
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -10,10 +10,10 @@ T405:
   sibling_groups: null
   typeID: 30683
 R943:
-  source:
-  - hs
-  - ls
-  - ns
+  sources:
+    - hs
+    - ls
+    - ns
   destination: c2
   mass_total: 750000000
   mass_jump_max: 375000000
@@ -23,8 +23,8 @@ R943:
   sibling_groups: null
   typeID: 30583
 B041:
-  source:
-  - hs
+  sources:
+    - hs
   destination: c6
   mass_total: 3000000000
   mass_jump_max: 1000000000
@@ -34,8 +34,8 @@ B041:
   sibling_groups: null
   typeID: 30645
 S804:
-  source:
-  - c1
+  sources:
+    - c1
   destination: c6
   mass_total: 1000000000
   mass_jump_max: 62000000
@@ -45,8 +45,8 @@ S804:
   sibling_groups: null
   typeID: 30665
 Q063:
-  source:
-  - thera
+  sources:
+    - thera
   destination: hs
   mass_total: 500000000
   mass_jump_max: 62000000
@@ -56,8 +56,8 @@ Q063:
   sibling_groups: null
   typeID: 34368
 K329:
-  source:
-  - c4
+  sources:
+    - c4
   destination: ns
   mass_total: 5000000000
   mass_jump_max: 2000000000
@@ -67,8 +67,8 @@ K329:
   sibling_groups: null
   typeID: 30697
 B520:
-  source:
-  - c6
+  sources:
+    - c6
   destination: hs
   mass_total: 3000000000
   mass_jump_max: 1000000000
@@ -78,8 +78,8 @@ B520:
   sibling_groups: null
   typeID: 30713
 M267:
-  source:
-  - c5
+  sources:
+    - c5
   destination: c3
   mass_total: 1000000000
   mass_jump_max: 375000000
@@ -89,8 +89,8 @@ M267:
   sibling_groups: []
   typeID: 30700
 V911:
-  source:
-  - c6
+  sources:
+    - c6
   destination: c5
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -100,8 +100,8 @@ V911:
   sibling_groups: []
   typeID: 30711
 O883:
-  source:
-  - c1
+  sources:
+    - c1
   destination: c3
   mass_total: 1000000000
   mass_jump_max: 62000000
@@ -111,8 +111,8 @@ O883:
   sibling_groups: null
   typeID: 30662
 W237:
-  source:
-  - c6
+  sources:
+    - c6
   destination: c6
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -122,8 +122,8 @@ W237:
   sibling_groups: []
   typeID: 30712
 L031:
-  source:
-  - ns
+  sources:
+    - ns
   destination: thera
   mass_total: 3000000000
   mass_jump_max: 1000000000
@@ -133,8 +133,8 @@ L031:
   sibling_groups: null
   typeID: 34367
 H121:
-  source:
-  - c1
+  sources:
+    - c1
   destination: c1
   mass_total: 500000000
   mass_jump_max: 62000000
@@ -144,7 +144,7 @@ H121:
   sibling_groups: null
   typeID: 30660
 E004:
-  source: null
+  sources: []
   destination: c1
   mass_total: 3000000000
   mass_jump_max: 5000000
@@ -154,8 +154,8 @@ E004:
   sibling_groups: null
   typeID: 34134
 V753:
-  source:
-  - c5
+  sources:
+    - c5
   destination: c6
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -165,7 +165,7 @@ V753:
   sibling_groups: []
   typeID: 30703
 C008:
-  source: null
+  sources: []
   destination: c5
   mass_total: 3000000000
   mass_jump_max: 5000000
@@ -175,8 +175,8 @@ C008:
   sibling_groups: null
   typeID: 34138
 F353:
-  source:
-  - c1
+  sources:
+    - c1
   destination: thera
   mass_total: 100000000
   mass_jump_max: 62000000
@@ -186,9 +186,9 @@ F353:
   sibling_groups: null
   typeID: 34371
 U319:
-  source:
-  - ls
-  - ns
+  sources:
+    - ls
+    - ns
   destination: c6
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -198,8 +198,8 @@ U319:
   sibling_groups: null
   typeID: 30646
 Z457:
-  source:
-  - c6
+  sources:
+    - c6
   destination: c4
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -209,8 +209,8 @@ Z457:
   sibling_groups: []
   typeID: 30710
 X877:
-  source:
-  - c4
+  sources:
+    - c4
   destination: c4
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -220,8 +220,8 @@ X877:
   sibling_groups: null
   typeID: 30692
 Y683:
-  source:
-  - c2
+  sources:
+    - c2
   destination: c4
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -229,13 +229,13 @@ Y683:
   lifetime: 16
   static: true
   sibling_groups:
-  - - B274
+    - - B274
   typeID: 30674
 O128:
-  source:
-  - hs
-  - ls
-  - ns
+  sources:
+    - hs
+    - ls
+    - ns
   destination: c4
   mass_total: 1000000000
   mass_jump_max: 375000000
@@ -245,7 +245,7 @@ O128:
   sibling_groups: null
   typeID: 30642
 C414:
-  source: null
+  sources: []
   destination: conflux
   mass_total: 750000000
   mass_jump_max: 375000000
@@ -255,7 +255,7 @@ C414:
   sibling_groups: null
   typeID: 35653
 A009:
-  source: null
+  sources: []
   destination: c13
   mass_total: 3000000000
   mass_jump_max: 5000000
@@ -265,8 +265,8 @@ A009:
   sibling_groups: null
   typeID: 34439
 L614:
-  source:
-  - c1
+  sources:
+    - c1
   destination: c5
   mass_total: 1000000000
   mass_jump_max: 62000000
@@ -276,8 +276,8 @@ L614:
   sibling_groups: null
   typeID: 30664
 B274:
-  source:
-  - c2
+  sources:
+    - c2
   destination: hs
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -285,13 +285,13 @@ B274:
   lifetime: 24
   static: true
   sibling_groups:
-  - - Z647
-  - - O477
-  - - Y683
+    - - Z647
+    - - O477
+    - - Y683
   typeID: 30677
 H900:
-  source:
-  - c4
+  sources:
+    - c4
   destination: c5
   mass_total: 3000000000
   mass_jump_max: 375000000
@@ -301,8 +301,8 @@ H900:
   sibling_groups: null
   typeID: 30693
 O477:
-  source:
-  - c2
+  sources:
+    - c2
   destination: c3
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -310,10 +310,10 @@ O477:
   lifetime: 16
   static: true
   sibling_groups:
-  - - B274
+    - - B274
   typeID: 30673
 L005:
-  source: null
+  sources: []
   destination: c2
   mass_total: 3000000000
   mass_jump_max: 5000000
@@ -323,8 +323,8 @@ L005:
   sibling_groups: null
   typeID: 34135
 E175:
-  source:
-  - c5
+  sources:
+    - c5
   destination: c4
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -334,8 +334,8 @@ E175:
   sibling_groups: []
   typeID: 30701
 K346:
-  source:
-  - c3
+  sources:
+    - c3
   destination: ns
   mass_total: 3000000000
   mass_jump_max: 375000000
@@ -345,7 +345,7 @@ K346:
   sibling_groups: []
   typeID: 30688
 Z006:
-  source: null
+  sources: []
   destination: c3
   mass_total: 3000000000
   mass_jump_max: 5000000
@@ -355,8 +355,8 @@ Z006:
   sibling_groups: null
   typeID: 34136
 P060:
-  source:
-  - c4
+  sources:
+    - c4
   destination: c1
   mass_total: 500000000
   mass_jump_max: 62000000
@@ -366,8 +366,8 @@ P060:
   sibling_groups: null
   typeID: 30689
 A239:
-  source:
-  - c2
+  sources:
+    - c2
   destination: ls
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -375,11 +375,11 @@ A239:
   lifetime: 24
   static: true
   sibling_groups:
-  - - D382
+    - - D382
   typeID: 30678
 C125:
-  source:
-  - c1
+  sources:
+    - c1
   destination: c2
   mass_total: 1000000000
   mass_jump_max: 62000000
@@ -389,9 +389,9 @@ C125:
   sibling_groups: null
   typeID: 30661
 Z142:
-  source:
-  - c5
-  - c6
+  sources:
+    - c5
+    - c6
   destination: ns
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -401,8 +401,8 @@ Z142:
   sibling_groups: null
   typeID: 30706
 R051:
-  source:
-  - hs
+  sources:
+    - hs
   destination: ls
   mass_total: 3000000000
   mass_jump_max: 1000000000
@@ -412,8 +412,8 @@ R051:
   sibling_groups: null
   typeID: 30658
 N770:
-  source:
-  - c3
+  sources:
+    - c3
   destination: c5
   mass_total: 3000000000
   mass_jump_max: 375000000
@@ -423,8 +423,8 @@ N770:
   sibling_groups: null
   typeID: 30684
 Y790:
-  source:
-  - c5
+  sources:
+    - c5
   destination: c1
   mass_total: 500000000
   mass_jump_max: 62000000
@@ -434,8 +434,8 @@ Y790:
   sibling_groups: []
   typeID: 30698
 V898:
-  source:
-  - thera
+  sources:
+    - thera
   destination: ls
   mass_total: 2000000000
   mass_jump_max: 1000000000
@@ -445,8 +445,8 @@ V898:
   sibling_groups: null
   typeID: 34369
 A641:
-  source:
-  - hs
+  sources:
+    - hs
   destination: hs
   mass_total: 2000000000
   mass_jump_max: 1000000000
@@ -456,8 +456,8 @@ A641:
   sibling_groups: null
   typeID: 30657
 M164:
-  source:
-  - ls
+  sources:
+    - ls
   destination: thera
   mass_total: 2000000000
   mass_jump_max: 1000000000
@@ -467,7 +467,7 @@ M164:
   sibling_groups: null
   typeID: 34366
 B735:
-  source: null
+  sources: []
   destination: barbican
   mass_total: 750000000
   mass_jump_max: 375000000
@@ -477,8 +477,8 @@ B735:
   sibling_groups: null
   typeID: 35651
 I182:
-  source:
-  - c3
+  sources:
+    - c3
   destination: c2
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -488,8 +488,8 @@ I182:
   sibling_groups: null
   typeID: 30681
 N290:
-  source:
-  - c4
+  sources:
+    - c4
   destination: ls
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -499,7 +499,7 @@ N290:
   sibling_groups: null
   typeID: 30696
 S877:
-  source: null
+  sources: []
   destination: sentinel
   mass_total: 750000000
   mass_jump_max: 375000000
@@ -509,8 +509,8 @@ S877:
   sibling_groups: null
   typeID: 35650
 D364:
-  source:
-  - c5
+  sources:
+    - c5
   destination: c2
   mass_total: 1000000000
   mass_jump_max: 375000000
@@ -520,8 +520,8 @@ D364:
   sibling_groups: []
   typeID: 30699
 N766:
-  source:
-  - c4
+  sources:
+    - c4
   destination: c2
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -531,8 +531,8 @@ N766:
   sibling_groups: null
   typeID: 30690
 U210:
-  source:
-  - c3
+  sources:
+    - c3
   destination: ls
   mass_total: 3000000000
   mass_jump_max: 375000000
@@ -542,10 +542,10 @@ U210:
   sibling_groups: []
   typeID: 30687
 Z971:
-  source:
-  - hs
-  - ls
-  - ns
+  sources:
+    - hs
+    - ls
+    - ns
   destination: c1
   mass_total: 100000000
   mass_jump_max: 62000000
@@ -555,8 +555,8 @@ Z971:
   sibling_groups: null
   typeID: 30579
 Z060:
-  source:
-  - c1
+  sources:
+    - c1
   destination: ns
   mass_total: 1000000000
   mass_jump_max: 62000000
@@ -566,8 +566,8 @@ Z060:
   sibling_groups: []
   typeID: 30668
 H296:
-  source:
-  - c5
+  sources:
+    - c5
   destination: c5
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -577,8 +577,8 @@ H296:
   sibling_groups: []
   typeID: 30702
 Q317:
-  source:
-  - c6
+  sources:
+    - c6
   destination: c1
   mass_total: 500000000
   mass_jump_max: 62000000
@@ -588,8 +588,8 @@ Q317:
   sibling_groups: []
   typeID: 30707
 A982:
-  source:
-  - c3
+  sources:
+    - c3
   destination: c6
   mass_total: 3000000000
   mass_jump_max: 375000000
@@ -599,10 +599,10 @@ A982:
   sibling_groups: null
   typeID: 30685
 X702:
-  source:
-  - hs
-  - ls
-  - ns
+  sources:
+    - hs
+    - ls
+    - ns
   destination: c3
   mass_total: 1000000000
   mass_jump_max: 375000000
@@ -612,8 +612,8 @@ X702:
   sibling_groups: null
   typeID: 30584
 V301:
-  source:
-  - c3
+  sources:
+    - c3
   destination: c1
   mass_total: 500000000
   mass_jump_max: 62000000
@@ -623,8 +623,8 @@ V301:
   sibling_groups: null
   typeID: 30680
 C391:
-  source:
-  - c6
+  sources:
+    - c6
   destination: ls
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -634,8 +634,8 @@ C391:
   sibling_groups: null
   typeID: 30714
 M555:
-  source:
-  - hs
+  sources:
+    - hs
   destination: c5
   mass_total: 3000000000
   mass_jump_max: 1000000000
@@ -645,9 +645,9 @@ M555:
   sibling_groups: null
   typeID: 30644
 F135:
-  source:
-  - c2
-  - c3
+  sources:
+    - c2
+    - c3
   destination: thera
   mass_total: 750000000
   mass_jump_max: 375000000
@@ -657,8 +657,8 @@ F135:
   sibling_groups: null
   typeID: 34372
 E545:
-  source:
-  - c2
+  sources:
+    - c2
   destination: ns
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -666,12 +666,12 @@ E545:
   lifetime: 16
   static: true
   sibling_groups:
-  - - N062
-  - - R474
+    - - N062
+    - - R474
   typeID: 30679
 D382:
-  source:
-  - c2
+  sources:
+    - c2
   destination: c2
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -679,11 +679,11 @@ D382:
   lifetime: 16
   static: true
   sibling_groups:
-  - - A239
+    - - A239
   typeID: 30672
 M609:
-  source:
-  - c1
+  sources:
+    - c1
   destination: c4
   mass_total: 1000000000
   mass_jump_max: 62000000
@@ -693,8 +693,8 @@ M609:
   sibling_groups: null
   typeID: 30663
 S047:
-  source:
-  - c4
+  sources:
+    - c4
   destination: hs
   mass_total: 3000000000
   mass_jump_max: 375000000
@@ -704,8 +704,8 @@ S047:
   sibling_groups: null
   typeID: 30686
 R474:
-  source:
-  - c2
+  sources:
+    - c2
   destination: c6
   mass_total: 3000000000
   mass_jump_max: 375000000
@@ -713,11 +713,11 @@ R474:
   lifetime: 24
   static: true
   sibling_groups:
-  - - E545
+    - - E545
   typeID: 30676
 N062:
-  source:
-  - c2
+  sources:
+    - c2
   destination: c5
   mass_total: 3000000000
   mass_jump_max: 375000000
@@ -725,11 +725,11 @@ N062:
   lifetime: 24
   static: true
   sibling_groups:
-  - - E545
+    - - E545
   typeID: 30675
 E587:
-  source:
-  - thera
+  sources:
+    - thera
   destination: ns
   mass_total: 3000000000
   mass_jump_max: 1000000000
@@ -739,9 +739,9 @@ E587:
   sibling_groups: null
   typeID: 34370
 S199:
-  source:
-  - ls
-  - ns
+  sources:
+    - ls
+    - ns
   destination: ns
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -751,8 +751,8 @@ S199:
   sibling_groups: null
   typeID: 30649
 Z647:
-  source:
-  - c2
+  sources:
+    - c2
   destination: c1
   mass_total: 500000000
   mass_jump_max: 62000000
@@ -760,11 +760,11 @@ Z647:
   lifetime: 16
   static: true
   sibling_groups:
-  - - B274
+    - - B274
   typeID: 30671
 C247:
-  source:
-  - c4
+  sources:
+    - c4
   destination: c3
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -774,7 +774,7 @@ C247:
   sibling_groups: null
   typeID: 30691
 Q003:
-  source: null
+  sources: []
   destination: ns
   mass_total: 3000000000
   mass_jump_max: 5000000
@@ -784,9 +784,9 @@ Q003:
   sibling_groups: null
   typeID: 34140
 N944:
-  source:
-  - ls
-  - ns
+  sources:
+    - ls
+    - ns
   destination: ls
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -796,9 +796,9 @@ N944:
   sibling_groups: null
   typeID: 30648
 D792:
-  source:
-  - c5
-  - c6
+  sources:
+    - c5
+    - c6
   destination: hs
   mass_total: 3000000000
   mass_jump_max: 1000000000
@@ -808,8 +808,8 @@ D792:
   sibling_groups: null
   typeID: 30704
 N110:
-  source:
-  - c1
+  sources:
+    - c1
   destination: hs
   mass_total: 1000000000
   mass_jump_max: 62000000
@@ -819,7 +819,7 @@ N110:
   sibling_groups: []
   typeID: 30666
 M001:
-  source: null
+  sources: []
   destination: c4
   mass_total: 3000000000
   mass_jump_max: 5000000
@@ -829,7 +829,7 @@ M001:
   sibling_groups: null
   typeID: 34137
 K162:
-  source: null
+  sources: []
   destination: null
   mass_total: null
   mass_jump_max: null
@@ -839,7 +839,7 @@ K162:
   sibling_groups: null
   typeID: 30831
 G008:
-  source: null
+  sources: []
   destination: c6
   mass_total: 3000000000
   mass_jump_max: 5000000
@@ -849,8 +849,8 @@ G008:
   sibling_groups: null
   typeID: 34139
 C248:
-  source:
-  - c6
+  sources:
+    - c6
   destination: ns
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -860,7 +860,7 @@ C248:
   sibling_groups: null
   typeID: 30715
 V928:
-  source: null
+  sources: []
   destination: vidette
   mass_total: 750000000
   mass_jump_max: 375000000
@@ -870,8 +870,8 @@ V928:
   sibling_groups: null
   typeID: 35652
 D845:
-  source:
-  - c3
+  sources:
+    - c3
   destination: hs
   mass_total: 5000000000
   mass_jump_max: 375000000
@@ -881,7 +881,7 @@ D845:
   sibling_groups: []
   typeID: 30695
 R259:
-  source: null
+  sources: []
   destination: redoubt
   mass_total: 750000000
   mass_jump_max: 375000000
@@ -891,8 +891,8 @@ R259:
   sibling_groups: null
   typeID: 35654
 N968:
-  source:
-  - c3
+  sources:
+    - c3
   destination: c3
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -902,8 +902,8 @@ N968:
   sibling_groups: null
   typeID: 30682
 T458:
-  source:
-  - hs
+  sources:
+    - hs
   destination: thera
   mass_total: 500000000
   mass_jump_max: 62000000
@@ -913,8 +913,8 @@ T458:
   sibling_groups: null
   typeID: 34338
 V283:
-  source:
-  - hs
+  sources:
+    - hs
   destination: ns
   mass_total: 3000000000
   mass_jump_max: 1000000000
@@ -924,9 +924,9 @@ V283:
   sibling_groups: null
   typeID: 30659
 C140:
-  source:
-  - c5
-  - c6
+  sources:
+    - c5
+    - c6
   destination: ls
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -936,8 +936,8 @@ C140:
   sibling_groups: null
   typeID: 30705
 U574:
-  source:
-  - c4
+  sources:
+    - c4
   destination: c6
   mass_total: 3000000000
   mass_jump_max: 375000000
@@ -947,9 +947,9 @@ U574:
   sibling_groups: null
   typeID: 30694
 N432:
-  source:
-  - ls
-  - ns
+  sources:
+    - ls
+    - ns
   destination: c5
   mass_total: 3300000000
   mass_jump_max: 2000000000
@@ -959,9 +959,9 @@ N432:
   sibling_groups: null
   typeID: 30643
 B449:
-  source:
-  - ls
-  - ns
+  sources:
+    - ls
+    - ns
   destination: hs
   mass_total: 2000000000
   mass_jump_max: 1000000000
@@ -971,8 +971,8 @@ B449:
   sibling_groups: null
   typeID: 30647
 G024:
-  source:
-  - c6
+  sources:
+    - c6
   destination: c2
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -982,8 +982,8 @@ G024:
   sibling_groups: []
   typeID: 30708
 J244:
-  source:
-  - c1
+  sources:
+    - c1
   destination: ls
   mass_total: 1000000000
   mass_jump_max: 62000000
@@ -993,8 +993,8 @@ J244:
   sibling_groups: []
   typeID: 30667
 L477:
-  source:
-  - c6
+  sources:
+    - c6
   destination: c3
   mass_total: 2000000000
   mass_jump_max: 375000000
@@ -1004,13 +1004,13 @@ L477:
   sibling_groups: []
   typeID: 30709
 J492:
-  source:
-  - c1
-  - c2
-  - c3
-  - c4
-  - c5
-  - c6
+  sources:
+    - c1
+    - c2
+    - c3
+    - c4
+    - c5
+    - c6
   destination: ls
   mass_total: 1000000000
   mass_jump_max: 620000000

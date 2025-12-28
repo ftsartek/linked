@@ -5,7 +5,7 @@
 	let mapId = $derived(page.params.map_id!);
 </script>
 
-<div class="w-[70vw] h-[70vh]">
+<div class="w-full h-full">
 	{#key mapId}
 		<Map map_id={mapId} />
 	{/key}

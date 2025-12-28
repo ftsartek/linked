@@ -1,19 +1,20 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Any, Iterator
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
 import pytest
 from litestar import Litestar
 from litestar.di import Provide
-from sqlspec import AsyncDriverAdapterBase
+from litestar.middleware import DefineMiddleware
 from litestar.middleware.session.server_side import ServerSideSessionConfig
 from litestar.stores.memory import MemoryStore
 from litestar.testing import TestClient
-from litestar.middleware import DefineMiddleware
+from sqlspec import AsyncDriverAdapterBase
 
 # Set test environment variables before importing app modules
 os.environ.setdefault("LINKED_CSRF_SECRET", "test_csrf_secret_at_least_32_chars_long")

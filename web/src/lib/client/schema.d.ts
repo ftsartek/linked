@@ -381,23 +381,51 @@ export interface components {
             /** @default false */
             is_public: boolean;
         };
-        /** LinkInfo */
-        LinkInfo: {
+        /** EnrichedLinkInfo */
+        EnrichedLinkInfo: {
             /** Format: uuid */
             id: string;
             /** Format: uuid */
             source_node_id: string;
             /** Format: uuid */
             target_node_id: string;
-            wormhole_id?: number | null;
-            mass_remaining?: number | null;
-            eol_at?: string | null;
+            wormhole_code?: string | null;
+            wormhole_mass_total?: number | null;
+            wormhole_mass_jump_max?: number | null;
+            wormhole_mass_regen?: number | null;
+            wormhole_lifetime?: number | null;
+            wormhole_is_static?: boolean | null;
+            lifetime_status: string;
+            /** Format: date-time */
+            date_lifetime_updated: string;
+            mass_usage: string;
+            /** Format: date-time */
+            date_mass_updated: string;
+        };
+        /** EnrichedNodeInfoResponse */
+        EnrichedNodeInfoResponse: {
+            /** Format: uuid */
+            id: string;
+            pos_x: number;
+            pos_y: number;
+            system_id: number;
+            system_name: string;
+            constellation_id?: number | null;
+            constellation_name?: string | null;
+            region_id?: number | null;
+            region_name?: string | null;
+            security_status?: number | null;
+            security_class?: string | null;
+            wh_class?: number | null;
+            wh_effect_name?: string | null;
+            wh_effect_buffs?: Record<string, never>[] | null;
+            wh_effect_debuffs?: Record<string, never>[] | null;
         };
         /** MapDetailResponse */
         MapDetailResponse: {
             map: components["schemas"]["MapInfo"];
-            nodes: components["schemas"]["NodeInfo"][];
-            links: components["schemas"]["LinkInfo"][];
+            nodes: components["schemas"]["EnrichedNodeInfoResponse"][];
+            links: components["schemas"]["EnrichedLinkInfo"][];
         };
         /** MapInfo */
         MapInfo: {
@@ -409,22 +437,13 @@ export interface components {
             description?: string | null;
             is_public: boolean;
             /** Format: date-time */
-            created_at: string;
+            date_created: string;
             /** Format: date-time */
-            updated_at: string;
+            date_updated: string;
         };
         /** MapListResponse */
         MapListResponse: {
             maps: components["schemas"]["MapInfo"][];
-        };
-        /** NodeInfo */
-        NodeInfo: {
-            /** Format: uuid */
-            id: string;
-            system_id: number;
-            pos_x: number;
-            pos_y: number;
-            label?: string | null;
         };
         /** UpdateMapRequest */
         UpdateMapRequest: {

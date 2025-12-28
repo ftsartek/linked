@@ -1,4 +1,4 @@
-.PHONY: help dev dev-services dev-stop api web postgres postgres-stop valkey valkey-stop preseed clean
+.PHONY: help dev dev-services dev-stop api web postgres postgres-stop valkey valkey-stop preseed schema clean
 
 # Configuration
 VALKEY_PORT ?= 6379
@@ -17,6 +17,9 @@ help:
 	@echo ""
 	@echo "Database:"
 	@echo "  preseed        - Import static EVE data"
+	@echo ""
+	@echo "Code Generation:"
+	@echo "  schema         - Generate OpenAPI schema and TypeScript types"
 	@echo ""
 	@echo "Cleanup:"
 	@echo "  postgres-stop  - Stop PostgreSQL container"
@@ -61,12 +64,19 @@ valkey:
 		--name linked-valkey \
 		-p $(VALKEY_PORT):6379 \
 		--rm \
-		valkey/valkey:8
+		valkey/valkey:9
 	@echo "Valkey started on port $(VALKEY_PORT)"
 
 valkey-stop:
 	@docker stop linked-valkey 2>/dev/null || true
 	@echo "Valkey stopped"
+
+# Generate OpenAPI schema and TypeScript types
+schema:
+	cd api && uv run linked schema -o ../openapi.json
+	cd web && npx openapi-typescript ../openapi.json -o src/lib/client/schema.d.ts
+	@rm -f openapi.json
+	@echo "TypeScript types generated at web/src/lib/client/schema.d.ts"
 
 # Delegate postgres targets to api/Makefile
 postgres postgres-stop preseed:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TypeVar
 
 import httpx
@@ -17,7 +19,7 @@ class ESIClient:
         self._client: httpx.AsyncClient | None = None
         self._etag_cache: dict[str, tuple[str, bytes]] = {}
 
-    async def __aenter__(self) -> "ESIClient":
+    async def __aenter__(self) -> ESIClient:
         self._client = httpx.AsyncClient(
             base_url=self.BASE_URL,
             headers={"User-Agent": self._user_agent},
@@ -73,6 +75,4 @@ class ESIClient:
         return await self._get_typed("/universe/constellations/", list[int])
 
     async def get_constellation(self, constellation_id: int) -> Constellation:
-        return await self._get_typed(
-            f"/universe/constellations/{constellation_id}/", Constellation
-        )
+        return await self._get_typed(f"/universe/constellations/{constellation_id}/", Constellation)

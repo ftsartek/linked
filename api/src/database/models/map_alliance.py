@@ -4,7 +4,6 @@ from uuid import UUID
 
 import msgspec
 
-
 CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS map_alliance (
     map_id UUID NOT NULL REFERENCES map(id) ON DELETE CASCADE,

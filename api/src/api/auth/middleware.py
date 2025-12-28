@@ -6,8 +6,6 @@ from uuid import UUID
 from litestar.connection import ASGIConnection
 from litestar.middleware import AbstractAuthenticationMiddleware, AuthenticationResult
 
-from database.models.user import User
-
 
 @dataclass
 class SessionUser:

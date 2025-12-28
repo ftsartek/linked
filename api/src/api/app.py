@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from litestar import Litestar
 from litestar.config.compression import CompressionConfig
 from litestar.config.cors import CORSConfig
@@ -15,7 +17,6 @@ from routes import AuthController, MapController, UserController
 
 def create_app() -> Litestar:
     settings = get_settings()
-
 
     cors_config = CORSConfig(
         allow_origins=settings.cors_allow_origins,

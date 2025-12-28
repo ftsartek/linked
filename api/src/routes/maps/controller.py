@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from uuid import UUID
 
 from litestar import Controller, Request, delete, get, patch, post
@@ -9,55 +8,21 @@ from litestar.exceptions import NotAuthorizedException, NotFoundException
 from litestar.status_codes import HTTP_204_NO_CONTENT
 
 from api.auth.guards import require_auth
-from routes.maps.service import (
+from routes.maps.dependencies import (
+    AddAllianceAccessRequest,
+    AddCorporationAccessRequest,
+    AddUserAccessRequest,
+    CreateMapRequest,
+    EnrichedNodeInfoResponse,
     MapDetailResponse,
     MapInfo,
     MapListResponse,
+    UpdateMapRequest,
+)
+from routes.maps.service import (
     MapService,
     provide_map_service,
 )
-
-
-@dataclass
-class CreateMapRequest:
-    """Request body for creating a map."""
-
-    name: str
-    description: str | None = None
-    is_public: bool = False
-
-
-@dataclass
-class UpdateMapRequest:
-    """Request body for updating a map."""
-
-    name: str | None = None
-    description: str | None = None
-    is_public: bool | None = None
-
-
-@dataclass
-class AddUserAccessRequest:
-    """Request body for adding user access."""
-
-    user_id: UUID
-    role: str = "viewer"
-
-
-@dataclass
-class AddCorporationAccessRequest:
-    """Request body for adding corporation access."""
-
-    corporation_id: int
-    role: str = "viewer"
-
-
-@dataclass
-class AddAllianceAccessRequest:
-    """Request body for adding alliance access."""
-
-    alliance_id: int
-    role: str = "viewer"
 
 
 class MapController(Controller):
@@ -154,7 +119,9 @@ class MapController(Controller):
         nodes = await map_service.get_map_nodes(map_id)
         links = await map_service.get_map_links(map_id)
 
-        return MapDetailResponse(map=map_info, nodes=nodes, links=links)
+        return MapDetailResponse(
+            map=map_info, nodes=[EnrichedNodeInfoResponse.from_origin(node) for node in nodes], links=links
+        )
 
     @patch("/{map_id:uuid}")
     async def update_map(

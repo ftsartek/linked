@@ -4,6 +4,7 @@ from datetime import datetime
 
 import msgspec
 
+from utils.datetime import ensure_utc
 
 CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS corporation (
@@ -12,8 +13,8 @@ CREATE TABLE IF NOT EXISTS corporation (
     ticker TEXT NOT NULL,
     alliance_id BIGINT,
     member_count INTEGER,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    date_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_corporation_alliance_id ON corporation(alliance_id);
@@ -29,8 +30,8 @@ ON CONFLICT (id) DO UPDATE SET
     ticker = EXCLUDED.ticker,
     alliance_id = EXCLUDED.alliance_id,
     member_count = EXCLUDED.member_count,
-    updated_at = NOW()
-RETURNING id, name, ticker, alliance_id, member_count, created_at, updated_at;
+    date_updated = NOW()
+RETURNING id, name, ticker, alliance_id, member_count, date_created, date_updated;
 """
 
 
@@ -42,8 +43,8 @@ class Corporation(msgspec.Struct):
     ticker: str
     alliance_id: int | None = None
     member_count: int | None = None
-    created_at: datetime | None = None
-    updated_at: datetime | None = None
+    date_created: datetime | None = None
+    date_updated: datetime | None = None
 
     @classmethod
     def from_esi_data(cls, corporation_id: int, data: dict) -> Corporation:
@@ -65,6 +66,6 @@ class Corporation(msgspec.Struct):
             ticker=row[2],
             alliance_id=row[3],
             member_count=row[4],
-            created_at=row[5],
-            updated_at=row[6],
+            date_created=ensure_utc(row[5]),
+            date_updated=ensure_utc(row[6]),
         )
