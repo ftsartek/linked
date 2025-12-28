@@ -62,7 +62,12 @@ def get_db_config() -> AsyncpgConfig:
             database=settings.db_name,
             min_size=settings.db_pool_min_size,
             max_size=settings.db_pool_max_size,
-        )
+        ),
+        extension_config={
+            "litestar": {
+                "session_key": "db_session",
+            }
+        },
     )
 
 

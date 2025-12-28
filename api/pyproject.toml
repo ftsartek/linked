@@ -36,3 +36,73 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".idea",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+]
+
+line-length = 120
+indent-width = 4
+target-version = "py314"
+
+[tool.ruff.lint]
+
+select = ["E", "F", "W", "C", "I", "N", "A", "COM", "C4", "INP", "Q", "RET", "SIM", "ARG", "PLW", "UP", "ANN", "TID"]
+ignore = ["COM812", "A005", "ANN401"]
+fixable = ["ALL"]
+unfixable = []
+
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["I002"]
+"migrations/versions/*.py" = ["INP001"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false
+docstring-code-line-length = "dynamic"
+
+
+[tool.pyright]
+include = ["src"]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.14"
+reportUnnecessaryTypeIgnoreComment = true
+typeCheckingMode = "standard"
+exclude = ["test/*"]

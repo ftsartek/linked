@@ -39,7 +39,7 @@ class TestCallback:
 
     def test_callback_rejects_invalid_state(self, client: TestClient) -> None:
         """Callback should reject requests with invalid state parameter."""
-        response = client.get("/auth/callback?code=test&oauth_state=invalid")
+        response = client.get("/auth/callback?code=test&state=invalid")
 
         assert response.status_code == 401
 
@@ -56,19 +56,13 @@ class TestCallback:
         # Get the state that was used
         state = mock_sso_service.get_authorization_url.call_args[0][0]
 
-        # Mock: character doesn't exist, user insert returns new user
-        mock_result_no_char = MagicMock()
-        mock_result_no_char.fetchone = AsyncMock(return_value=None)
-
-        mock_result_new_user = MagicMock()
-        mock_result_new_user.fetchone = AsyncMock(return_value=(1, None, None))  # id, created_at, updated_at
-
-        mock_db_session.execute = AsyncMock(
-            side_effect=[mock_result_no_char, mock_result_new_user, MagicMock(), MagicMock()]
-        )
+        # Mock: character doesn't exist, user insert returns new user id
+        mock_db_session.select_one_or_none = AsyncMock(return_value=None)
+        mock_db_session.select_value = AsyncMock(return_value=1)  # new user_id
+        mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
         response = client.get(
-            f"/auth/callback?code=test_code&oauth_state={state}",
+            f"/auth/callback?code=test_code&state={state}",
             follow_redirects=False,
         )
 
@@ -87,17 +81,13 @@ class TestCallback:
         state = mock_sso_service.get_authorization_url.call_args[0][0]
 
         # Mock: character exists with user_id=42
-        mock_result_char = MagicMock()
-        mock_result_char.fetchone = AsyncMock(
+        mock_db_session.select_one_or_none = AsyncMock(
             return_value=(12345678, 42, "Test Pilot", None, None)
         )
-
-        mock_db_session.execute = AsyncMock(
-            side_effect=[mock_result_char, MagicMock()]  # SELECT, then UPSERT token
-        )
+        mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
         response = client.get(
-            f"/auth/callback?code=test_code&oauth_state={state}",
+            f"/auth/callback?code=test_code&state={state}",
             follow_redirects=False,
         )
 
@@ -118,15 +108,12 @@ class TestLogout:
         client.get("/auth/login", follow_redirects=False)
         state = mock_sso_service.get_authorization_url.call_args[0][0]
 
-        mock_result_char = MagicMock()
-        mock_result_char.fetchone = AsyncMock(
+        mock_db_session.select_one_or_none = AsyncMock(
             return_value=(12345678, 42, "Test Pilot", None, None)
         )
-        mock_db_session.execute = AsyncMock(
-            side_effect=[mock_result_char, MagicMock()]
-        )
+        mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
-        client.get(f"/auth/callback?code=test&oauth_state={state}", follow_redirects=False)
+        client.get(f"/auth/callback?code=test&state={state}", follow_redirects=False)
 
         # Now logout
         response = client.post("/auth/logout")
@@ -156,16 +143,12 @@ class TestMe:
         state = mock_sso_service.get_authorization_url.call_args[0][0]
 
         # Mock callback: existing character
-        mock_result_char = MagicMock()
-        mock_result_char.fetchone = AsyncMock(
+        mock_db_session.select_one_or_none = AsyncMock(
             return_value=(12345678, 42, "Test Pilot", 98000001, None)
         )
+        mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
-        mock_db_session.execute = AsyncMock(
-            side_effect=[mock_result_char, MagicMock()]
-        )
-
-        client.get(f"/auth/callback?code=test&oauth_state={state}", follow_redirects=False)
+        client.get(f"/auth/callback?code=test&state={state}", follow_redirects=False)
 
         # Now mock the /me query
         mock_result_chars = MagicMock()
@@ -207,15 +190,12 @@ class TestLink:
         client.get("/auth/login", follow_redirects=False)
         state = mock_sso_service.get_authorization_url.call_args[0][0]
 
-        mock_result_char = MagicMock()
-        mock_result_char.fetchone = AsyncMock(
+        mock_db_session.select_one_or_none = AsyncMock(
             return_value=(12345678, 42, "Test Pilot", None, None)
         )
-        mock_db_session.execute = AsyncMock(
-            side_effect=[mock_result_char, MagicMock()]
-        )
+        mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
-        client.get(f"/auth/callback?code=test&oauth_state={state}", follow_redirects=False)
+        client.get(f"/auth/callback?code=test&state={state}", follow_redirects=False)
 
         # Reset mock to track the link call
         mock_sso_service.get_authorization_url.reset_mock()
@@ -236,15 +216,12 @@ class TestLink:
         client.get("/auth/login", follow_redirects=False)
         state = mock_sso_service.get_authorization_url.call_args[0][0]
 
-        mock_result_char = MagicMock()
-        mock_result_char.fetchone = AsyncMock(
+        mock_db_session.select_one_or_none = AsyncMock(
             return_value=(12345678, 42, "Test Pilot", None, None)
         )
-        mock_db_session.execute = AsyncMock(
-            side_effect=[mock_result_char, MagicMock()]
-        )
+        mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
-        client.get(f"/auth/callback?code=test&oauth_state={state}", follow_redirects=False)
+        client.get(f"/auth/callback?code=test&state={state}", follow_redirects=False)
 
         # Now start link flow
         mock_sso_service.get_authorization_url.reset_mock()
@@ -258,14 +235,11 @@ class TestLink:
         )
 
         # Mock: new character doesn't exist
-        mock_result_no_char = MagicMock()
-        mock_result_no_char.fetchone = AsyncMock(return_value=None)
-        mock_db_session.execute = AsyncMock(
-            side_effect=[mock_result_no_char, MagicMock(), MagicMock()]
-        )
+        mock_db_session.select_one_or_none = AsyncMock(return_value=None)
+        mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
         response = client.get(
-            f"/auth/callback?code=link_code&oauth_state={link_state}",
+            f"/auth/callback?code=link_code&state={link_state}",
             follow_redirects=False,
         )
 
@@ -282,15 +256,12 @@ class TestLink:
         client.get("/auth/login", follow_redirects=False)
         state = mock_sso_service.get_authorization_url.call_args[0][0]
 
-        mock_result_char = MagicMock()
-        mock_result_char.fetchone = AsyncMock(
+        mock_db_session.select_one_or_none = AsyncMock(
             return_value=(12345678, 42, "Test Pilot", None, None)
         )
-        mock_db_session.execute = AsyncMock(
-            side_effect=[mock_result_char, MagicMock()]
-        )
+        mock_db_session.execute = AsyncMock(return_value=MagicMock())
 
-        client.get(f"/auth/callback?code=test&oauth_state={state}", follow_redirects=False)
+        client.get(f"/auth/callback?code=test&state={state}", follow_redirects=False)
 
         # Start link flow
         mock_sso_service.get_authorization_url.reset_mock()
@@ -298,11 +269,9 @@ class TestLink:
         link_state = mock_sso_service.get_authorization_url.call_args[0][0]
 
         # Mock: character exists but belongs to user 99 (not us)
-        mock_result_other_char = MagicMock()
-        mock_result_other_char.fetchone = AsyncMock(
+        mock_db_session.select_one_or_none = AsyncMock(
             return_value=(87654321, 99, "Someone Else", None, None)  # user_id=99
         )
-        mock_db_session.execute = AsyncMock(return_value=mock_result_other_char)
 
         mock_sso_service.validate_jwt.return_value = MockCharacterInfo(
             character_id=87654321,
@@ -310,7 +279,7 @@ class TestLink:
         )
 
         response = client.get(
-            f"/auth/callback?code=link_code&oauth_state={link_state}",
+            f"/auth/callback?code=link_code&state={link_state}",
             follow_redirects=False,
         )
 

@@ -5,13 +5,17 @@ from litestar.config.csrf import CSRFConfig
 from litestar.middleware import DefineMiddleware
 from litestar.middleware.session.server_side import ServerSideSessionConfig
 from litestar.stores.valkey import ValkeyStore
+from sqlspec.extensions.litestar import SQLSpecPlugin
 
-from api.auth import AuthController, AuthenticationMiddleware
+from api.auth import AuthenticationMiddleware
 from config import get_settings
+from database import sql
+from routes import AuthController
 
 
 def create_app() -> Litestar:
     settings = get_settings()
+
 
     cors_config = CORSConfig(
         allow_origins=settings.cors_allow_origins,
@@ -41,8 +45,11 @@ def create_app() -> Litestar:
         exclude=["^/schema", "^/health"],
     )
 
+    sqlspec_plugin = SQLSpecPlugin(sqlspec=sql)
+
     return Litestar(
         route_handlers=[AuthController],
+        plugins=[sqlspec_plugin],
         stores={"sessions": ValkeyStore.with_client(url=settings.valkey_url)},
         middleware=[session_config.middleware, auth_middleware],
         cors_config=cors_config,

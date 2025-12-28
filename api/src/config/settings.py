@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     # CORS
     cors_allow_origins: list[str] = Field(default_factory=list)
-    cors_allow_methods: list[str] = Field(default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "PATCH"])
+    cors_allow_methods: list[str] = Field(default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
     cors_allow_headers: list[str] = Field(default_factory=list)
     cors_allow_credentials: bool = False
 
@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     token_encryption_key: str = Field(min_length=32, description="Fernet key for encrypting refresh tokens")
 
     # Frontend redirect URL after auth
-    frontend_url: str = "http://localhost:3000"
+    frontend_url: str = "http://localhost:5173"
 
     # Database
     db_host: str = "localhost"
