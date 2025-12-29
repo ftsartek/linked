@@ -140,6 +140,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/maps/{map_id}/links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CreateLink */
+        post: operations["MapsMapIdLinksCreateLink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/maps": {
         parameters: {
             query?: never;
@@ -151,6 +168,23 @@ export interface paths {
         put?: never;
         /** CreateMap */
         post: operations["MapsCreateMap"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/maps/{map_id}/nodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CreateNode */
+        post: operations["MapsMapIdNodesCreateNode"];
         delete?: never;
         options?: never;
         head?: never;
@@ -295,6 +329,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/universe/systems": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** SearchSystems */
+        get: operations["UniverseSystemsSearchSystems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/universe/wormholes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** SearchWormholes */
+        get: operations["UniverseWormholesSearchWormholes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/characters/{character_id}": {
         parameters: {
             query?: never;
@@ -374,12 +442,26 @@ export interface components {
         CharacterListResponse: {
             characters: components["schemas"]["users_service_CharacterInfo"][];
         };
+        /** CreateLinkRequest */
+        CreateLinkRequest: {
+            /** Format: uuid */
+            source_node_id: string;
+            /** Format: uuid */
+            target_node_id: string;
+            wormhole_id?: number | null;
+        };
         /** CreateMapRequest */
         CreateMapRequest: {
             name: string;
             description?: string | null;
             /** @default false */
             is_public: boolean;
+        };
+        /** CreateNodeRequest */
+        CreateNodeRequest: {
+            system_id: number;
+            pos_x: number;
+            pos_y: number;
         };
         /** EnrichedLinkInfo */
         EnrichedLinkInfo: {
@@ -445,6 +527,16 @@ export interface components {
         MapListResponse: {
             maps: components["schemas"]["MapInfo"][];
         };
+        /** SystemSearchResponse */
+        SystemSearchResponse: {
+            systems: components["schemas"]["SystemSearchResult"][];
+        };
+        /** SystemSearchResult */
+        SystemSearchResult: {
+            id: number;
+            name: string;
+            wh_class?: number | null;
+        };
         /** UpdateMapRequest */
         UpdateMapRequest: {
             name?: string | null;
@@ -456,6 +548,15 @@ export interface components {
             /** Format: uuid */
             id: string;
             characters: components["schemas"]["auth_service_CharacterInfo"][];
+        };
+        /** WormholeSearchResponse */
+        WormholeSearchResponse: {
+            wormholes: components["schemas"]["WormholeSearchResult"][];
+        };
+        /** WormholeSearchResult */
+        WormholeSearchResult: {
+            id: number;
+            code: string;
         };
         /** CharacterInfo */
         auth_service_CharacterInfo: {
@@ -717,6 +818,47 @@ export interface operations {
             };
         };
     };
+    MapsMapIdLinksCreateLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                map_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateLinkRequest"];
+            };
+        };
+        responses: {
+            /** @description Document created, URL follows */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnrichedLinkInfo"];
+                };
+            };
+            /** @description Bad request syntax or unsupported method */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        status_code: number;
+                        detail: string;
+                        extra?: null | {
+                            [key: string]: unknown;
+                        } | unknown[];
+                    };
+                };
+            };
+        };
+    };
     MapsCreateMap: {
         parameters: {
             query?: never;
@@ -737,6 +879,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MapInfo"];
+                };
+            };
+            /** @description Bad request syntax or unsupported method */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        status_code: number;
+                        detail: string;
+                        extra?: null | {
+                            [key: string]: unknown;
+                        } | unknown[];
+                    };
+                };
+            };
+        };
+    };
+    MapsMapIdNodesCreateNode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                map_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateNodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Document created, URL follows */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnrichedNodeInfoResponse"];
                 };
             };
             /** @description Bad request syntax or unsupported method */
@@ -1039,6 +1222,82 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Bad request syntax or unsupported method */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        status_code: number;
+                        detail: string;
+                        extra?: null | {
+                            [key: string]: unknown;
+                        } | unknown[];
+                    };
+                };
+            };
+        };
+    };
+    UniverseSystemsSearchSystems: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Request fulfilled, document follows */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemSearchResponse"];
+                };
+            };
+            /** @description Bad request syntax or unsupported method */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        status_code: number;
+                        detail: string;
+                        extra?: null | {
+                            [key: string]: unknown;
+                        } | unknown[];
+                    };
+                };
+            };
+        };
+    };
+    UniverseWormholesSearchWormholes: {
+        parameters: {
+            query: {
+                q: string;
+                destination?: string | null;
+                source?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Request fulfilled, document follows */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WormholeSearchResponse"];
+                };
             };
             /** @description Bad request syntax or unsupported method */
             400: {

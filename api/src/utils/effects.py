@@ -6,9 +6,9 @@ from typing import Any
 
 
 def apply_class_multiplier(
-    effects: list[dict[str, Any]] | None,
+    effects: dict[str, int | float] | None,
     wh_class: int | None,
-) -> list[dict[str, Any]] | None:
+) -> dict[str, int | float] | None:
     """Apply wormhole class multiplier to effect values.
 
     Args:
@@ -24,17 +24,13 @@ def apply_class_multiplier(
     if wh_class not in range(1, 7):
         wh_class = 1
 
-    result = []
-    for effect in effects:
-        multiplied_effect = {}
-        for key, value in effect.items():
-            if isinstance(value, (int, float)):
-                multiplied_effect[key] = calculate_effect(value, wh_class)
-            else:
-                multiplied_effect[key] = value
-        result.append(multiplied_effect)
+    print(effects)
 
-    return result
+    multiplied_effect = {}
+    for effect, value in effects.items():
+        multiplied_effect[effect] = calculate_effect(value, wh_class)
+
+    return multiplied_effect
 
 
 def calculate_effect(effect: int | float, wh_class: int) -> float:

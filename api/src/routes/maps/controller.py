@@ -12,7 +12,10 @@ from routes.maps.dependencies import (
     AddAllianceAccessRequest,
     AddCorporationAccessRequest,
     AddUserAccessRequest,
+    CreateLinkRequest,
     CreateMapRequest,
+    CreateNodeRequest,
+    EnrichedLinkInfo,
     EnrichedNodeInfoResponse,
     MapDetailResponse,
     MapInfo,
@@ -249,3 +252,62 @@ class MapController(Controller):
             raise NotAuthorizedException("Only the owner can manage map access")
 
         await map_service.remove_alliance_access(map_id, alliance_id)
+
+    # Node management
+
+    @post("/{map_id:uuid}/nodes")
+    async def create_node(
+        self,
+        request: Request,
+        map_service: MapService,
+        map_id: UUID,
+        data: CreateNodeRequest,
+    ) -> EnrichedNodeInfoResponse:
+        """Create a new node on the map."""
+        ctx = await map_service.get_character_context(request.user.id)
+
+        has_access = await map_service.can_access_map(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+        if not has_access:
+            raise NotAuthorizedException("You do not have access to this map")
+
+        node = await map_service.create_node(
+            map_id=map_id,
+            system_id=data.system_id,
+            pos_x=data.pos_x,
+            pos_y=data.pos_y,
+        )
+        return EnrichedNodeInfoResponse.from_origin(node)
+
+    # Link management
+
+    @post("/{map_id:uuid}/links")
+    async def create_link(
+        self,
+        request: Request,
+        map_service: MapService,
+        map_id: UUID,
+        data: CreateLinkRequest,
+    ) -> EnrichedLinkInfo:
+        """Create a new link between nodes."""
+        ctx = await map_service.get_character_context(request.user.id)
+
+        has_access = await map_service.can_access_map(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+        if not has_access:
+            raise NotAuthorizedException("You do not have access to this map")
+
+        return await map_service.create_link(
+            map_id=map_id,
+            source_node_id=data.source_node_id,
+            target_node_id=data.target_node_id,
+            wormhole_id=data.wormhole_id,
+        )

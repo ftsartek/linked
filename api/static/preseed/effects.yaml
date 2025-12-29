@@ -1,55 +1,55 @@
 Magnetar:
   buffs:
-    - Damage modifier: 30
+    Damage modifier: 30
   debuffs:
-    - Targeting Range: -15
-    - Missile Explosion Radius: 15
-    - Turret/Drone Tracking Speed: -15
-    - Target Painter Strength: -15
+    Targeting Range: -15
+    Missile Explosion Radius: 15
+    Turret/Drone Tracking Speed: -15
+    Target Painter Strength: -15
 
 Cataclysmic Variable:
   buffs:
-    - Remote Repair Amount: 30
-    - Shield Transfer Amount: 30
-    - Capacitor Capacity: 30
+    Remote Repair Amount: 30
+    Shield Transfer Amount: 30
+    Capacitor Capacity: 30
   debuffs:
-    - Armor Repair Amount: -15
-    - Shield Boost Amount: -15
-    - Capacitor Transfer Amount: -15
-    - Capacitor Recharge Time: 15
+    Armor Repair Amount: -15
+    Shield Boost Amount: -15
+    Capacitor Transfer Amount: -15
+    Capacitor Recharge Time: 15
 
 Black Hole:
   buffs:
-    - Ship Velocity: 30
-    - Missile Velocity: 15
-    - Missile Explosion Velocity: 30
+    Ship Velocity: 30
+    Missile Velocity: 15
+    Missile Explosion Velocity: 30
   debuffs:
-    - Ship Inertia: 15
-    - Targeting Range: 30
-    - Stasis Webifier Strength: -15
+    Ship Inertia: 15
+    Targeting Range: 30
+    Stasis Webifier Strength: -15
 
 Pulsar:
   buffs:
-    - Shield Capacity: 30
-    - Capacitor Recharge Time: -15
-    - Energy Nosferatu/Neutralizer Drain Amount: 30
+    Shield Capacity: 30
+    Capacitor Recharge Time: -15
+    Energy Nosferatu/Neutralizer Drain Amount: 30
   debuffs:
-    - Armor Resistances: -15
-    - Signature Radius: 30
+    Armor Resistances: -15
+    Signature Radius: 30
 
 Red Giant:
   buffs:
-    - Overload Bonus: 30
-    - Smart Bomb Damage: 30
-    - Smart Bomb Range: 30
-    - Bomb Damage: 30
+    Overload Bonus: 30
+    Smart Bomb Damage: 30
+    Smart Bomb Range: 30
+    Bomb Damage: 30
   debuffs:
-    - Heat Damage: 15
+    Heat Damage: 15
 
 Wolf-Rayet Star:
   buffs:
-    - Armor HP: 30
-    - Small Weapon Damage: 60
-    - Signature Radius: -15
+    Armor HP: 30
+    Small Weapon Damage: 60
+    Signature Radius: -15
   debuffs:
-    - Shield Resistances: -15
+    Shield Resistances: -15

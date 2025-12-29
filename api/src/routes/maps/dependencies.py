@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from litestar.dto import DataclassDTO, DTOConfig
-
 from utils.effects import apply_class_multiplier
 
 
@@ -41,16 +39,16 @@ class EnrichedNodeInfo:
     security_class: str | None
     wh_class: int | None
     wh_effect_name: str | None
-    raw_buffs: list[dict] | None
-    raw_debuffs: list[dict] | None
+    raw_buffs: dict[str, int | float] | None
+    raw_debuffs: dict[str, int | float] | None
 
     @property
-    def wh_effect_buffs(self) -> list[dict] | None:
+    def wh_effect_buffs(self) -> dict[str, int | float] | None:
         """Buffs with wormhole class multiplier applied."""
         return apply_class_multiplier(self.raw_buffs, self.wh_class)
 
     @property
-    def wh_effect_debuffs(self) -> list[dict] | None:
+    def wh_effect_debuffs(self) -> dict[str, int | float] | None:
         """Debuffs with wormhole class multiplier applied."""
         return apply_class_multiplier(self.raw_debuffs, self.wh_class)
 
@@ -186,3 +184,21 @@ class AddAllianceAccessRequest:
 
     alliance_id: int
     role: str = "viewer"
+
+
+@dataclass
+class CreateNodeRequest:
+    """Request body for creating a node."""
+
+    system_id: int
+    pos_x: float
+    pos_y: float
+
+
+@dataclass
+class CreateLinkRequest:
+    """Request body for creating a link."""
+
+    source_node_id: UUID
+    target_node_id: UUID
+    wormhole_id: int | None = None

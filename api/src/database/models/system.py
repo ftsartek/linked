@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS system (
 
 CREATE INDEX IF NOT EXISTS idx_system_constellation_id ON system(constellation_id);
 CREATE INDEX IF NOT EXISTS idx_system_name ON system(name);
+CREATE INDEX IF NOT EXISTS idx_system_name_trgm ON system USING GIN (name gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_system_wh_class ON system(wh_class);
 CREATE INDEX IF NOT EXISTS idx_system_wh_effect_id ON system(wh_effect_id);
 """

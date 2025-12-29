@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS wormhole (
 CREATE INDEX IF NOT EXISTS idx_wormhole_sources ON wormhole(sources);
 CREATE INDEX IF NOT EXISTS idx_wormhole_destination ON wormhole(destination);
 CREATE INDEX IF NOT EXISTS idx_wormhole_is_static ON wormhole(is_static);
+CREATE INDEX IF NOT EXISTS idx_wormhole_code_trgm ON wormhole USING GIN (code gin_trgm_ops);
 """
 
 INSERT_STMT = """

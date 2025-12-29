@@ -24,9 +24,7 @@ def load_yaml(filename: str) -> dict | list:
 async def import_effects(session: AsyncpgDriver, effects_data: dict) -> dict[str, int]:
     """Import effects and return name -> db_id mapping."""
     click.echo(f"Importing {len(effects_data)} effects...")
-    rows = [
-        (name, json.dumps(data.get("buffs")), json.dumps(data.get("debuffs"))) for name, data in effects_data.items()
-    ]
+    rows = [(name, data.get("buffs"), data.get("debuffs")) for name, data in effects_data.items()]
     await session.execute_many(
         """INSERT INTO effect (name, buffs, debuffs) VALUES ($1, $2, $3)
            ON CONFLICT (name) DO UPDATE SET buffs = EXCLUDED.buffs, debuffs = EXCLUDED.debuffs""",
@@ -53,7 +51,7 @@ async def import_wormholes(session: AsyncpgDriver, wormholes_data: dict) -> dict
         (
             code,
             data.get("typeID"),
-            data.get("source"),
+            data.get("sources"),
             data["destination"],
             data.get("mass_total"),
             data.get("mass_jump_max"),

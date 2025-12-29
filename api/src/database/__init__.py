@@ -24,6 +24,9 @@ from database.models.system_static import CREATE_STMT as SYSTEM_STATIC_CREATE
 from database.models.user import CREATE_STMT as USER_CREATE
 from database.models.wormhole import CREATE_STMT as WORMHOLE_CREATE
 
+# PostgreSQL extensions
+EXTENSIONS_STMT = "CREATE EXTENSION IF NOT EXISTS pg_trgm;"
+
 # Table creation order (respects foreign key dependencies)
 CREATE_STATEMENTS = [
     # Static EVE data (no dependencies on dynamic tables)
@@ -77,6 +80,8 @@ db = sql.add_config(get_db_config())
 async def init_db() -> None:
     """Initialize database tables."""
     async with sql.provide_session(db) as session:
+        # Enable required PostgreSQL extensions
+        await session.execute(EXTENSIONS_STMT)
         for stmt in CREATE_STATEMENTS:
             await session.execute(stmt)
 

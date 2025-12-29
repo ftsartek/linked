@@ -1,6 +1,10 @@
 .PHONY: help dev dev-services dev-stop api web postgres postgres-stop valkey valkey-stop preseed schema clean
 
 # Configuration
+POSTGRES_USER ?= linked
+POSTGRES_PASSWORD ?= linked
+POSTGRES_DB ?= linked
+POSTGRES_PORT ?= 5432
 VALKEY_PORT ?= 6379
 
 help:
@@ -33,7 +37,7 @@ dev: dev-services
 	@$(MAKE) preseed
 	@echo "Starting API and Web servers..."
 	@echo "Press Ctrl+C to stop all services"
-	@trap 'kill 0' INT; \
+	@trap '$(MAKE) dev-stop; exit 0' INT TERM; \
 		(cd api && uv run uvicorn src.api.app:app --reload --host 0.0.0.0 --port 8000) & \
 		(cd web && npm run dev) & \
 		wait
@@ -78,9 +82,26 @@ schema:
 	@rm -f openapi.json
 	@echo "TypeScript types generated at web/src/lib/client/schema.d.ts"
 
-# Delegate postgres targets to api/Makefile
-postgres postgres-stop preseed:
-	$(MAKE) -C api $@
+# PostgreSQL container
+postgres:
+	@docker run -d \
+		--name linked-postgres \
+		-e POSTGRES_USER=$(POSTGRES_USER) \
+		-e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) \
+		-e POSTGRES_DB=$(POSTGRES_DB) \
+		-p $(POSTGRES_PORT):5432 \
+		--rm \
+		pgvector/pgvector:pg18-trixie
+	@echo "PostgreSQL started on port $(POSTGRES_PORT)"
+	@echo "Connection: postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:$(POSTGRES_PORT)/$(POSTGRES_DB)"
+
+postgres-stop:
+	@docker stop linked-postgres 2>/dev/null || true
+	@echo "PostgreSQL stopped"
+
+# Import static EVE data
+preseed:
+	cd api && uv run linked preseed
 
 clean: postgres-stop valkey-stop
 	@echo "Cleanup complete"

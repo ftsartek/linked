@@ -21,10 +21,15 @@ from routes.maps.dependencies import (
 from routes.maps.queries import (
     CHECK_ACCESS,
     DELETE_MAP,
+    GET_K162_ID,
+    GET_LINK_ENRICHED,
     GET_MAP,
     GET_MAP_LINKS,
     GET_MAP_NODES,
+    GET_NODE_ENRICHED,
     GET_USER_CHARACTER,
+    INSERT_LINK,
+    INSERT_NODE,
     LIST_ALLIANCE_MAPS,
     LIST_CORPORATION_MAPS,
     LIST_OWNED_MAPS,
@@ -213,6 +218,59 @@ class MapService:
         """Remove alliance access from a map. Returns True if removed."""
         result = await self.db_session.execute(MAP_ALLIANCE_DELETE, map_id, alliance_id)
         return result.rowcount > 0
+
+    # Node management
+
+    async def create_node(
+        self,
+        map_id: UUID,
+        system_id: int,
+        pos_x: float,
+        pos_y: float,
+    ) -> EnrichedNodeInfo:
+        """Create a new node on the map."""
+        node_id = await self.db_session.select_value(
+            INSERT_NODE,
+            map_id,
+            system_id,
+            pos_x,
+            pos_y,
+        )
+        return await self.db_session.select_one(
+            GET_NODE_ENRICHED,
+            node_id,
+            schema_type=EnrichedNodeInfo,
+        )
+
+    # Link management
+
+    async def get_k162_id(self) -> int | None:
+        """Get the ID of the K162 wormhole type."""
+        return await self.db_session.select_value(GET_K162_ID)
+
+    async def create_link(
+        self,
+        map_id: UUID,
+        source_node_id: UUID,
+        target_node_id: UUID,
+        wormhole_id: int | None = None,
+    ) -> EnrichedLinkInfo:
+        """Create a new link between nodes. Defaults to K162 if no wormhole specified."""
+        if wormhole_id is None:
+            wormhole_id = await self.get_k162_id()
+
+        link_id = await self.db_session.select_value(
+            INSERT_LINK,
+            map_id,
+            source_node_id,
+            target_node_id,
+            wormhole_id,
+        )
+        return await self.db_session.select_one(
+            GET_LINK_ENRICHED,
+            link_id,
+            schema_type=EnrichedLinkInfo,
+        )
 
 
 def provide_map_service(db_session: AsyncDriverAdapterBase) -> MapService:
