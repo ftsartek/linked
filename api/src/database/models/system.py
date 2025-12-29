@@ -7,11 +7,10 @@ CREATE TABLE IF NOT EXISTS system (
     id INTEGER PRIMARY KEY,
     constellation_id INTEGER REFERENCES constellation(id),
     name TEXT NOT NULL,
-    security_status REAL,
-    security_class TEXT,
+    security_status REAL NOT NULL,
+    system_class TEXT NOT NULL,
+    alt_class TEXT,
     star_id INTEGER,
-    -- Wormhole-specific fields (NULL for K-space systems)
-    wh_class INTEGER,
     wh_effect_id INTEGER REFERENCES effect(id)
 );
 
@@ -32,12 +31,11 @@ class System(msgspec.Struct):
 
     id: int
     name: str
+    system_class: str
+    security_status: float
+    alt_class: str | None = None
     constellation_id: int | None = None
-    security_status: float | None = None
-    security_class: str | None = None
     star_id: int | None = None
-    # Wormhole-specific (NULL for K-space)
-    wh_class: int | None = None
     wh_effect_id: int | None = None
 
     @classmethod

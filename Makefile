@@ -1,4 +1,4 @@
-.PHONY: help dev dev-services dev-stop api web postgres postgres-stop valkey valkey-stop preseed schema clean
+.PHONY: help dev dev-services dev-stop api web postgres postgres-stop valkey valkey-stop preseed schema clean cli
 
 # Configuration
 POSTGRES_USER ?= linked
@@ -24,6 +24,9 @@ help:
 	@echo ""
 	@echo "Code Generation:"
 	@echo "  schema         - Generate OpenAPI schema and TypeScript types"
+	@echo ""
+	@echo "CLI:"
+	@echo "  cli            - Run CLI command (make cli CMD=\"...\")"
 	@echo ""
 	@echo "Cleanup:"
 	@echo "  postgres-stop  - Stop PostgreSQL container"
@@ -102,6 +105,10 @@ postgres-stop:
 # Import static EVE data
 preseed:
 	cd api && uv run linked preseed
+
+# Run CLI commands
+cli:
+	cd api && uv run linked $(CMD)
 
 clean: postgres-stop valkey-stop
 	@echo "Cleanup complete"

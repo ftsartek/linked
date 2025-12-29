@@ -32,8 +32,8 @@ class UniverseService:
     async def search_wormholes(
         self,
         query: str,
-        destination: str | None = None,
-        source: str | None = None,
+        target_class: int | None = None,
+        source: int | None = None,
     ) -> list[WormholeSearchResult]:
         """Search wormholes by code using trigram similarity with optional filters."""
         pattern = f"{query}%"
@@ -41,7 +41,7 @@ class UniverseService:
             SEARCH_WORMHOLES,
             pattern,
             query,
-            destination,
+            target_class,
             source,
             schema_type=WormholeSearchResult,
         )

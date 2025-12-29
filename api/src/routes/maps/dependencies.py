@@ -103,8 +103,7 @@ class EnrichedLinkInfo:
     wormhole_mass_total: int | None
     wormhole_mass_jump_max: int | None
     wormhole_mass_regen: int | None
-    wormhole_lifetime: int | None
-    wormhole_is_static: bool | None
+    wormhole_lifetime: float | None
     lifetime_status: str
     date_lifetime_updated: datetime
     mass_usage: str

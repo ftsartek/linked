@@ -1,0 +1,1001 @@
+30579:
+  code: Z971
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 100000000
+  target_class: 1
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30583:
+  code: R943
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 750000000
+  target_class: 2
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30584:
+  code: X702
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 3
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30642:
+  code: O128
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 4
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30643:
+  code: N432
+  lifetime: 24.0
+  mass_jump_max: 2000000000
+  mass_regen: 0
+  mass_total: 3300000000
+  target_class: 5
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30644:
+  code: M555
+  lifetime: 24.0
+  mass_jump_max: 1000000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 5
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30645:
+  code: B041
+  lifetime: 48.0
+  mass_jump_max: 1000000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 6
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30646:
+  code: U319
+  lifetime: 48.0
+  mass_jump_max: 2000000000
+  mass_regen: 0
+  mass_total: 3300000000
+  target_class: 6
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30647:
+  code: B449
+  lifetime: 16.0
+  mass_jump_max: 1000000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 7
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30648:
+  code: N944
+  lifetime: 24.0
+  mass_jump_max: 2000000000
+  mass_regen: 0
+  mass_total: 3300000000
+  target_class: 8
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30649:
+  code: S199
+  lifetime: 16.0
+  mass_jump_max: 2000000000
+  mass_regen: 0
+  mass_total: 3300000000
+  target_class: 9
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30657:
+  code: A641
+  lifetime: 16.0
+  mass_jump_max: 1000000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 7
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30658:
+  code: R051
+  lifetime: 16.0
+  mass_jump_max: 1000000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 8
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30659:
+  code: V283
+  lifetime: 16.0
+  mass_jump_max: 1000000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 9
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30660:
+  code: H121
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 500000000
+  target_class: 1
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30661:
+  code: C125
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 2
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30662:
+  code: O883
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 3
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30663:
+  code: M609
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 4
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30664:
+  code: L614
+  lifetime: 24.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 5
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30665:
+  code: S804
+  lifetime: 24.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 6
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30666:
+  code: N110
+  lifetime: 24.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 7
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30667:
+  alt_type_ids:
+  - 73748
+  code: J244
+  lifetime: 24.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 8
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30668:
+  code: Z060
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 9
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30671:
+  code: Z647
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 500000000
+  target_class: 1
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30672:
+  code: D382
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 2
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30673:
+  code: O477
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 3
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30674:
+  code: Y683
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 4
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30675:
+  code: N062
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 5
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30676:
+  code: R474
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 6
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30677:
+  code: B274
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 7
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30678:
+  code: A239
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 8
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30679:
+  code: E545
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 9
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30680:
+  code: V301
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 500000000
+  target_class: 1
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30681:
+  code: I182
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 2
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30682:
+  code: N968
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 3
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30683:
+  code: T405
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 4
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30684:
+  code: N770
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 5
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30685:
+  code: A982
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 6
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30686:
+  code: S047
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 7
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30687:
+  code: U210
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 8
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30688:
+  code: K346
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 9
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30689:
+  code: P060
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 500000000
+  target_class: 1
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30690:
+  code: N766
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 2
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30691:
+  code: C247
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 3
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30692:
+  code: X877
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 4
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30693:
+  code: H900
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 5
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30694:
+  code: U574
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 6
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30695:
+  code: D845
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 5000000000
+  target_class: 7
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30696:
+  code: N290
+  lifetime: 24.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 8
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30697:
+  code: K329
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 9
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30698:
+  code: Y790
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 500000000
+  target_class: 1
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30699:
+  code: D364
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 2
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30700:
+  code: M267
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 3
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30701:
+  code: E175
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 4
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30702:
+  code: H296
+  lifetime: 24.0
+  mass_jump_max: 2000000000
+  mass_regen: 0
+  mass_total: 3300000000
+  target_class: 5
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30703:
+  code: V753
+  lifetime: 24.0
+  mass_jump_max: 2000000000
+  mass_regen: 0
+  mass_total: 3300000000
+  target_class: 6
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30704:
+  code: D792
+  lifetime: 24.0
+  mass_jump_max: 1000000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 7
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30705:
+  code: C140
+  lifetime: 24.0
+  mass_jump_max: 2000000000
+  mass_regen: 0
+  mass_total: 3300000000
+  target_class: 8
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30706:
+  code: Z142
+  lifetime: 16.0
+  mass_jump_max: 2000000000
+  mass_regen: 0
+  mass_total: 3300000000
+  target_class: 9
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30707:
+  code: Q317
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 500000000
+  target_class: 1
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30708:
+  code: G024
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 2
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30709:
+  code: L477
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 3
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30710:
+  code: Z457
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 4
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30711:
+  code: V911
+  lifetime: 24.0
+  mass_jump_max: 2000000000
+  mass_regen: 0
+  mass_total: 3300000000
+  target_class: 5
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30712:
+  code: W237
+  lifetime: 24.0
+  mass_jump_max: 2000000000
+  mass_regen: 0
+  mass_total: 3300000000
+  target_class: 6
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30713:
+  code: B520
+  lifetime: 48.0
+  mass_jump_max: 1000000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 7
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30714:
+  code: C391
+  lifetime: 48.0
+  mass_jump_max: 2000000000
+  mass_regen: 0
+  mass_total: 3300000000
+  target_class: 8
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30715:
+  code: C248
+  lifetime: 16.0
+  mass_jump_max: 2000000000
+  mass_regen: 0
+  mass_total: 3300000000
+  target_class: 9
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+30831:
+  code: K162
+  lifetime: null
+  mass_jump_max: null
+  mass_regen: null
+  mass_total: null
+  target_class: null
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34134:
+  code: E004
+  lifetime: 4.5
+  mass_jump_max: 5000000
+  mass_regen: 3000000000
+  mass_total: 3000000000
+  target_class: 1
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34135:
+  code: L005
+  lifetime: 4.5
+  mass_jump_max: 5000000
+  mass_regen: 3000000000
+  mass_total: 3000000000
+  target_class: 2
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34136:
+  code: Z006
+  lifetime: 4.5
+  mass_jump_max: 5000000
+  mass_regen: 3000000000
+  mass_total: 3000000000
+  target_class: 3
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34137:
+  code: M001
+  lifetime: 4.5
+  mass_jump_max: 5000000
+  mass_regen: 3000000000
+  mass_total: 3000000000
+  target_class: 4
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34138:
+  code: C008
+  lifetime: 4.5
+  mass_jump_max: 5000000
+  mass_regen: 3000000000
+  mass_total: 3000000000
+  target_class: 5
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34139:
+  code: G008
+  lifetime: 4.5
+  mass_jump_max: 5000000
+  mass_regen: 3000000000
+  mass_total: 3000000000
+  target_class: 6
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34140:
+  code: Q003
+  lifetime: 4.5
+  mass_jump_max: 5000000
+  mass_regen: 3000000000
+  mass_total: 3000000000
+  target_class: 9
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34338:
+  code: T458
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 500000000
+  target_class: 12
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34366:
+  code: M164
+  lifetime: 16.0
+  mass_jump_max: 1000000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 12
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34367:
+  code: L031
+  lifetime: 16.0
+  mass_jump_max: 1000000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 12
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34368:
+  code: Q063
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 500000000
+  target_class: 7
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34369:
+  code: V898
+  lifetime: 16.0
+  mass_jump_max: 1000000000
+  mass_regen: 0
+  mass_total: 2000000000
+  target_class: 8
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34370:
+  code: E587
+  lifetime: 16.0
+  mass_jump_max: 1000000000
+  mass_regen: 0
+  mass_total: 3000000000
+  target_class: 9
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34371:
+  code: F353
+  lifetime: 16.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 100000000
+  target_class: 12
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34372:
+  code: F135
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 750000000
+  target_class: 12
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+34439:
+  code: A009
+  lifetime: 4.5
+  mass_jump_max: 5000000
+  mass_regen: 3000000000
+  mass_total: 3000000000
+  target_class: 13
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+35650:
+  code: S877
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 750000000
+  target_class: 14
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+35651:
+  code: B735
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 750000000
+  target_class: 15
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+35652:
+  code: V928
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 750000000
+  target_class: 16
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+35653:
+  code: C414
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 750000000
+  target_class: 17
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+35654:
+  code: R259
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 750000000
+  target_class: 18
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+56026:
+  alt_type_ids:
+  - 56535
+  - 56536
+  - 56537
+  - 56538
+  - 56539
+  - 56545
+  - 56546
+  - 56547
+  - 56548
+  - 56549
+  - 56550
+  - 56551
+  - 56552
+  - 56553
+  - 56554
+  - 56555
+  - 56556
+  - 56557
+  - 56558
+  - 56559
+  - 56560
+  - 56561
+  - 56562
+  - 56563
+  - 56564
+  - 56565
+  code: C729
+  lifetime: 12.0
+  mass_jump_max: 410000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 25
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+56540:
+  code: X450
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 9
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+56541:
+  code: R081
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 4
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+56542:
+  alt_type_ids:
+  - 56543
+  code: F216
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 25
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+56544:
+  code: U372
+  lifetime: 16.0
+  mass_jump_max: 375000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 25
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+73749:
+  code: J377
+  lifetime: 24.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 8
+  target_constellations: []
+  target_regions: []
+  target_systems: []
+87827:
+  code: J492
+  lifetime: 24.0
+  mass_jump_max: 62000000
+  mass_regen: 0
+  mass_total: 1000000000
+  target_class: 8
+  target_constellations: []
+  target_regions: []
+  target_systems: []

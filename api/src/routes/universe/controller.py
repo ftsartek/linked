@@ -36,9 +36,9 @@ class UniverseController(Controller):
         self,
         universe_service: UniverseService,
         q: str,
-        destination: str | None = None,
-        source: str | None = None,
+        target_class: int | None = None,
+        source: int | None = None,
     ) -> WormholeSearchResponse:
-        """Search wormholes by code with optional destination/source filters."""
-        wormholes = await universe_service.search_wormholes(q, destination, source)
+        """Search wormholes by code with optional target_class/source filters."""
+        wormholes = await universe_service.search_wormholes(q, target_class, source)
         return WormholeSearchResponse(wormholes=wormholes)

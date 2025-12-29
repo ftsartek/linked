@@ -41,3 +41,25 @@ class System(Struct):
     stargates: list[int] | None = None
     stations: list[int] | None = None
     planets: list[Planet] | None = None
+
+
+class DogmaAttribute(Struct):
+    attribute_id: int
+    value: float
+
+
+class UniverseGroup(Struct):
+    group_id: int
+    name: str
+    category_id: int
+    published: bool
+    types: list[int]
+
+
+class UniverseType(Struct):
+    type_id: int
+    name: str
+    group_id: int
+    published: bool
+    description: str | None = None
+    dogma_attributes: list[DogmaAttribute] | None = None

@@ -1,1021 +1,1275 @@
 T405:
   sources:
-    - c3
+  - c3
   destination: c4
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30683
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 R943:
   sources:
-    - hs
-    - ls
-    - ns
+  - hs
+  - ls
+  - ns
   destination: c2
   mass_total: 750000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30583
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 B041:
   sources:
-    - hs
+  - hs
   destination: c6
   mass_total: 3000000000
   mass_jump_max: 1000000000
   mass_regen: 0
   lifetime: 48
   static: false
-  sibling_groups: null
   typeID: 30645
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 S804:
   sources:
-    - c1
+  - c1
   destination: c6
   mass_total: 1000000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30665
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 Q063:
   sources:
-    - thera
+  - thera
   destination: hs
   mass_total: 500000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: null
   typeID: 34368
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 K329:
   sources:
-    - c4
+  - c4
   destination: ns
   mass_total: 5000000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30697
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 B520:
   sources:
-    - c6
+  - c6
   destination: hs
   mass_total: 3000000000
   mass_jump_max: 1000000000
   mass_regen: 0
   lifetime: 48
   static: false
-  sibling_groups: null
   typeID: 30713
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 M267:
   sources:
-    - c5
+  - c5
   destination: c3
   mass_total: 1000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: []
   typeID: 30700
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 V911:
   sources:
-    - c6
+  - c6
   destination: c5
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups: []
   typeID: 30711
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 O883:
   sources:
-    - c1
+  - c1
   destination: c3
   mass_total: 1000000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30662
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 W237:
   sources:
-    - c6
+  - c6
   destination: c6
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups: []
   typeID: 30712
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 L031:
   sources:
-    - ns
+  - ns
   destination: thera
   mass_total: 3000000000
   mass_jump_max: 1000000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 34367
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 H121:
   sources:
-    - c1
+  - c1
   destination: c1
   mass_total: 500000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30660
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 E004:
-  sources: []
+  sources: null
   destination: c1
   mass_total: 3000000000
   mass_jump_max: 5000000
   mass_regen: 3000000000
   lifetime: 4.5
   static: false
-  sibling_groups: null
   typeID: 34134
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 V753:
   sources:
-    - c5
+  - c5
   destination: c6
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups: []
   typeID: 30703
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 C008:
-  sources: []
+  sources: null
   destination: c5
   mass_total: 3000000000
   mass_jump_max: 5000000
   mass_regen: 3000000000
   lifetime: 4.5
   static: false
-  sibling_groups: null
   typeID: 34138
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 F353:
   sources:
-    - c1
+  - c1
   destination: thera
   mass_total: 100000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 34371
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 U319:
   sources:
-    - ls
-    - ns
+  - ls
+  - ns
   destination: c6
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 48
   static: false
-  sibling_groups: null
   typeID: 30646
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 Z457:
   sources:
-    - c6
+  - c6
   destination: c4
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: []
   typeID: 30710
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 X877:
   sources:
-    - c4
+  - c4
   destination: c4
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: null
   typeID: 30692
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 Y683:
   sources:
-    - c2
+  - c2
   destination: c4
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups:
-    - - B274
   typeID: 30674
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 O128:
   sources:
-    - hs
-    - ls
-    - ns
+  - hs
+  - ls
+  - ns
   destination: c4
   mass_total: 1000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30642
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 C414:
-  sources: []
+  sources: null
   destination: conflux
   mass_total: 750000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: null
-  sibling_groups: null
   typeID: 35653
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 A009:
-  sources: []
+  sources: null
   destination: c13
   mass_total: 3000000000
   mass_jump_max: 5000000
   mass_regen: 3000000000
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 34439
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 L614:
   sources:
-    - c1
+  - c1
   destination: c5
   mass_total: 1000000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30664
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 B274:
   sources:
-    - c2
+  - c2
   destination: hs
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups:
-    - - Z647
-    - - O477
-    - - Y683
   typeID: 30677
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 H900:
   sources:
-    - c4
+  - c4
   destination: c5
   mass_total: 3000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups: null
   typeID: 30693
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 O477:
   sources:
-    - c2
+  - c2
   destination: c3
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups:
-    - - B274
   typeID: 30673
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 L005:
-  sources: []
+  sources: null
   destination: c2
   mass_total: 3000000000
   mass_jump_max: 5000000
   mass_regen: 3000000000
   lifetime: 4.5
   static: false
-  sibling_groups: null
   typeID: 34135
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 E175:
   sources:
-    - c5
+  - c5
   destination: c4
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: []
   typeID: 30701
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 K346:
   sources:
-    - c3
+  - c3
   destination: ns
   mass_total: 3000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: []
   typeID: 30688
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 Z006:
-  sources: []
+  sources: null
   destination: c3
   mass_total: 3000000000
   mass_jump_max: 5000000
   mass_regen: 3000000000
   lifetime: 4.5
   static: false
-  sibling_groups: null
   typeID: 34136
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 P060:
   sources:
-    - c4
+  - c4
   destination: c1
   mass_total: 500000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: null
   typeID: 30689
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 A239:
   sources:
-    - c2
+  - c2
   destination: ls
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups:
-    - - D382
   typeID: 30678
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 C125:
   sources:
-    - c1
+  - c1
   destination: c2
   mass_total: 1000000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30661
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 Z142:
   sources:
-    - c5
-    - c6
+  - c5
+  - c6
   destination: ns
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30706
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 R051:
   sources:
-    - hs
+  - hs
   destination: ls
   mass_total: 3000000000
   mass_jump_max: 1000000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30658
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 N770:
   sources:
-    - c3
+  - c3
   destination: c5
   mass_total: 3000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30684
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 Y790:
   sources:
-    - c5
+  - c5
   destination: c1
   mass_total: 500000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: []
   typeID: 30698
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 V898:
   sources:
-    - thera
+  - thera
   destination: ls
   mass_total: 2000000000
   mass_jump_max: 1000000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: null
   typeID: 34369
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 A641:
   sources:
-    - hs
+  - hs
   destination: hs
   mass_total: 2000000000
   mass_jump_max: 1000000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30657
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 M164:
   sources:
-    - ls
+  - ls
   destination: thera
   mass_total: 2000000000
   mass_jump_max: 1000000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 34366
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 B735:
-  sources: []
+  sources: null
   destination: barbican
   mass_total: 750000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: null
-  sibling_groups: null
   typeID: 35651
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 I182:
   sources:
-    - c3
+  - c3
   destination: c2
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30681
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 N290:
   sources:
-    - c4
+  - c4
   destination: ls
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30696
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 S877:
-  sources: []
+  sources: null
   destination: sentinel
   mass_total: 750000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: null
-  sibling_groups: null
   typeID: 35650
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 D364:
   sources:
-    - c5
+  - c5
   destination: c2
   mass_total: 1000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: []
   typeID: 30699
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 N766:
   sources:
-    - c4
+  - c4
   destination: c2
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: null
   typeID: 30690
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 U210:
   sources:
-    - c3
+  - c3
   destination: ls
   mass_total: 3000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups: []
   typeID: 30687
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 Z971:
   sources:
-    - hs
-    - ls
-    - ns
+  - hs
+  - ls
+  - ns
   destination: c1
   mass_total: 100000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30579
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 Z060:
   sources:
-    - c1
+  - c1
   destination: ns
   mass_total: 1000000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: []
   typeID: 30668
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 H296:
   sources:
-    - c5
+  - c5
   destination: c5
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups: []
   typeID: 30702
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 Q317:
   sources:
-    - c6
+  - c6
   destination: c1
   mass_total: 500000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: []
   typeID: 30707
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 A982:
   sources:
-    - c3
+  - c3
   destination: c6
   mass_total: 3000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30685
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 X702:
   sources:
-    - hs
-    - ls
-    - ns
+  - hs
+  - ls
+  - ns
   destination: c3
   mass_total: 1000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30584
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 V301:
   sources:
-    - c3
+  - c3
   destination: c1
   mass_total: 500000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30680
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 C391:
   sources:
-    - c6
+  - c6
   destination: ls
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 48
   static: false
-  sibling_groups: null
   typeID: 30714
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 M555:
   sources:
-    - hs
+  - hs
   destination: c5
   mass_total: 3000000000
   mass_jump_max: 1000000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30644
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 F135:
   sources:
-    - c2
-    - c3
+  - c2
+  - c3
   destination: thera
   mass_total: 750000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 34372
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 E545:
   sources:
-    - c2
+  - c2
   destination: ns
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups:
-    - - N062
-    - - R474
   typeID: 30679
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 D382:
   sources:
-    - c2
+  - c2
   destination: c2
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups:
-    - - A239
   typeID: 30672
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 M609:
   sources:
-    - c1
+  - c1
   destination: c4
   mass_total: 1000000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30663
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 S047:
   sources:
-    - c4
+  - c4
   destination: hs
   mass_total: 3000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30686
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 R474:
   sources:
-    - c2
+  - c2
   destination: c6
   mass_total: 3000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups:
-    - - E545
   typeID: 30676
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 N062:
   sources:
-    - c2
+  - c2
   destination: c5
   mass_total: 3000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups:
-    - - E545
   typeID: 30675
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 E587:
   sources:
-    - thera
+  - thera
   destination: ns
   mass_total: 3000000000
   mass_jump_max: 1000000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: null
   typeID: 34370
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 S199:
   sources:
-    - ls
-    - ns
+  - ls
+  - ns
   destination: ns
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30649
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 Z647:
   sources:
-    - c2
+  - c2
   destination: c1
   mass_total: 500000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups:
-    - - B274
   typeID: 30671
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 C247:
   sources:
-    - c4
+  - c4
   destination: c3
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: null
   typeID: 30691
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 Q003:
-  sources: []
+  sources: null
   destination: ns
   mass_total: 3000000000
   mass_jump_max: 5000000
   mass_regen: 3000000000
   lifetime: 4.5
   static: false
-  sibling_groups: null
   typeID: 34140
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 N944:
   sources:
-    - ls
-    - ns
+  - ls
+  - ns
   destination: ls
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30648
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 D792:
   sources:
-    - c5
-    - c6
+  - c5
+  - c6
   destination: hs
   mass_total: 3000000000
   mass_jump_max: 1000000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30704
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 N110:
   sources:
-    - c1
+  - c1
   destination: hs
   mass_total: 1000000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups: []
   typeID: 30666
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 M001:
-  sources: []
+  sources: null
   destination: c4
   mass_total: 3000000000
   mass_jump_max: 5000000
   mass_regen: 3000000000
   lifetime: 4.5
   static: false
-  sibling_groups: null
   typeID: 34137
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 K162:
-  sources: []
+  sources: null
   destination: null
   mass_total: null
   mass_jump_max: null
   mass_regen: null
   lifetime: null
   static: null
-  sibling_groups: null
   typeID: 30831
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 G008:
-  sources: []
+  sources: null
   destination: c6
   mass_total: 3000000000
   mass_jump_max: 5000000
   mass_regen: 3000000000
   lifetime: 4.5
   static: false
-  sibling_groups: null
   typeID: 34139
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 C248:
   sources:
-    - c6
+  - c6
   destination: ns
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30715
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 V928:
-  sources: []
+  sources: null
   destination: vidette
   mass_total: 750000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: null
-  sibling_groups: null
   typeID: 35652
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 D845:
   sources:
-    - c3
+  - c3
   destination: hs
   mass_total: 5000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups: []
   typeID: 30695
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 R259:
-  sources: []
+  sources: null
   destination: redoubt
   mass_total: 750000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: null
-  sibling_groups: null
   typeID: 35654
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 N968:
   sources:
-    - c3
+  - c3
   destination: c3
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30682
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 T458:
   sources:
-    - hs
+  - hs
   destination: thera
   mass_total: 500000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 34338
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 V283:
   sources:
-    - hs
+  - hs
   destination: ns
   mass_total: 3000000000
   mass_jump_max: 1000000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30659
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 C140:
   sources:
-    - c5
-    - c6
+  - c5
+  - c6
   destination: ls
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30705
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 U574:
   sources:
-    - c4
+  - c4
   destination: c6
   mass_total: 3000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups: null
   typeID: 30694
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 N432:
   sources:
-    - ls
-    - ns
+  - ls
+  - ns
   destination: c5
   mass_total: 3300000000
   mass_jump_max: 2000000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 30643
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 B449:
   sources:
-    - ls
-    - ns
+  - ls
+  - ns
   destination: hs
   mass_total: 2000000000
   mass_jump_max: 1000000000
   mass_regen: 0
   lifetime: 16
   static: false
-  sibling_groups: null
   typeID: 30647
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 G024:
   sources:
-    - c6
+  - c6
   destination: c2
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: []
   typeID: 30708
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 J244:
   sources:
-    - c1
+  - c1
   destination: ls
   mass_total: 1000000000
   mass_jump_max: 62000000
   mass_regen: 0
   lifetime: 24
   static: true
-  sibling_groups: []
   typeID: 30667
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 L477:
   sources:
-    - c6
+  - c6
   destination: c3
   mass_total: 2000000000
   mass_jump_max: 375000000
   mass_regen: 0
   lifetime: 16
   static: true
-  sibling_groups: []
   typeID: 30709
+  target_systems: []
+  target_constellations: []
+  target_regions: []
 J492:
   sources:
-    - c1
-    - c2
-    - c3
-    - c4
-    - c5
-    - c6
+  - c1
+  - c2
+  - c3
+  - c4
+  - c5
+  - c6
   destination: ls
   mass_total: 1000000000
   mass_jump_max: 620000000
   mass_regen: 0
   lifetime: 24
   static: false
-  sibling_groups: null
   typeID: 87827
+  target_systems: []
+  target_constellations: []
+  target_regions: []
+J377:
+  sources:
+  - c1
+  - c2
+  destination: ls
+  mass_total: 1000000000
+  mass_jump_max: 62000000
+  mass_regen: 0
+  lifetime: 24
+  static: false
+  typeID: 73749
+  target_systems: []
+  target_constellations: []
+  target_regions: []
+U372:
+  sources:
+  - ns
+  destination: pv
+  mass_total: 1000000000
+  mass_jump_max: 375000000
+  mass_regen: 0
+  lifetime: 16
+  static: false
+  typeID: 56544
+  target_systems: []
+  target_constellations: []
+  target_regions: []
+C729:
+  sources:
+  - hs
+  - ls
+  destination: pv
+  mass_total: 1000000000
+  mass_jump_max: 410000000
+  mass_regen: 0
+  lifetime: 12
+  static: false
+  typeID: 56545
+  target_systems: []
+  target_constellations: []
+  target_regions: []
+F216:
+  sources:
+  - c2
+  - c3
+  - c4
+  - c5
+  - c6
+  destination: pv
+  mass_total: 1000000000
+  mass_jump_max: 375000000
+  mass_regen: 0
+  lifetime: 16
+  static: false
+  typeID: 56543
+  target_systems: []
+  target_constellations: []
+  target_regions: []
+X450:
+  sources:
+  - pv
+  destination: ns
+  mass_total: 1000000000
+  mass_jump_max: 375000000
+  mass_regen: 0
+  lifetime: 16
+  static: false
+  typeID: 56540
+  target_systems: []
+  target_constellations: []
+  target_regions: []
+R081:
+  sources:
+  - pv
+  destination: c4
+  mass_total: 1000000000
+  mass_jump_max: 375000000
+  mass_regen: 0
+  lifetime: 16
+  static: false
+  typeID: 56541
+  target_systems: []
+  target_constellations: []
+  target_regions: []

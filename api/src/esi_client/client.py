@@ -5,7 +5,7 @@ from typing import TypeVar
 import httpx
 import msgspec
 
-from .models import Constellation, Region, System
+from .models import Constellation, Region, System, UniverseGroup, UniverseType
 
 T = TypeVar("T")
 
@@ -76,3 +76,9 @@ class ESIClient:
 
     async def get_constellation(self, constellation_id: int) -> Constellation:
         return await self._get_typed(f"/universe/constellations/{constellation_id}/", Constellation)
+
+    async def get_group(self, group_id: int) -> UniverseGroup:
+        return await self._get_typed(f"/universe/groups/{group_id}/", UniverseGroup)
+
+    async def get_type(self, type_id: int) -> UniverseType:
+        return await self._get_typed(f"/universe/types/{type_id}/", UniverseType)

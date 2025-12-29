@@ -64,7 +64,6 @@ SELECT
     w.mass_jump_max AS wormhole_mass_jump_max,
     w.mass_regen AS wormhole_mass_regen,
     w.lifetime AS wormhole_lifetime,
-    w.is_static AS wormhole_is_static,
     l.lifetime_status, l.date_lifetime_updated,
     l.mass_usage, l.date_mass_updated
 FROM link l
@@ -146,7 +145,6 @@ SELECT
     w.mass_jump_max AS wormhole_mass_jump_max,
     w.mass_regen AS wormhole_mass_regen,
     w.lifetime AS wormhole_lifetime,
-    w.is_static AS wormhole_is_static,
     l.lifetime_status, l.date_lifetime_updated,
     l.mass_usage, l.date_mass_updated
 FROM link l

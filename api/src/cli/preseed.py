@@ -44,6 +44,43 @@ async def import_regions(session: AsyncpgDriver, regions_data: list) -> None:
     )
 
 
+def merge_wormhole_data(info_data: dict, spawns_data: dict) -> dict[str, dict]:
+    """Merge wormhole_info and wormhole_spawns into a code-keyed dict.
+
+    Since multiple typeIDs can map to the same code, we merge target lists
+    and use the first encountered typeID for other values.
+    """
+    merged: dict[str, dict] = {}
+
+    for type_id_str, info in info_data.items():
+        type_id = int(type_id_str)
+        code = info["code"]
+        spawns = spawns_data.get(type_id_str, spawns_data.get(type_id, {}))
+
+        if code not in merged:
+            # First typeID for this code - initialize
+            merged[code] = {
+                "typeID": type_id,
+                "sources": spawns.get("sources"),
+                "target_class": info.get("target_class"),
+                "mass_total": info.get("mass_total"),
+                "mass_jump_max": info.get("mass_jump_max"),
+                "mass_regen": info.get("mass_regen"),
+                "lifetime": info.get("lifetime"),
+                "target_regions": info.get("target_regions", []),
+                "target_constellations": info.get("target_constellations", []),
+                "target_systems": info.get("target_systems", []),
+            }
+        else:
+            # Merge target lists from additional typeIDs
+            existing = merged[code]
+            for key in ["target_regions", "target_constellations", "target_systems"]:
+                new_values = info.get(key, [])
+                existing[key] = list(set(existing.get(key, []) + new_values))
+
+    return merged
+
+
 async def import_wormholes(session: AsyncpgDriver, wormholes_data: dict) -> dict[str, int]:
     """Import wormhole types and return code -> db_id mapping."""
     click.echo(f"Importing {len(wormholes_data)} wormhole types...")
@@ -52,22 +89,25 @@ async def import_wormholes(session: AsyncpgDriver, wormholes_data: dict) -> dict
             code,
             data.get("typeID"),
             data.get("sources"),
-            data["destination"],
+            data.get("target_class"),
             data.get("mass_total"),
             data.get("mass_jump_max"),
             data.get("mass_regen"),
             data.get("lifetime"),
-            data.get("static"),
+            data.get("target_regions"),
+            data.get("target_constellations"),
+            data.get("target_systems"),
         )
         for code, data in wormholes_data.items()
     ]
     await session.execute_many(
-        """INSERT INTO wormhole (code, eve_type_id, sources, destination, mass_total, mass_jump_max, mass_regen, lifetime, is_static)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        """INSERT INTO wormhole (code, eve_type_id, sources, target_class, mass_total, mass_jump_max, mass_regen, lifetime, target_regions, target_constellations, target_systems)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
            ON CONFLICT (code) DO UPDATE SET
-               eve_type_id = EXCLUDED.eve_type_id, sources = EXCLUDED.sources, destination = EXCLUDED.destination,
+               eve_type_id = EXCLUDED.eve_type_id, sources = EXCLUDED.sources, target_class = EXCLUDED.target_class,
                mass_total = EXCLUDED.mass_total, mass_jump_max = EXCLUDED.mass_jump_max, mass_regen = EXCLUDED.mass_regen,
-               lifetime = EXCLUDED.lifetime, is_static = EXCLUDED.is_static""",
+               lifetime = EXCLUDED.lifetime, target_regions = EXCLUDED.target_regions,
+               target_constellations = EXCLUDED.target_constellations, target_systems = EXCLUDED.target_systems""",
         rows,
     )
     return {row["code"]: row["id"] for row in await session.select("SELECT id, code FROM wormhole")}
@@ -221,7 +261,9 @@ async def preseed() -> None:
     click.echo("Loading YAML files...")
     effects_data = load_yaml("effects.yaml")
     regions_data = load_yaml("regions.yaml")
-    wormholes_data = load_yaml("wormholes.yaml")
+    wormhole_info_data = load_yaml("wormhole_info.yaml")
+    wormhole_spawns_data = load_yaml("wormhole_spawns.yaml")
+    wormholes_data = merge_wormhole_data(wormhole_info_data, wormhole_spawns_data)
     constellations_data = load_yaml("constellations.yaml")
     systems_data = load_yaml("systems.yaml")
     wormhole_systems_data = load_yaml("wormhole_systems.yaml")
