@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS link (
     date_mass_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     date_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    date_deleted TIMESTAMPTZ,
     UNIQUE (map_id, source_node_id, target_node_id)
 );
 
@@ -29,6 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_link_target_node_id ON link(target_node_id);
 CREATE INDEX IF NOT EXISTS idx_link_wormhole_id ON link(wormhole_id);
 CREATE INDEX IF NOT EXISTS idx_link_lifetime_status ON link(lifetime_status);
 CREATE INDEX IF NOT EXISTS idx_link_mass_usage ON link(mass_usage);
+CREATE INDEX IF NOT EXISTS idx_link_date_deleted ON link(date_deleted);
 """
 
 INSERT_STMT = """
@@ -81,6 +83,7 @@ class Link(msgspec.Struct):
     id: UUID | None = None
     date_created: datetime | None = None
     date_updated: datetime | None = None
+    date_deleted: datetime | None = None
 
     @property
     def is_eol(self) -> bool:

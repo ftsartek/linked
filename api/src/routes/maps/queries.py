@@ -70,7 +70,7 @@ JOIN system s ON n.system_id = s.id
 LEFT JOIN constellation c ON s.constellation_id = c.id
 LEFT JOIN region r ON c.region_id = r.id
 LEFT JOIN effect e ON s.wh_effect_id = e.id
-WHERE n.map_id = $1
+WHERE n.map_id = $1 AND n.date_deleted IS NULL
 ORDER BY n.id;
 """
 
@@ -86,7 +86,7 @@ SELECT
     l.mass_usage, l.date_mass_updated
 FROM link l
 LEFT JOIN wormhole w ON l.wormhole_id = w.id
-WHERE l.map_id = $1
+WHERE l.map_id = $1 AND l.date_deleted IS NULL
 ORDER BY l.id;
 """
 
@@ -157,7 +157,7 @@ JOIN system s ON n.system_id = s.id
 LEFT JOIN constellation c ON s.constellation_id = c.id
 LEFT JOIN region r ON c.region_id = r.id
 LEFT JOIN effect e ON s.wh_effect_id = e.id
-WHERE n.id = $1;
+WHERE n.id = $1 AND n.date_deleted IS NULL;
 """
 
 GET_K162_ID = """
@@ -182,7 +182,7 @@ SELECT
     l.mass_usage, l.date_mass_updated
 FROM link l
 LEFT JOIN wormhole w ON l.wormhole_id = w.id
-WHERE l.id = $1;
+WHERE l.id = $1 AND l.date_deleted IS NULL;
 """
 
 UPDATE_NODE_POSITION = """
@@ -200,7 +200,10 @@ RETURNING id;
 """
 
 DELETE_NODE = """
-DELETE FROM node WHERE id = $1;
+UPDATE node
+SET date_deleted = NOW(), date_updated = NOW()
+WHERE id = $1 AND date_deleted IS NULL
+RETURNING id;
 """
 
 UPDATE_LINK = """
@@ -214,7 +217,10 @@ RETURNING id;
 """
 
 DELETE_LINK = """
-DELETE FROM link WHERE id = $1;
+UPDATE link
+SET date_deleted = NOW(), date_updated = NOW()
+WHERE id = $1 AND date_deleted IS NULL
+RETURNING id;
 """
 
 GET_NODE_MAP_ID = """

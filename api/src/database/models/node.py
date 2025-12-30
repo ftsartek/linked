@@ -17,11 +17,13 @@ CREATE TABLE IF NOT EXISTS node (
     label TEXT,
     date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     date_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    date_deleted TIMESTAMPTZ,
     UNIQUE (map_id, system_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_node_map_id ON node(map_id);
 CREATE INDEX IF NOT EXISTS idx_node_system_id ON node(system_id);
+CREATE INDEX IF NOT EXISTS idx_node_date_deleted ON node(date_deleted);
 """
 
 INSERT_STMT = """\
@@ -49,6 +51,7 @@ class Node(msgspec.Struct):
     id: UUID | None = None
     date_created: datetime | None = None
     date_updated: datetime | None = None
+    date_deleted: datetime | None = None
 
     @classmethod
     def from_row(cls, row: tuple) -> Node:
@@ -62,4 +65,5 @@ class Node(msgspec.Struct):
             label=row[5],
             date_created=ensure_utc(row[6]),
             date_updated=ensure_utc(row[7]),
+            date_deleted=ensure_utc(row[8]) if row[8] else None,
         )

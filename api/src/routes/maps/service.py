@@ -20,6 +20,45 @@ from routes.maps.dependencies import (
 )
 from routes.maps.event_queue import MapEventQueue
 from routes.maps.events import MapEvent
+
+
+def _serialize_node_for_event(node: EnrichedNodeInfo) -> dict:
+    """Serialize an EnrichedNodeInfo to a dict for event payloads."""
+    return {
+        "id": str(node.id),
+        "pos_x": node.pos_x,
+        "pos_y": node.pos_y,
+        "system_id": node.system_id,
+        "system_name": node.system_name,
+        "constellation_id": node.constellation_id,
+        "constellation_name": node.constellation_name,
+        "region_id": node.region_id,
+        "region_name": node.region_name,
+        "security_status": node.security_status,
+        "security_class": node.security_class,
+        "wh_effect_name": node.wh_effect_name,
+        "class_name": node.class_name,
+        "wh_effect_buffs": node.wh_effect_buffs,
+        "wh_effect_debuffs": node.wh_effect_debuffs,
+    }
+
+
+def _serialize_link_for_event(link: EnrichedLinkInfo) -> dict:
+    """Serialize an EnrichedLinkInfo to a dict for event payloads."""
+    return {
+        "id": str(link.id),
+        "source_node_id": str(link.source_node_id),
+        "target_node_id": str(link.target_node_id),
+        "wormhole_code": link.wormhole_code,
+        "wormhole_mass_total": link.wormhole_mass_total,
+        "wormhole_mass_jump_max": link.wormhole_mass_jump_max,
+        "wormhole_mass_regen": link.wormhole_mass_regen,
+        "wormhole_lifetime": link.wormhole_lifetime,
+        "lifetime_status": link.lifetime_status,
+        "date_lifetime_updated": link.date_lifetime_updated.isoformat(),
+        "mass_usage": link.mass_usage,
+        "date_mass_updated": link.date_mass_updated.isoformat(),
+    }
 from routes.maps.queries import (
     CHECK_ACCESS,
     CHECK_EDIT_ACCESS,
@@ -274,13 +313,13 @@ class MapService:
             schema_type=EnrichedNodeInfo,
         )
 
-        # Publish event
+        # Publish event with full node data
         if self.event_queue:
             event_id = await self.event_queue.get_next_event_id(map_id)
             event = MapEvent.node_created(
                 event_id=event_id,
                 map_id=map_id,
-                node_id=node_id,
+                node_data=_serialize_node_for_event(node),
                 user_id=user_id,
             )
             await self.event_queue.publish_event(event)
@@ -310,14 +349,17 @@ class MapService:
             schema_type=EnrichedNodeInfo,
         )
 
-        # Publish event
+        # Publish event with position data only
         if self.event_queue:
             event_id = await self.event_queue.get_next_event_id(map_id)
             event = MapEvent.node_updated(
                 event_id=event_id,
                 map_id=map_id,
-                node_id=node_id,
-                changes={"pos_x": pos_x, "pos_y": pos_y},
+                update_data={
+                    "id": str(node_id),
+                    "pos_x": pos_x,
+                    "pos_y": pos_y,
+                },
                 user_id=user_id,
             )
             await self.event_queue.publish_event(event)
@@ -346,14 +388,13 @@ class MapService:
             schema_type=EnrichedNodeInfo,
         )
 
-        # Publish event
+        # Publish event with full updated node data (system change)
         if self.event_queue:
             event_id = await self.event_queue.get_next_event_id(map_id)
             event = MapEvent.node_updated(
                 event_id=event_id,
                 map_id=map_id,
-                node_id=node_id,
-                changes={"system_id": system_id},
+                update_data=_serialize_node_for_event(node),
                 user_id=user_id,
             )
             await self.event_queue.publish_event(event)
@@ -418,13 +459,13 @@ class MapService:
             schema_type=EnrichedLinkInfo,
         )
 
-        # Publish event
+        # Publish event with full link data
         if self.event_queue:
             event_id = await self.event_queue.get_next_event_id(map_id)
             event = MapEvent.link_created(
                 event_id=event_id,
                 map_id=map_id,
-                link_id=link_id,
+                link_data=_serialize_link_for_event(link),
                 user_id=user_id,
             )
             await self.event_queue.publish_event(event)
@@ -461,22 +502,13 @@ class MapService:
             schema_type=EnrichedLinkInfo,
         )
 
-        # Publish event
+        # Publish event with full updated link data
         if self.event_queue:
-            changes = {}
-            if wormhole_id is not None:
-                changes["wormhole_id"] = wormhole_id
-            if lifetime_status is not None:
-                changes["lifetime_status"] = lifetime_status
-            if mass_usage is not None:
-                changes["mass_usage"] = mass_usage
-
             event_id = await self.event_queue.get_next_event_id(map_id)
             event = MapEvent.link_updated(
                 event_id=event_id,
                 map_id=map_id,
-                link_id=link_id,
-                changes=changes,
+                link_data=_serialize_link_for_event(link),
                 user_id=user_id,
             )
             await self.event_queue.publish_event(event)

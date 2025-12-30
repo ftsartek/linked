@@ -62,16 +62,16 @@ class MapEvent(msgspec.Struct):
         cls,
         event_id: str,
         map_id: UUID,
-        node_id: UUID,
+        node_data: dict[str, Any],
         user_id: UUID | None = None,
     ) -> MapEvent:
-        """Create a node_created event."""
+        """Create a node_created event with full node details."""
         return cls(
             event_id=event_id,
             event_type=EventType.NODE_CREATED,
             map_id=map_id,
             timestamp=datetime.now(UTC),
-            data={"node_id": str(node_id)},
+            data=node_data,
             user_id=user_id,
         )
 
@@ -80,20 +80,20 @@ class MapEvent(msgspec.Struct):
         cls,
         event_id: str,
         map_id: UUID,
-        node_id: UUID,
-        changes: dict[str, Any],
+        update_data: dict[str, Any],
         user_id: UUID | None = None,
     ) -> MapEvent:
-        """Create a node_updated event."""
+        """Create a node_updated event.
+
+        For position updates: includes node_id, pos_x, pos_y
+        For data updates: includes full updated node details
+        """
         return cls(
             event_id=event_id,
             event_type=EventType.NODE_UPDATED,
             map_id=map_id,
             timestamp=datetime.now(UTC),
-            data={
-                "node_id": str(node_id),
-                "changes": changes,
-            },
+            data=update_data,
             user_id=user_id,
         )
 
@@ -122,16 +122,16 @@ class MapEvent(msgspec.Struct):
         cls,
         event_id: str,
         map_id: UUID,
-        link_id: UUID,
+        link_data: dict[str, Any],
         user_id: UUID | None = None,
     ) -> MapEvent:
-        """Create a link_created event."""
+        """Create a link_created event with full link details."""
         return cls(
             event_id=event_id,
             event_type=EventType.LINK_CREATED,
             map_id=map_id,
             timestamp=datetime.now(UTC),
-            data={"link_id": str(link_id)},
+            data=link_data,
             user_id=user_id,
         )
 
@@ -140,20 +140,16 @@ class MapEvent(msgspec.Struct):
         cls,
         event_id: str,
         map_id: UUID,
-        link_id: UUID,
-        changes: dict[str, Any],
+        link_data: dict[str, Any],
         user_id: UUID | None = None,
     ) -> MapEvent:
-        """Create a link_updated event."""
+        """Create a link_updated event with full updated link details."""
         return cls(
             event_id=event_id,
             event_type=EventType.LINK_UPDATED,
             map_id=map_id,
             timestamp=datetime.now(UTC),
-            data={
-                "link_id": str(link_id),
-                "changes": changes,
-            },
+            data=link_data,
             user_id=user_id,
         )
 
