@@ -54,9 +54,22 @@ class Settings(BaseSettings):
         description="ESI scopes to request",
     )
 
-    # Session
-    valkey_url: str = "valkey://localhost:6379/0"
+    # Valkey
+    valkey_host: str = "localhost"
+    valkey_port: int = 6379
+    valkey_session_db: int = 0
+    valkey_event_db: int = 1
     session_max_age: int = 604800  # 7 days in seconds
+
+    @property
+    def valkey_session_url(self) -> str:
+        """Build Valkey URL for session storage."""
+        return f"valkey://{self.valkey_host}:{self.valkey_port}/{self.valkey_session_db}"
+
+    @property
+    def valkey_event_url(self) -> str:
+        """Build Valkey URL for event storage."""
+        return f"valkey://{self.valkey_host}:{self.valkey_port}/{self.valkey_event_db}"
 
     # Token encryption (Fernet key, generate with:
     # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")

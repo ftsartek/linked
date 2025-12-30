@@ -17,15 +17,13 @@ from database import sql
 from routes import AuthController, MapController, UniverseController, UserController
 
 
-def provide_valkey_client() -> valkey.Valkey:
+async def provide_valkey_client() -> valkey.Valkey:
     """Provide a raw Valkey client for event queues.
 
-    Uses database 1 (sessions use database 0) for event storage.
+    Uses valkey_event_db for event storage (separate from sessions).
     """
     settings = get_settings()
-    # Use database 1 for events (sessions use database 0)
-    url = settings.valkey_url.replace("/0", "/1")
-    return valkey.from_url(url, decode_responses=False)
+    return valkey.from_url(settings.valkey_event_url, decode_responses=False)
 
 
 def create_app() -> Litestar:
@@ -64,8 +62,8 @@ def create_app() -> Litestar:
     return Litestar(
         route_handlers=[AuthController, MapController, UniverseController, UserController],
         plugins=[sqlspec_plugin],
-        stores={"sessions": ValkeyStore.with_client(url=settings.valkey_url)},
-        dependencies={"valkey_client": Provide(provide_valkey_client, sync_to_thread=False)},
+        stores={"sessions": ValkeyStore.with_client(url=settings.valkey_session_url)},
+        dependencies={"valkey_client": Provide(provide_valkey_client)},
         middleware=[session_config.middleware, auth_middleware],
         cors_config=cors_config,
         csrf_config=csrf_config,
