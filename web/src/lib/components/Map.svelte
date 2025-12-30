@@ -15,7 +15,8 @@
 	import type { components } from '$lib/client/schema';
 	import SystemNode from './Node.svelte';
 
-	type NodeInfo = components['schemas']['EnrichedNodeInfoResponse'];
+	type NodeInfo =
+		components['schemas']['routes.maps.controller.MapController.create_nodeEnrichedNodeInfoResponseBody'];
 	type LinkInfo = components['schemas']['EnrichedLinkInfo'];
 	type SystemSearchResult = components['schemas']['SystemSearchResult'];
 
@@ -63,15 +64,7 @@
 		return apiNodes.map((node) => ({
 			id: node.id,
 			position: { x: node.pos_x, y: node.pos_y },
-			data: {
-				system_name: node.system_name ?? `System ${node.system_id}`,
-				system_id: node.system_id,
-				wh_class: node.wh_class,
-				security_class: node.security_class,
-				wh_effect_name: node.wh_effect_name,
-				wh_effect_buffs: node.wh_effect_buffs,
-				wh_effect_debuffs: node.wh_effect_debuffs
-			}
+			data: node
 		}));
 	}
 
@@ -83,8 +76,7 @@
 			data: {
 				wormhole_id: link.wormhole_code,
 				mass_remaining: link.mass_usage,
-				status: link.lifetime_status,
-				static: link.wormhole_is_static
+				status: link.lifetime_status
 			}
 		}));
 	}
@@ -165,10 +157,7 @@
 	}
 
 	function formatSystemLabel(system: SystemSearchResult): string {
-		if (system.wh_class !== null && system.wh_class !== undefined) {
-			return `${system.name} [C${system.wh_class}]`;
-		}
-		return system.name;
+		return system.name + ': ' + system.system_class;
 	}
 
 	async function handleSystemSelect(system: SystemSearchResult) {
@@ -192,15 +181,7 @@
 			const newNode: Node = {
 				id: data.id,
 				position: { x: data.pos_x, y: data.pos_y },
-				data: {
-					system_name: data.system_name ?? `System ${data.system_id}`,
-					system_id: data.system_id,
-					wh_class: data.wh_class,
-					security_class: data.security_class,
-					wh_effect_name: data.wh_effect_name,
-					wh_effect_buffs: data.wh_effect_buffs,
-					wh_effect_debuffs: data.wh_effect_debuffs
-				}
+				data: data
 			};
 			nodes = [...nodes, newNode];
 		}
@@ -230,8 +211,7 @@
 				data: {
 					wormhole_id: data.wormhole_code,
 					mass_remaining: data.mass_usage,
-					status: data.lifetime_status,
-					static: data.wormhole_is_static
+					status: data.lifetime_status
 				}
 			};
 			edges = [...edges, newEdge];
@@ -265,7 +245,6 @@
 				bind:nodes
 				bind:edges
 				{nodeTypes}
-				fitView
 				colorMode="dark"
 				snapGrid={[20, 20]}
 				proOptions={{ hideAttribution: true }}

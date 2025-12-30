@@ -117,6 +117,6 @@ class UserService:
         return count > 1
 
 
-def provide_user_service(db_session: AsyncDriverAdapterBase) -> UserService:
+async def provide_user_service(db_session: AsyncDriverAdapterBase) -> UserService:
     """Provide UserService with injected database session."""
     return UserService(db_session)

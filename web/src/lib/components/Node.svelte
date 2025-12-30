@@ -1,16 +1,16 @@
 <script lang="ts">
+	import type { components } from '$lib/client/schema';
+	import {
+		classColour,
+		renderSecStatus,
+		secStatusColour,
+		shouldShowSecStatus
+	} from '$lib/helpers/renderClass';
 	import { Handle, Position } from '@xyflow/svelte';
 	import { Sparkles } from 'lucide-svelte';
 
-	interface NodeData {
-		system_name: string;
-		system_id: number;
-		wh_class?: number | null;
-		security_class?: string | null;
-		wh_effect_name?: string | null;
-		wh_effect_buffs?: Record<string, never>[] | null;
-		wh_effect_debuffs?: Record<string, never>[] | null;
-	}
+	type NodeData =
+		components['schemas']['routes.maps.controller.MapController.create_nodeEnrichedNodeInfoResponseBody'];
 
 	interface Props {
 		data: NodeData;
@@ -19,28 +19,25 @@
 	let { data }: Props = $props();
 
 	let showEffects = $state(false);
-
-	function getClassDisplay(): string {
-		if (data.wh_class != null) {
-			return `C${data.wh_class}`;
-		}
-		if (data.security_class != null) {
-			return data.security_class;
-		}
-		return '';
-	}
 </script>
 
 <div
-	class="relative rounded-lg border border-surface-600 bg-surface-700 px-3 py-2 text-sm shadow-lg"
+	class="relative rounded-lg border border-surface-600 bg-surface-700 px-2 py-1 text-sm shadow-lg"
 >
 	<Handle type="target" position={Position.Left} />
 
-	<div class="flex items-center gap-2">
-		<div class="flex flex-col">
-			<span class="font-semibold text-white">{data.system_name}</span>
-			{#if getClassDisplay()}
-				<span class="text-xs text-surface-400">{getClassDisplay()}</span>
+	<div class="flex items-start gap-2">
+		<div class="flex w-full flex-row items-baseline justify-between">
+			<span class="font-semibold text-slate-100">{data.system_name}</span>
+			{#if data.class_name && shouldShowSecStatus(data.class_name)}
+				<div class="flex items-start gap-1">
+					<span class="font-bold {classColour(data.class_name)}">{data.class_name}</span>
+					<span class="text-xs font-normal {secStatusColour(data.security_status)}"
+						>{data.security_status ? renderSecStatus(data.security_status) : ''}</span
+					>
+				</div>
+			{:else if data.class_name}
+				<span class="font-bold {classColour(data.class_name)}">{data.class_name}</span>
 			{/if}
 		</div>
 

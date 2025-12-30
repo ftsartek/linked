@@ -8,18 +8,18 @@ CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS map_corporation (
     map_id UUID NOT NULL REFERENCES map(id) ON DELETE CASCADE,
     corporation_id BIGINT NOT NULL REFERENCES corporation(id) ON DELETE CASCADE,
-    role TEXT NOT NULL DEFAULT 'viewer',
+    read_only BOOLEAN NOT NULL DEFAULT true,
     PRIMARY KEY (map_id, corporation_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_map_corporation_corporation_id ON map_corporation(corporation_id);
-CREATE INDEX IF NOT EXISTS idx_map_corporation_role ON map_corporation(role);
+CREATE INDEX IF NOT EXISTS idx_map_corporation_read_only ON map_corporation(read_only);
 """
 
 INSERT_STMT = """\
-INSERT INTO map_corporation (map_id, corporation_id, role)
+INSERT INTO map_corporation (map_id, corporation_id, read_only)
 VALUES ($1, $2, $3)
-ON CONFLICT (map_id, corporation_id) DO UPDATE SET role = EXCLUDED.role;
+ON CONFLICT (map_id, corporation_id) DO UPDATE SET read_only = EXCLUDED.read_only;
 """
 
 DELETE_STMT = """\
@@ -33,4 +33,4 @@ class MapCorporation(msgspec.Struct):
 
     map_id: UUID
     corporation_id: int
-    role: str = "viewer"  # 'owner', 'editor', 'viewer'
+    read_only: bool = True

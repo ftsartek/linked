@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 LIST_OWNED_MAPS = """
-SELECT id, owner_id, name, description, is_public, date_created, date_updated
+SELECT id, owner_id, name, description, is_public, date_created, date_updated, true AS edit_access
 FROM map
 WHERE owner_id = $1
 ORDER BY date_updated DESC;
 """
 
 LIST_SHARED_MAPS = """
-SELECT m.id, m.owner_id, m.name, m.description, m.is_public, m.date_created, m.date_updated
+SELECT m.id, m.owner_id, m.name, m.description, m.is_public, m.date_created, m.date_updated,
+    CASE
+        WHEN m.owner_id = $1 THEN true
+        ELSE NOT mu.read_only
+    END AS edit_access
 FROM map m
 JOIN map_user mu ON m.id = mu.map_id
 WHERE mu.user_id = $1
@@ -18,17 +22,31 @@ ORDER BY m.date_updated DESC;
 """
 
 LIST_CORPORATION_MAPS = """
-SELECT m.id, m.owner_id, m.name, m.description, m.is_public, m.date_created, m.date_updated
+SELECT m.id, m.owner_id, m.name, m.description, m.is_public, m.date_created, m.date_updated,
+    CASE
+        WHEN m.owner_id = $2 THEN true
+        WHEN mu.map_id IS NOT NULL THEN NOT mu.read_only
+        ELSE NOT mc.read_only
+    END AS edit_access
 FROM map m
 JOIN map_corporation mc ON m.id = mc.map_id
+LEFT JOIN map_user mu ON m.id = mu.map_id AND mu.user_id = $2
 WHERE mc.corporation_id = $1
 ORDER BY m.date_updated DESC;
 """
 
 LIST_ALLIANCE_MAPS = """
-SELECT m.id, m.owner_id, m.name, m.description, m.is_public, m.date_created, m.date_updated
+SELECT m.id, m.owner_id, m.name, m.description, m.is_public, m.date_created, m.date_updated,
+    CASE
+        WHEN m.owner_id = $2 THEN true
+        WHEN mu.map_id IS NOT NULL THEN NOT mu.read_only
+        WHEN mc.map_id IS NOT NULL THEN NOT mc.read_only
+        ELSE NOT ma.read_only
+    END AS edit_access
 FROM map m
 JOIN map_alliance ma ON m.id = ma.map_id
+LEFT JOIN map_user mu ON m.id = mu.map_id AND mu.user_id = $2
+LEFT JOIN map_corporation mc ON m.id = mc.map_id AND mc.corporation_id = $3
 WHERE ma.alliance_id = $1
 ORDER BY m.date_updated DESC;
 """
@@ -82,6 +100,21 @@ SELECT EXISTS(
     UNION
     SELECT 1 FROM map_alliance WHERE map_id = $1 AND alliance_id = $4
 );
+"""
+
+CHECK_EDIT_ACCESS = """
+SELECT CASE
+    WHEN m.owner_id = $2 THEN true
+    WHEN mu.map_id IS NOT NULL THEN NOT mu.read_only
+    WHEN mc.map_id IS NOT NULL THEN NOT mc.read_only
+    WHEN ma.map_id IS NOT NULL THEN NOT ma.read_only
+    ELSE false
+END
+FROM map m
+LEFT JOIN map_user mu ON mu.map_id = m.id AND mu.user_id = $2
+LEFT JOIN map_corporation mc ON mc.map_id = m.id AND mc.corporation_id = $3
+LEFT JOIN map_alliance ma ON ma.map_id = m.id AND ma.alliance_id = $4
+WHERE m.id = $1;
 """
 
 GET_USER_CHARACTER = """

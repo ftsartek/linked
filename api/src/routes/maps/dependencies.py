@@ -6,6 +6,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
+from litestar.dto import DataclassDTO, DTOConfig
+
+from utils.class_mapping import SYSTEM_CLASS_MAPPING
 from utils.effects import apply_class_multiplier
 
 
@@ -17,9 +20,10 @@ class MapInfo:
     owner_id: UUID
     name: str
     description: str | None
-    is_public: bool
     date_created: datetime
     date_updated: datetime
+    is_public: bool = False
+    edit_access: bool = False
 
 
 @dataclass
@@ -52,44 +56,16 @@ class EnrichedNodeInfo:
         """Debuffs with wormhole class multiplier applied."""
         return apply_class_multiplier(self.raw_debuffs, self.system_class)
 
+    @property
+    def class_name(self) -> str | None:
+        """Name of the system class."""
+        if self.system_class is None:
+            return None
+        return SYSTEM_CLASS_MAPPING.get(self.system_class)
 
-@dataclass
-class EnrichedNodeInfoResponse:
-    id: UUID
-    pos_x: float
-    pos_y: float
-    system_id: int
-    system_name: str
-    constellation_id: int | None
-    constellation_name: str | None
-    region_id: int | None
-    region_name: str | None
-    security_status: float | None
-    security_class: str | None
-    system_class: int | None
-    wh_effect_name: str | None
-    wh_effect_buffs: list[dict] | None
-    wh_effect_debuffs: list[dict] | None
 
-    @classmethod
-    def from_origin(cls, origin: EnrichedNodeInfo) -> EnrichedNodeInfoResponse:
-        return EnrichedNodeInfoResponse(
-            id=origin.id,
-            pos_x=origin.pos_x,
-            pos_y=origin.pos_y,
-            system_id=origin.system_id,
-            system_name=origin.system_name,
-            constellation_id=origin.constellation_id,
-            constellation_name=origin.constellation_name,
-            region_id=origin.region_id,
-            region_name=origin.region_name,
-            security_status=origin.security_status,
-            security_class=origin.security_class,
-            system_class=origin.system_class,
-            wh_effect_name=origin.wh_effect_name,
-            wh_effect_buffs=origin.wh_effect_buffs,
-            wh_effect_debuffs=origin.wh_effect_debuffs,
-        )
+class EnrichedNodeInfoDTO(DataclassDTO[EnrichedNodeInfo]):
+    config = DTOConfig(exclude={"raw_buffs", "raw_debuffs", "system_class"})
 
 
 @dataclass
@@ -124,8 +100,12 @@ class MapDetailResponse:
     """Full map with nodes and links."""
 
     map: MapInfo
-    nodes: list[EnrichedNodeInfoResponse]
+    nodes: list[EnrichedNodeInfo]
     links: list[EnrichedLinkInfo]
+
+
+class MapDetailResponseDTO(DataclassDTO[MapDetailResponse]):
+    config = DTOConfig(exclude={"nodes.0.system_class", "nodes.0.raw_buffs", "nodes.0.raw_debuffs"})
 
 
 @dataclass
@@ -166,7 +146,7 @@ class AddUserAccessRequest:
     """Request body for adding user access."""
 
     user_id: UUID
-    role: str = "viewer"
+    read_only: bool = True
 
 
 @dataclass
@@ -174,7 +154,7 @@ class AddCorporationAccessRequest:
     """Request body for adding corporation access."""
 
     corporation_id: int
-    role: str = "viewer"
+    read_only: bool = True
 
 
 @dataclass
@@ -182,7 +162,7 @@ class AddAllianceAccessRequest:
     """Request body for adding alliance access."""
 
     alliance_id: int
-    role: str = "viewer"
+    read_only: bool = True
 
 
 @dataclass

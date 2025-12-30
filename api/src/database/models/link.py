@@ -5,8 +5,7 @@ from uuid import UUID
 
 import msgspec
 
-from utils.datetime import ensure_utc
-from utils.enums import LifetimeStatus, MassStatus
+from utils.enums import LifetimeStatus
 
 CREATE_STMT = """
 CREATE TABLE IF NOT EXISTS link (
@@ -82,23 +81,6 @@ class Link(msgspec.Struct):
     id: UUID | None = None
     date_created: datetime | None = None
     date_updated: datetime | None = None
-
-    @classmethod
-    def from_row(cls, row: tuple) -> Link:
-        """Create a Link from a database row."""
-        return cls(
-            id=row[0],
-            map_id=row[1],
-            source_node_id=row[2],
-            target_node_id=row[3],
-            wormhole_id=row[4],
-            lifetime_status=LifetimeStatus(row[5]),
-            date_lifetime_updated=ensure_utc(row[6]),
-            mass_usage=MassStatus(row[7]),
-            date_mass_updated=ensure_utc(row[8]),
-            date_created=ensure_utc(row[9]),
-            date_updated=ensure_utc(row[10]),
-        )
 
     @property
     def is_eol(self) -> bool:

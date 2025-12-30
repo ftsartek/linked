@@ -17,5 +17,5 @@ SYSTEM_CLASS_MAPPING = {
     16: "Vidette",
     17: "Redoubt",
     18: "Conflux",
-    25: "Povchen",
+    25: "Pochven",
 }

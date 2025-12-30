@@ -20,6 +20,7 @@ from routes.maps.dependencies import (
 )
 from routes.maps.queries import (
     CHECK_ACCESS,
+    CHECK_EDIT_ACCESS,
     DELETE_MAP,
     GET_K162_ID,
     GET_LINK_ENRICHED,
@@ -77,19 +78,22 @@ class MapService:
             schema_type=MapInfo,
         )
 
-    async def list_corporation_maps(self, corporation_id: int) -> list[MapInfo]:
+    async def list_corporation_maps(self, corporation_id: int, user_id: UUID) -> list[MapInfo]:
         """List maps shared with the corporation."""
         return await self.db_session.select(
             LIST_CORPORATION_MAPS,
             corporation_id,
+            user_id,
             schema_type=MapInfo,
         )
 
-    async def list_alliance_maps(self, alliance_id: int) -> list[MapInfo]:
+    async def list_alliance_maps(self, alliance_id: int, user_id: UUID, corporation_id: int | None) -> list[MapInfo]:
         """List maps shared with the alliance."""
         return await self.db_session.select(
             LIST_ALLIANCE_MAPS,
             alliance_id,
+            user_id,
+            corporation_id,
             schema_type=MapInfo,
         )
 
@@ -133,6 +137,23 @@ class MapService:
             alliance_id,
         )
 
+    async def has_edit_access(
+        self,
+        map_id: UUID,
+        user_id: UUID,
+        corporation_id: int | None,
+        alliance_id: int | None,
+    ) -> bool:
+        """Check if user has edit access to the map (priority: owner > user > corp > alliance)."""
+        result = await self.db_session.select_value(
+            CHECK_EDIT_ACCESS,
+            map_id,
+            user_id,
+            corporation_id,
+            alliance_id,
+        )
+        return result or False
+
     async def get_character_context(self, user_id: UUID) -> CharacterContext:
         """Get the user's character context for access checks."""
         row = await self.db_session.select_one_or_none(GET_USER_CHARACTER, user_id, schema_type=UserCharacter)
@@ -164,7 +185,7 @@ class MapService:
     async def delete_map(self, map_id: UUID) -> bool:
         """Delete a map. Returns True if deleted."""
         result = await self.db_session.execute(DELETE_MAP, map_id)
-        return result.rowcount > 0
+        return result.num_rows > 0
 
     async def is_owner(self, map_id: UUID, user_id: UUID) -> bool:
         """Check if user is the owner of the map."""
@@ -177,15 +198,15 @@ class MapService:
         self,
         map_id: UUID,
         user_id: UUID,
-        role: str = "viewer",
+        read_only: bool = True,
     ) -> None:
         """Add or update user access to a map."""
-        await self.db_session.execute(MAP_USER_INSERT, map_id, user_id, role)
+        await self.db_session.execute(MAP_USER_INSERT, map_id, user_id, read_only)
 
     async def remove_user_access(self, map_id: UUID, user_id: UUID) -> bool:
         """Remove user access from a map. Returns True if removed."""
         result = await self.db_session.execute(MAP_USER_DELETE, map_id, user_id)
-        return result.rowcount > 0
+        return result.num_rows > 0
 
     # Corporation access management
 
@@ -193,15 +214,15 @@ class MapService:
         self,
         map_id: UUID,
         corporation_id: int,
-        role: str = "viewer",
+        read_only: bool = True,
     ) -> None:
         """Add or update corporation access to a map."""
-        await self.db_session.execute(MAP_CORPORATION_INSERT, map_id, corporation_id, role)
+        await self.db_session.execute(MAP_CORPORATION_INSERT, map_id, corporation_id, read_only)
 
     async def remove_corporation_access(self, map_id: UUID, corporation_id: int) -> bool:
         """Remove corporation access from a map. Returns True if removed."""
         result = await self.db_session.execute(MAP_CORPORATION_DELETE, map_id, corporation_id)
-        return result.rowcount > 0
+        return result.num_rows > 0
 
     # Alliance access management
 
@@ -209,15 +230,15 @@ class MapService:
         self,
         map_id: UUID,
         alliance_id: int,
-        role: str = "viewer",
+        read_only: bool = True,
     ) -> None:
         """Add or update alliance access to a map."""
-        await self.db_session.execute(MAP_ALLIANCE_INSERT, map_id, alliance_id, role)
+        await self.db_session.execute(MAP_ALLIANCE_INSERT, map_id, alliance_id, read_only)
 
     async def remove_alliance_access(self, map_id: UUID, alliance_id: int) -> bool:
         """Remove alliance access from a map. Returns True if removed."""
         result = await self.db_session.execute(MAP_ALLIANCE_DELETE, map_id, alliance_id)
-        return result.rowcount > 0
+        return result.num_rows > 0
 
     # Node management
 

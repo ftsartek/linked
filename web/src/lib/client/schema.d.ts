@@ -422,21 +422,21 @@ export interface components {
         /** AddAllianceAccessRequest */
         AddAllianceAccessRequest: {
             alliance_id: number;
-            /** @default viewer */
-            role: string;
+            /** @default true */
+            read_only: boolean;
         };
         /** AddCorporationAccessRequest */
         AddCorporationAccessRequest: {
             corporation_id: number;
-            /** @default viewer */
-            role: string;
+            /** @default true */
+            read_only: boolean;
         };
         /** AddUserAccessRequest */
         AddUserAccessRequest: {
             /** Format: uuid */
             user_id: string;
-            /** @default viewer */
-            role: string;
+            /** @default true */
+            read_only: boolean;
         };
         /** CharacterListResponse */
         CharacterListResponse: {
@@ -476,38 +476,12 @@ export interface components {
             wormhole_mass_jump_max?: number | null;
             wormhole_mass_regen?: number | null;
             wormhole_lifetime?: number | null;
-            wormhole_is_static?: boolean | null;
             lifetime_status: string;
             /** Format: date-time */
             date_lifetime_updated: string;
             mass_usage: string;
             /** Format: date-time */
             date_mass_updated: string;
-        };
-        /** EnrichedNodeInfoResponse */
-        EnrichedNodeInfoResponse: {
-            /** Format: uuid */
-            id: string;
-            pos_x: number;
-            pos_y: number;
-            system_id: number;
-            system_name: string;
-            constellation_id?: number | null;
-            constellation_name?: string | null;
-            region_id?: number | null;
-            region_name?: string | null;
-            security_status?: number | null;
-            security_class?: string | null;
-            wh_class?: number | null;
-            wh_effect_name?: string | null;
-            wh_effect_buffs?: Record<string, never>[] | null;
-            wh_effect_debuffs?: Record<string, never>[] | null;
-        };
-        /** MapDetailResponse */
-        MapDetailResponse: {
-            map: components["schemas"]["MapInfo"];
-            nodes: components["schemas"]["EnrichedNodeInfoResponse"][];
-            links: components["schemas"]["EnrichedLinkInfo"][];
         };
         /** MapInfo */
         MapInfo: {
@@ -517,11 +491,14 @@ export interface components {
             owner_id: string;
             name: string;
             description?: string | null;
-            is_public: boolean;
             /** Format: date-time */
             date_created: string;
             /** Format: date-time */
             date_updated: string;
+            /** @default false */
+            is_public: boolean;
+            /** @default false */
+            edit_access: boolean;
         };
         /** MapListResponse */
         MapListResponse: {
@@ -535,7 +512,7 @@ export interface components {
         SystemSearchResult: {
             id: number;
             name: string;
-            wh_class?: number | null;
+            system_class?: number | null;
         };
         /** UpdateMapRequest */
         UpdateMapRequest: {
@@ -564,6 +541,95 @@ export interface components {
             name: string;
             corporation_id?: number | null;
             alliance_id?: number | null;
+        };
+        /** routes.maps.controller.MapController.create_nodeEnrichedNodeInfoResponseBody */
+        "routes.maps.controller.MapController.create_nodeEnrichedNodeInfoResponseBody": {
+            /** Format: uuid */
+            id: string;
+            pos_x: number;
+            pos_y: number;
+            system_id: number;
+            system_name: string;
+            constellation_id?: number | null;
+            constellation_name?: string | null;
+            region_id?: number | null;
+            region_name?: string | null;
+            security_status?: number | null;
+            security_class?: string | null;
+            wh_effect_name?: string | null;
+            wh_effect_buffs?: {
+                [key: string]: number;
+            } | null;
+            wh_effect_debuffs?: {
+                [key: string]: number;
+            } | null;
+            class_name?: string | null;
+        };
+        /** routes.maps.controller.MapController.load_mapMapDetailResponseMapInfoResponseBody */
+        "routes.maps.controller.MapController.load_mapMapDetailResponseMapInfoResponseBody": {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            owner_id: string;
+            name: string;
+            description?: string | null;
+            /** Format: date-time */
+            date_created: string;
+            /** Format: date-time */
+            date_updated: string;
+            /** @default false */
+            is_public: boolean;
+            /** @default false */
+            edit_access: boolean;
+        };
+        /** routes.maps.controller.MapController.load_mapMapDetailResponseResponseBody */
+        "routes.maps.controller.MapController.load_mapMapDetailResponseResponseBody": {
+            map: components["schemas"]["routes.maps.controller.MapController.load_mapMapDetailResponseMapInfoResponseBody"];
+            nodes: components["schemas"]["routes.maps.controller.MapController.load_mapMapDetailResponse_0EnrichedNodeInfoResponseBody"][];
+            links: components["schemas"]["routes.maps.controller.MapController.load_mapMapDetailResponse_0EnrichedLinkInfoResponseBody"][];
+        };
+        /** routes.maps.controller.MapController.load_mapMapDetailResponse_0EnrichedLinkInfoResponseBody */
+        "routes.maps.controller.MapController.load_mapMapDetailResponse_0EnrichedLinkInfoResponseBody": {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            source_node_id: string;
+            /** Format: uuid */
+            target_node_id: string;
+            wormhole_code?: string | null;
+            wormhole_mass_total?: number | null;
+            wormhole_mass_jump_max?: number | null;
+            wormhole_mass_regen?: number | null;
+            wormhole_lifetime?: number | null;
+            lifetime_status: string;
+            /** Format: date-time */
+            date_lifetime_updated: string;
+            mass_usage: string;
+            /** Format: date-time */
+            date_mass_updated: string;
+        };
+        /** routes.maps.controller.MapController.load_mapMapDetailResponse_0EnrichedNodeInfoResponseBody */
+        "routes.maps.controller.MapController.load_mapMapDetailResponse_0EnrichedNodeInfoResponseBody": {
+            /** Format: uuid */
+            id: string;
+            pos_x: number;
+            pos_y: number;
+            system_id: number;
+            system_name: string;
+            constellation_id?: number | null;
+            constellation_name?: string | null;
+            region_id?: number | null;
+            region_name?: string | null;
+            security_status?: number | null;
+            security_class?: string | null;
+            wh_effect_name?: string | null;
+            wh_effect_buffs?: {
+                [key: string]: number;
+            } | null;
+            wh_effect_debuffs?: {
+                [key: string]: number;
+            } | null;
+            class_name?: string | null;
         };
         /** CharacterInfo */
         users_service_CharacterInfo: {
@@ -919,7 +985,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EnrichedNodeInfoResponse"];
+                    "application/json": components["schemas"]["routes.maps.controller.MapController.create_nodeEnrichedNodeInfoResponseBody"];
                 };
             };
             /** @description Bad request syntax or unsupported method */
@@ -956,7 +1022,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MapDetailResponse"];
+                    "application/json": components["schemas"]["routes.maps.controller.MapController.load_mapMapDetailResponseResponseBody"];
                 };
             };
             /** @description Bad request syntax or unsupported method */
@@ -1281,8 +1347,8 @@ export interface operations {
         parameters: {
             query: {
                 q: string;
-                destination?: string | null;
-                source?: string | null;
+                target_class?: number | null;
+                source?: number | null;
             };
             header?: never;
             path?: never;

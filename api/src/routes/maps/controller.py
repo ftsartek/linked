@@ -16,8 +16,10 @@ from routes.maps.dependencies import (
     CreateMapRequest,
     CreateNodeRequest,
     EnrichedLinkInfo,
-    EnrichedNodeInfoResponse,
+    EnrichedNodeInfo,
+    EnrichedNodeInfoDTO,
     MapDetailResponse,
+    MapDetailResponseDTO,
     MapInfo,
     MapListResponse,
     UpdateMapRequest,
@@ -80,7 +82,7 @@ class MapController(Controller):
         ctx = await map_service.get_character_context(request.user.id)
         if ctx.corporation_id is None:
             return MapListResponse(maps=[])
-        maps = await map_service.list_corporation_maps(ctx.corporation_id)
+        maps = await map_service.list_corporation_maps(ctx.corporation_id, ctx.user_id)
         return MapListResponse(maps=maps)
 
     @get("/alliance")
@@ -93,10 +95,10 @@ class MapController(Controller):
         ctx = await map_service.get_character_context(request.user.id)
         if ctx.alliance_id is None:
             return MapListResponse(maps=[])
-        maps = await map_service.list_alliance_maps(ctx.alliance_id)
+        maps = await map_service.list_alliance_maps(ctx.alliance_id, ctx.user_id, ctx.corporation_id)
         return MapListResponse(maps=maps)
 
-    @get("/{map_id:uuid}")
+    @get("/{map_id:uuid}", return_dto=MapDetailResponseDTO)
     async def load_map(
         self,
         request: Request,
@@ -119,12 +121,17 @@ class MapController(Controller):
         if map_info is None:
             raise NotFoundException("Map not found")
 
+        map_info.edit_access = await map_service.has_edit_access(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+
         nodes = await map_service.get_map_nodes(map_id)
         links = await map_service.get_map_links(map_id)
 
-        return MapDetailResponse(
-            map=map_info, nodes=[EnrichedNodeInfoResponse.from_origin(node) for node in nodes], links=links
-        )
+        return MapDetailResponse(map=map_info, nodes=nodes, links=links)
 
     @patch("/{map_id:uuid}")
     async def update_map(
@@ -177,7 +184,7 @@ class MapController(Controller):
         if not await map_service.is_owner(map_id, request.user.id):
             raise NotAuthorizedException("Only the owner can manage map access")
 
-        await map_service.add_user_access(map_id, data.user_id, data.role)
+        await map_service.add_user_access(map_id, data.user_id, data.read_only)
 
     @delete("/{map_id:uuid}/users/{user_id:uuid}", status_code=HTTP_204_NO_CONTENT)
     async def remove_user_access(
@@ -207,7 +214,7 @@ class MapController(Controller):
         if not await map_service.is_owner(map_id, request.user.id):
             raise NotAuthorizedException("Only the owner can manage map access")
 
-        await map_service.add_corporation_access(map_id, data.corporation_id, data.role)
+        await map_service.add_corporation_access(map_id, data.corporation_id, data.read_only)
 
     @delete("/{map_id:uuid}/corporations/{corporation_id:int}", status_code=HTTP_204_NO_CONTENT)
     async def remove_corporation_access(
@@ -237,7 +244,7 @@ class MapController(Controller):
         if not await map_service.is_owner(map_id, request.user.id):
             raise NotAuthorizedException("Only the owner can manage map access")
 
-        await map_service.add_alliance_access(map_id, data.alliance_id, data.role)
+        await map_service.add_alliance_access(map_id, data.alliance_id, data.read_only)
 
     @delete("/{map_id:uuid}/alliances/{alliance_id:int}", status_code=HTTP_204_NO_CONTENT)
     async def remove_alliance_access(
@@ -255,14 +262,14 @@ class MapController(Controller):
 
     # Node management
 
-    @post("/{map_id:uuid}/nodes")
+    @post("/{map_id:uuid}/nodes", return_dto=EnrichedNodeInfoDTO)
     async def create_node(
         self,
         request: Request,
         map_service: MapService,
         map_id: UUID,
         data: CreateNodeRequest,
-    ) -> EnrichedNodeInfoResponse:
+    ) -> EnrichedNodeInfo:
         """Create a new node on the map."""
         ctx = await map_service.get_character_context(request.user.id)
 
@@ -275,13 +282,12 @@ class MapController(Controller):
         if not has_access:
             raise NotAuthorizedException("You do not have access to this map")
 
-        node = await map_service.create_node(
+        return await map_service.create_node(
             map_id=map_id,
             system_id=data.system_id,
             pos_x=data.pos_x,
             pos_y=data.pos_y,
         )
-        return EnrichedNodeInfoResponse.from_origin(node)
 
     # Link management
 
