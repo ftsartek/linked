@@ -5,6 +5,7 @@
 	import Navbar from "$lib/components/Navbar.svelte";
 	import { apiClient } from "$lib/client/client";
 	import { user } from "$lib/stores/user";
+	import { Toaster } from "@skeletonlabs/skeleton-svelte";
 
 	let { children } = $props();
 
@@ -15,5 +16,6 @@
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<Toaster />
 <Navbar />
 {@render children?.()}
