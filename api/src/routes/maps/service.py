@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
+import msgspec
 from sqlspec import AsyncDriverAdapterBase
 
 from database.models.map import INSERT_STMT as MAP_INSERT
@@ -23,42 +24,25 @@ from routes.maps.events import MapEvent
 
 
 def _serialize_node_for_event(node: EnrichedNodeInfo) -> dict:
-    """Serialize an EnrichedNodeInfo to a dict for event payloads."""
-    return {
-        "id": str(node.id),
-        "pos_x": node.pos_x,
-        "pos_y": node.pos_y,
-        "system_id": node.system_id,
-        "system_name": node.system_name,
-        "constellation_id": node.constellation_id,
-        "constellation_name": node.constellation_name,
-        "region_id": node.region_id,
-        "region_name": node.region_name,
-        "security_status": node.security_status,
-        "security_class": node.security_class,
-        "wh_effect_name": node.wh_effect_name,
-        "class_name": node.class_name,
-        "wh_effect_buffs": node.wh_effect_buffs,
-        "wh_effect_debuffs": node.wh_effect_debuffs,
-    }
+    """Serialize an EnrichedNodeInfo to a dict for event payloads.
+
+    Includes computed properties like class_name and wh_effect_buffs.
+    """
+    # Convert struct to dict, then add computed properties
+    data = msgspec.structs.asdict(node)
+    data["class_name"] = node.class_name
+    data["wh_effect_buffs"] = node.wh_effect_buffs
+    data["wh_effect_debuffs"] = node.wh_effect_debuffs
+    # Remove raw fields that aren't needed in events
+    data.pop("raw_buffs", None)
+    data.pop("raw_debuffs", None)
+    data.pop("system_class", None)
+    return data
 
 
 def _serialize_link_for_event(link: EnrichedLinkInfo) -> dict:
     """Serialize an EnrichedLinkInfo to a dict for event payloads."""
-    return {
-        "id": str(link.id),
-        "source_node_id": str(link.source_node_id),
-        "target_node_id": str(link.target_node_id),
-        "wormhole_code": link.wormhole_code,
-        "wormhole_mass_total": link.wormhole_mass_total,
-        "wormhole_mass_jump_max": link.wormhole_mass_jump_max,
-        "wormhole_mass_regen": link.wormhole_mass_regen,
-        "wormhole_lifetime": link.wormhole_lifetime,
-        "lifetime_status": link.lifetime_status,
-        "date_lifetime_updated": link.date_lifetime_updated.isoformat(),
-        "mass_usage": link.mass_usage,
-        "date_mass_updated": link.date_mass_updated.isoformat(),
-    }
+    return msgspec.structs.asdict(link)
 from routes.maps.queries import (
     CHECK_ACCESS,
     CHECK_EDIT_ACCESS,

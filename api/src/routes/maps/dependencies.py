@@ -1,4 +1,4 @@
-"""Dataclasses and types for map routes."""
+"""Msgspec structs and types for map routes."""
 
 from __future__ import annotations
 
@@ -6,14 +6,15 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from litestar.dto import DataclassDTO, DTOConfig
+import msgspec
+from litestar.contrib.msgspec import MsgspecDTO
+from litestar.dto import DTOConfig
 
 from utils.class_mapping import SYSTEM_CLASS_MAPPING
 from utils.effects import apply_class_multiplier
 
 
-@dataclass
-class MapInfo:
+class MapInfo(msgspec.Struct):
     """Map information for API responses."""
 
     id: UUID
@@ -26,8 +27,7 @@ class MapInfo:
     edit_access: bool = False
 
 
-@dataclass
-class EnrichedNodeInfo:
+class EnrichedNodeInfo(msgspec.Struct):
     """Enriched node information for API responses."""
 
     id: UUID
@@ -64,12 +64,11 @@ class EnrichedNodeInfo:
         return SYSTEM_CLASS_MAPPING.get(self.system_class)
 
 
-class EnrichedNodeInfoDTO(DataclassDTO[EnrichedNodeInfo]):
+class EnrichedNodeInfoDTO(MsgspecDTO[EnrichedNodeInfo]):
     config = DTOConfig(exclude={"raw_buffs", "raw_debuffs", "system_class"})
 
 
-@dataclass
-class EnrichedLinkInfo:
+class EnrichedLinkInfo(msgspec.Struct):
     """Enriched link information for API responses."""
 
     id: UUID
@@ -86,8 +85,7 @@ class EnrichedLinkInfo:
     date_mass_updated: datetime
 
 
-@dataclass
-class CharacterContext:
+class CharacterContext(msgspec.Struct):
     """Character context for access checks."""
 
     user_id: UUID
@@ -95,8 +93,7 @@ class CharacterContext:
     alliance_id: int | None
 
 
-@dataclass
-class MapDetailResponse:
+class MapDetailResponse(msgspec.Struct):
     """Full map with nodes and links."""
 
     map: MapInfo
@@ -104,19 +101,17 @@ class MapDetailResponse:
     links: list[EnrichedLinkInfo]
 
 
-class MapDetailResponseDTO(DataclassDTO[MapDetailResponse]):
+class MapDetailResponseDTO(MsgspecDTO[MapDetailResponse]):
     config = DTOConfig(exclude={"nodes.0.system_class", "nodes.0.raw_buffs", "nodes.0.raw_debuffs"})
 
 
-@dataclass
-class MapListResponse:
+class MapListResponse(msgspec.Struct):
     """List of maps."""
 
     maps: list[MapInfo]
 
 
-@dataclass
-class UserCharacter:
+class UserCharacter(msgspec.Struct):
     """User character info for context lookups."""
 
     corporation_id: int | None
