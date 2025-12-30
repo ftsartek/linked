@@ -25,7 +25,8 @@ CREATE INDEX IF NOT EXISTS idx_wormhole_code_trgm ON wormhole USING GIN (code gi
 
 INSERT_STMT = """
 INSERT INTO wormhole
-    (code, eve_type_id, sources, target_class, mass_total, mass_jump_max, mass_regen, lifetime, target_regions, target_constellations, target_systems)
+    (code, eve_type_id, sources, target_class, mass_total, mass_jump_max, mass_regen,
+     lifetime, target_regions, target_constellations, target_systems)
 VALUES
     ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 RETURNING id;"""

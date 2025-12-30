@@ -6,15 +6,17 @@ CREATE_STMT = """\
 CREATE TABLE IF NOT EXISTS region (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
-    description TEXT
+    description TEXT,
+    wormhole_class_id INTEGER,
+    faction_id INTEGER
 );
 
 CREATE INDEX IF NOT EXISTS idx_region_name ON region(name);
 """
 
 INSERT_STMT = """\
-INSERT INTO region (id, name, description)
-VALUES ($1, $2, $3);"""
+INSERT INTO region (id, name, description, wormhole_class_id, faction_id)
+VALUES ($1, $2, $3, $4, $5);"""
 
 
 class Region(msgspec.Struct):
@@ -23,12 +25,5 @@ class Region(msgspec.Struct):
     id: int
     name: str
     description: str | None = None
-
-    @classmethod
-    def from_region_data(cls, data: dict) -> Region:
-        """Create a Region from regions.yaml data."""
-        return cls(
-            id=data["region_id"],
-            name=data["name"],
-            description=data.get("description"),
-        )
+    wormhole_class_id: int | None = None
+    faction_id: int | None = None

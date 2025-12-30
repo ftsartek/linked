@@ -9,9 +9,9 @@ from api.auth.middleware import SessionUser
 from database.models.character import INSERT_STMT as CHARACTER_INSERT
 from database.models.refresh_token import UPSERT_STMT as REFRESH_TOKEN_UPSERT
 from database.models.user import INSERT_STMT as USER_INSERT
-from services.encryption import get_encryption_service
+from services.encryption import EncryptionService
 from services.eve_sso import CharacterInfo as SSOCharacterInfo
-from services.eve_sso import TokenResponse, get_sso_service
+from services.eve_sso import EveSSOService, TokenResponse
 
 
 @dataclass
@@ -53,8 +53,15 @@ class CallbackResult:
 class AuthService:
     """Authentication business logic."""
 
-    def __init__(self, db_session: AsyncDriverAdapterBase) -> None:
+    def __init__(
+        self,
+        db_session: AsyncDriverAdapterBase,
+        sso_service: EveSSOService,
+        encryption_service: EncryptionService,
+    ) -> None:
         self.db_session = db_session
+        self.sso_service = sso_service
+        self.encryption_service = encryption_service
 
     async def get_character_by_id(self, character_id: int) -> CharacterUserInfo | None:
         """Fetch character by EVE character ID.
@@ -101,8 +108,7 @@ class AuthService:
         scopes: list[str],
     ) -> None:
         """Store encrypted refresh token."""
-        encryption = get_encryption_service()
-        token = encryption.encrypt(refresh_token)
+        token = self.encryption_service.encrypt(refresh_token)
 
         await self.db_session.execute(
             REFRESH_TOKEN_UPSERT,
@@ -149,13 +155,11 @@ class AuthService:
         Raises:
             ValueError: If linking but not logged in, or character belongs to another user
         """
-        sso = get_sso_service()
-
         # Exchange code for tokens
-        tokens = await sso.exchange_code(code)
+        tokens = await self.sso_service.exchange_code(code)
 
         # Validate JWT and extract character info
-        char_info = sso.validate_jwt(tokens.access_token)
+        char_info = self.sso_service.validate_jwt(tokens.access_token)
 
         # Process the callback (create/link user, store tokens)
         user_id = await self._handle_sso_callback(
@@ -235,6 +239,10 @@ class AuthService:
         return user_id
 
 
-def provide_auth_service(db_session: AsyncDriverAdapterBase) -> AuthService:
-    """Provide AuthService with injected database session."""
-    return AuthService(db_session)
+async def provide_auth_service(
+    db_session: AsyncDriverAdapterBase,
+    sso_service: EveSSOService,
+    encryption_service: EncryptionService,
+) -> AuthService:
+    """Provide AuthService with injected dependencies."""
+    return AuthService(db_session, sso_service, encryption_service)

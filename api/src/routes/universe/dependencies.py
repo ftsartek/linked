@@ -9,7 +9,7 @@ class SystemSearchResult:
 
     id: int
     name: str
-    wh_class: int | None
+    system_class: int | None
 
 
 @dataclass

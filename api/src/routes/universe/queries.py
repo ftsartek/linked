@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 SEARCH_SYSTEMS = """\
-SELECT id, name, wh_class
+SELECT id, name, system_class
 FROM system
 WHERE name ILIKE $1 OR name % $2
 ORDER BY

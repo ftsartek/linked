@@ -2,6 +2,7 @@
 
 These utilities support both cron-based automatic updates and manual client updates.
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta

@@ -188,10 +188,7 @@ class EveSSOService:
         # Extract character ID from sub claim (format: "CHARACTER:EVE:<character_id>")
         sub = payload["sub"]
         # Handle both old format "CHARACTER:EVE:123" and new format
-        if sub.startswith("CHARACTER:EVE:"):
-            character_id = int(sub.split(":")[-1])
-        else:
-            character_id = int(sub)
+        character_id = int(sub.split(":")[-1]) if sub.startswith("CHARACTER:EVE:") else int(sub)
 
         # Get character name
         character_name = payload.get("name", "")
@@ -208,12 +205,6 @@ class EveSSOService:
         )
 
 
-_sso_service: EveSSOService | None = None
-
-
-def get_sso_service() -> EveSSOService:
-    """Get a singleton SSO service instance."""
-    global _sso_service
-    if _sso_service is None:
-        _sso_service = EveSSOService()
-    return _sso_service
+async def provide_sso_service() -> EveSSOService:
+    """Provide SSO service for dependency injection."""
+    return EveSSOService()

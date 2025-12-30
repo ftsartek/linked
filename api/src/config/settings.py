@@ -58,7 +58,8 @@ class Settings(BaseSettings):
     valkey_url: str = "valkey://localhost:6379/0"
     session_max_age: int = 604800  # 7 days in seconds
 
-    # Token encryption (Fernet key, generate with: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+    # Token encryption (Fernet key, generate with:
+    # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
     token_encryption_key: str = Field(min_length=32, description="Fernet key for encrypting refresh tokens")
 
     # Frontend redirect URL after auth

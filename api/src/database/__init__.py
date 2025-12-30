@@ -1,5 +1,8 @@
+from contextlib import AbstractAsyncContextManager
+
 from sqlspec import SQLSpec
 from sqlspec.adapters.asyncpg import AsyncpgConfig, AsyncpgPoolConfig
+from sqlspec.adapters.asyncpg.driver import AsyncpgDriver
 
 from config.settings import get_settings
 from database.models.alliance import CREATE_STMT as ALLIANCE_CREATE
@@ -86,6 +89,6 @@ async def init_db() -> None:
             await session.execute(stmt)
 
 
-def provide_session():
+def provide_session() -> AbstractAsyncContextManager[AsyncpgDriver]:
     """Provide a database session context manager."""
     return sql.provide_session(db)

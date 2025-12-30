@@ -15,7 +15,7 @@ from routes.users.service import (
     UserService,
     provide_user_service,
 )
-from services.eve_sso import get_sso_service
+from services.eve_sso import EveSSOService, provide_sso_service
 
 
 class UserController(Controller):
@@ -23,10 +23,13 @@ class UserController(Controller):
 
     path = "/users"
     guards = [require_auth]
-    dependencies = {"user_service": Provide(provide_user_service, sync_to_thread=False)}
+    dependencies = {
+        "sso_service": Provide(provide_sso_service),
+        "user_service": Provide(provide_user_service),
+    }
 
     @get("/characters/link")
-    async def link_character(self, request: Request) -> Redirect:
+    async def link_character(self, request: Request, sso_service: EveSSOService) -> Redirect:
         """Initiate EVE SSO flow to link additional character.
 
         Redirects to EVE SSO to authorize a new character
@@ -36,8 +39,7 @@ class UserController(Controller):
         request.session["oauth_state"] = state
         request.session["linking"] = True
 
-        sso = get_sso_service()
-        auth_url = sso.get_authorization_url(state)
+        auth_url = sso_service.get_authorization_url(state)
 
         return Redirect(path=auth_url)
 

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Any
-
 
 def apply_class_multiplier(
     effects: dict[str, int | float] | None,

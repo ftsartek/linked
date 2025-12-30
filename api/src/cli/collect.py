@@ -3,15 +3,14 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import TypeVar
+from typing import Any
 
 import asyncclick as click
 import msgspec
 import yaml
 
 from esi_client import ESIClient
-
-T = TypeVar("T")
+from esi_client.models import DogmaAttribute
 
 STATIC_DIR = Path(__file__).parent.parent.parent / "static"
 
@@ -19,7 +18,7 @@ STATIC_DIR = Path(__file__).parent.parent.parent / "static"
 MAX_CONCURRENT = 20
 
 
-async def fetch_with_rate_limit(
+async def fetch_with_rate_limit[T](
     ids: list[int],
     fetch_fn: Callable[[int], Awaitable[T]],
     label: str,
@@ -42,12 +41,10 @@ async def fetch_with_rate_limit(
     tasks = [fetch_one(item_id) for item_id in ids]
 
     # Process with progress updates
-    done = 0
-    for coro in asyncio.as_completed(tasks):
+    for i, coro in enumerate(asyncio.as_completed(tasks)):
         await coro
-        done += 1
-        if done % 100 == 0 or done == total:
-            click.echo(f"  Progress: {done}/{total}")
+        if i % 100 == 0 or i == total - 1:
+            click.echo(f"  Progress: {i + 1}/{total}")
 
     if errors:
         click.echo(f"  Warning: {len(errors)} errors occurred", err=True)
@@ -164,7 +161,7 @@ ATTR_TARGET_CONSTELLATIONS = range(1395, 1404)  # 1395-1403
 ATTR_TARGET_SYSTEMS = range(1404, 1413)  # 1404-1412
 
 
-def parse_wormhole_dogma(dogma_attributes: list | None) -> dict:
+def parse_wormhole_dogma(dogma_attributes: list[DogmaAttribute] | None) -> dict[str, Any]:
     """Parse dogma attributes into wormhole info fields."""
     result: dict = {
         "lifetime": None,
@@ -352,9 +349,9 @@ async def wormholes(user_agent: str) -> None:
     click.echo(f"Wrote {len(wormhole_spawns)} wormhole spawns to {spawns_path}")
 
 
-@collect.command()
+@collect.command("all")
 @click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT", required=True)
-async def all(user_agent: str) -> None:
+async def import_all(user_agent: str) -> None:
     """Collect all static data (regions, constellations, systems, wormholes)."""
     # Load existing spawn data for wormhole source mappings
     existing_spawns = load_existing_spawns()

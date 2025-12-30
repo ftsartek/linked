@@ -11,17 +11,22 @@ from litestar.response import Redirect
 from api.auth.guards import require_auth
 from config import get_settings
 from routes.auth.service import AuthService, UserInfo, provide_auth_service
-from services.eve_sso import get_sso_service
+from services.encryption import provide_encryption_service
+from services.eve_sso import EveSSOService, provide_sso_service
 
 
 class AuthController(Controller):
     """Authentication endpoints for EVE SSO."""
 
     path = "/auth"
-    dependencies = {"auth_service": Provide(provide_auth_service, sync_to_thread=False)}
+    dependencies = {
+        "sso_service": Provide(provide_sso_service),
+        "encryption_service": Provide(provide_encryption_service),
+        "auth_service": Provide(provide_auth_service),
+    }
 
     @get("/login")
-    async def login(self, request: Request) -> Redirect:
+    async def login(self, request: Request, sso_service: EveSSOService) -> Redirect:
         """Initiate EVE SSO login flow.
 
         Generates a random state parameter, stores it in session,
@@ -31,13 +36,12 @@ class AuthController(Controller):
         request.session["oauth_state"] = state
         request.session["linking"] = False
 
-        sso = get_sso_service()
-        auth_url = sso.get_authorization_url(state)
+        auth_url = sso_service.get_authorization_url(state)
 
         return Redirect(path=auth_url)
 
     @get("/link", guards=[require_auth])
-    async def link(self, request: Request) -> Redirect:
+    async def link(self, request: Request, sso_service: EveSSOService) -> Redirect:
         """Initiate EVE SSO flow to link additional character.
 
         Requires authenticated user. Redirects to EVE SSO to authorize
@@ -47,8 +51,7 @@ class AuthController(Controller):
         request.session["oauth_state"] = state
         request.session["linking"] = True
 
-        sso = get_sso_service()
-        auth_url = sso.get_authorization_url(state)
+        auth_url = sso_service.get_authorization_url(state)
 
         return Redirect(path=auth_url)
 

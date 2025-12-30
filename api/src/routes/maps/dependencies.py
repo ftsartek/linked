@@ -37,7 +37,7 @@ class EnrichedNodeInfo:
     region_name: str | None
     security_status: float | None
     security_class: str | None
-    wh_class: int | None
+    system_class: int | None
     wh_effect_name: str | None
     raw_buffs: dict[str, int | float] | None
     raw_debuffs: dict[str, int | float] | None
@@ -45,12 +45,12 @@ class EnrichedNodeInfo:
     @property
     def wh_effect_buffs(self) -> dict[str, int | float] | None:
         """Buffs with wormhole class multiplier applied."""
-        return apply_class_multiplier(self.raw_buffs, self.wh_class)
+        return apply_class_multiplier(self.raw_buffs, self.system_class)
 
     @property
     def wh_effect_debuffs(self) -> dict[str, int | float] | None:
         """Debuffs with wormhole class multiplier applied."""
-        return apply_class_multiplier(self.raw_debuffs, self.wh_class)
+        return apply_class_multiplier(self.raw_debuffs, self.system_class)
 
 
 @dataclass
@@ -66,7 +66,7 @@ class EnrichedNodeInfoResponse:
     region_name: str | None
     security_status: float | None
     security_class: str | None
-    wh_class: int | None
+    system_class: int | None
     wh_effect_name: str | None
     wh_effect_buffs: list[dict] | None
     wh_effect_debuffs: list[dict] | None
@@ -85,7 +85,7 @@ class EnrichedNodeInfoResponse:
             region_name=origin.region_name,
             security_status=origin.security_status,
             security_class=origin.security_class,
-            wh_class=origin.wh_class,
+            system_class=origin.system_class,
             wh_effect_name=origin.wh_effect_name,
             wh_effect_buffs=origin.wh_effect_buffs,
             wh_effect_debuffs=origin.wh_effect_debuffs,

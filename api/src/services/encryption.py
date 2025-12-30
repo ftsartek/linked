@@ -24,12 +24,6 @@ class EncryptionService:
         return self._fernet.decrypt(ciphertext).decode()
 
 
-_encryption_service: EncryptionService | None = None
-
-
-def get_encryption_service() -> EncryptionService:
-    """Get a singleton encryption service instance."""
-    global _encryption_service
-    if _encryption_service is None:
-        _encryption_service = EncryptionService()
-    return _encryption_service
+async def provide_encryption_service() -> EncryptionService:
+    """Provide encryption service for dependency injection."""
+    return EncryptionService()

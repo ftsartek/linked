@@ -25,6 +25,8 @@ os.environ.setdefault("LINKED_ESI_USER_AGENT", "test-agent")
 
 from api.auth import AuthenticationMiddleware
 from routes import AuthController
+from services.encryption import EncryptionService
+from services.eve_sso import EveSSOService
 
 # Test UUID constants
 TEST_USER_UUID = UUID("00000000-0000-0000-0000-000000000001")
@@ -54,32 +56,50 @@ class MockCharacterInfo:
             self.scopes = []
 
 
+class MockSSOService(EveSSOService):
+    """Mock SSO service for testing."""
+
+    def __init__(self) -> None:
+        # Don't call super().__init__() to avoid loading settings
+        self.client_id = "test_client_id"
+        self.client_secret = "test_client_secret"
+        self.callback_url = "http://localhost/callback"
+        self._jwks_client = None
+
+    def get_authorization_url(self, state: str, scopes: list[str] | None = None) -> str:
+        return "https://login.eveonline.com/v2/oauth/authorize?mock=true"
+
+    async def exchange_code(self, code: str) -> MockTokenResponse:
+        return MockTokenResponse()
+
+    def validate_jwt(self, access_token: str) -> MockCharacterInfo:
+        return MockCharacterInfo()
+
+
 @pytest.fixture
-def mock_sso_service() -> Iterator[MagicMock]:
+def mock_sso_service() -> MockSSOService:
     """Mock the EVE SSO service."""
-    # Patch in both locations: controller (for login/link) and service (for callback)
-    with (
-        patch("routes.auth.controller.get_sso_service") as mock_controller,
-        patch("routes.auth.service.get_sso_service") as mock_service_module,
-    ):
-        mock_service = MagicMock()
-        mock_service.get_authorization_url.return_value = "https://login.eveonline.com/v2/oauth/authorize?mock=true"
-        mock_service.exchange_code = AsyncMock(return_value=MockTokenResponse())
-        mock_service.validate_jwt.return_value = MockCharacterInfo()
-        mock_controller.return_value = mock_service
-        mock_service_module.return_value = mock_service
-        yield mock_service
+    return MockSSOService()
+
+
+class MockEncryptionService(EncryptionService):
+    """Mock encryption service for testing."""
+
+    def __init__(self) -> None:
+        # Don't call super().__init__() to avoid loading settings
+        pass
+
+    def encrypt(self, plaintext: str) -> bytes:
+        return b"encrypted_token"
+
+    def decrypt(self, ciphertext: bytes) -> str:
+        return "decrypted_token"
 
 
 @pytest.fixture
-def mock_encryption_service() -> Iterator[MagicMock]:
+def mock_encryption_service() -> MockEncryptionService:
     """Mock the encryption service."""
-    with patch("routes.auth.service.get_encryption_service") as mock_get:
-        mock_service = MagicMock()
-        mock_service.encrypt.return_value = b"encrypted_token"
-        mock_service.decrypt.return_value = "decrypted_token"
-        mock_get.return_value = mock_service
-        yield mock_service
+    return MockEncryptionService()
 
 
 class MockDbSession(AsyncDriverAdapterBase):  # type: ignore[misc]
@@ -99,7 +119,11 @@ def mock_db_session() -> MockDbSession:
 
 
 @pytest.fixture
-def test_app(mock_db_session: MockDbSession) -> Litestar:
+def test_app(
+    mock_db_session: MockDbSession,
+    mock_sso_service: MockSSOService,
+    mock_encryption_service: MockEncryptionService,
+) -> Litestar:
     """Create a test Litestar app with in-memory session store."""
     session_config = ServerSideSessionConfig(
         key="session",
@@ -111,25 +135,31 @@ def test_app(mock_db_session: MockDbSession) -> Litestar:
         exclude=["^/schema"],
     )
 
-    # Provide mock db_session as a dependency
+    # Provide mock dependencies
     def provide_mock_db_session() -> Any:
         return mock_db_session
+
+    async def provide_mock_sso_service() -> MockSSOService:
+        return mock_sso_service
+
+    async def provide_mock_encryption_service() -> MockEncryptionService:
+        return mock_encryption_service
 
     return Litestar(
         route_handlers=[AuthController],
         stores={"sessions": MemoryStore()},
         middleware=[session_config.middleware, auth_middleware],
-        dependencies={"db_session": Provide(provide_mock_db_session, sync_to_thread=False)},
+        dependencies={
+            "db_session": Provide(provide_mock_db_session, sync_to_thread=False),
+            "sso_service": Provide(provide_mock_sso_service),
+            "encryption_service": Provide(provide_mock_encryption_service),
+        },
         debug=True,
     )
 
 
 @pytest.fixture
-def client(
-    test_app: Litestar,
-    mock_sso_service: MagicMock,
-    mock_encryption_service: MagicMock,
-) -> Iterator[TestClient]:
+def client(test_app: Litestar) -> Iterator[TestClient]:
     """Create a test client with all mocks in place."""
     with TestClient(app=test_app) as client:
         yield client

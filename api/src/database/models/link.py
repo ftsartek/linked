@@ -6,8 +6,7 @@ from uuid import UUID
 import msgspec
 
 from utils.datetime import ensure_utc
-
-from ..enums import LifetimeStatus, MassStatus
+from utils.enums import LifetimeStatus, MassStatus
 
 CREATE_STMT = """
 CREATE TABLE IF NOT EXISTS link (

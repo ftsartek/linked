@@ -45,7 +45,7 @@ SELECT
     s.id AS system_id, s.name AS system_name,
     c.id AS constellation_id, c.name AS constellation_name,
     r.id AS region_id, r.name AS region_name,
-    s.security_status, s.security_class, s.wh_class,
+    s.security_status, s.security_class, s.system_class,
     e.name AS wh_effect_name, e.buffs AS raw_buffs, e.debuffs AS raw_debuffs
 FROM node n
 JOIN system s ON n.system_id = s.id
@@ -117,7 +117,7 @@ SELECT
     s.id AS system_id, s.name AS system_name,
     c.id AS constellation_id, c.name AS constellation_name,
     r.id AS region_id, r.name AS region_name,
-    s.security_status, s.security_class, s.wh_class,
+    s.security_status, s.security_class, s.system_class,
     e.name AS wh_effect_name, e.buffs AS raw_buffs, e.debuffs AS raw_debuffs
 FROM node n
 JOIN system s ON n.system_id = s.id

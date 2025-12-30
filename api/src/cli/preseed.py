@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -13,12 +12,99 @@ if TYPE_CHECKING:
     from sqlspec.adapters.asyncpg import AsyncpgDriver
 
 PRESEED_DIR = Path(__file__).parent.parent.parent / "static" / "preseed"
+SDE_DIR = PRESEED_DIR / "sde"
 
 
-def load_yaml(filename: str) -> dict | list:
-    """Load a YAML file from the preseed directory."""
-    with open(PRESEED_DIR / filename) as f:
+def load_yaml(filename: str, directory: Path = PRESEED_DIR) -> dict | list:
+    """Load a YAML file from the specified directory."""
+    with open(directory / filename) as f:
         return yaml.safe_load(f)
+
+
+def load_sde_data() -> tuple[dict, dict, dict]:
+    """Load SDE map data files and return (regions, constellations, systems) dicts."""
+    click.echo("Loading SDE data...")
+    sde_regions = load_yaml("mapRegions.yaml", SDE_DIR)
+    sde_constellations = load_yaml("mapConstellations.yaml", SDE_DIR)
+    sde_systems = load_yaml("mapSolarSystems.yaml", SDE_DIR)
+    return sde_regions, sde_constellations, sde_systems
+
+
+def build_fallback_lookups(
+    sde_regions: dict,
+    sde_constellations: dict,
+) -> tuple[dict[int, int | None], dict[int, int | None], dict[int, int | None], dict[int, int | None]]:
+    """Build lookup dicts for wormhole_class_id and faction_id fallbacks.
+
+    Returns:
+        (region_wh_class, region_faction, constellation_wh_class, constellation_faction)
+    """
+    region_wh_class: dict[int, int | None] = {}
+    region_faction: dict[int, int | None] = {}
+    constellation_wh_class: dict[int, int | None] = {}
+    constellation_faction: dict[int, int | None] = {}
+
+    for region_id, data in sde_regions.items():
+        region_wh_class[region_id] = data.get("wormholeClassID")
+        region_faction[region_id] = data.get("factionID")
+
+    for const_id, data in sde_constellations.items():
+        constellation_wh_class[const_id] = data.get("wormholeClassID")
+        constellation_faction[const_id] = data.get("factionID")
+
+    return region_wh_class, region_faction, constellation_wh_class, constellation_faction
+
+
+def resolve_system_class(
+    system_data: dict,
+    constellation_id: int,
+    sde_constellations: dict,
+    region_wh_class: dict[int, int | None],
+    constellation_wh_class: dict[int, int | None],
+) -> int:
+    """Resolve system_class with fallback: system -> constellation -> region -> 0."""
+    # Try system level
+    if system_data.get("wormholeClassID") is not None:
+        return system_data["wormholeClassID"]
+
+    # Try constellation level
+    if constellation_wh_class.get(constellation_id) is not None:
+        return constellation_wh_class[constellation_id]
+
+    # Try region level
+    const_data = sde_constellations.get(constellation_id, {})
+    region_id = const_data.get("regionID")
+    if region_id and region_wh_class.get(region_id) is not None:
+        return region_wh_class[region_id]
+
+    # Default to 0
+    return 0
+
+
+def resolve_faction_id(
+    system_data: dict,
+    constellation_id: int,
+    sde_constellations: dict,
+    region_faction: dict[int, int | None],
+    constellation_faction: dict[int, int | None],
+) -> int:
+    """Resolve faction_id with fallback: system -> constellation -> region -> 0."""
+    # Try system level
+    if system_data.get("factionID") is not None:
+        return system_data["factionID"]
+
+    # Try constellation level
+    if constellation_faction.get(constellation_id) is not None:
+        return constellation_faction[constellation_id]
+
+    # Try region level
+    const_data = sde_constellations.get(constellation_id, {})
+    region_id = const_data.get("regionID")
+    if region_id and region_faction.get(region_id) is not None:
+        return region_faction[region_id]
+
+    # Default to 0
+    return 0
 
 
 async def import_effects(session: AsyncpgDriver, effects_data: dict) -> dict[str, int]:
@@ -33,23 +119,32 @@ async def import_effects(session: AsyncpgDriver, effects_data: dict) -> dict[str
     return {row["name"]: row["id"] for row in await session.select("SELECT id, name FROM effect")}
 
 
-async def import_regions(session: AsyncpgDriver, regions_data: list) -> None:
-    """Import regions."""
+async def import_regions(session: AsyncpgDriver, regions_data: list, sde_regions: dict) -> None:
+    """Import regions with SDE wormhole_class_id and faction_id."""
     click.echo(f"Importing {len(regions_data)} regions...")
-    rows = [(r["region_id"], r["name"], r.get("description")) for r in regions_data]
+    rows = []
+    for r in regions_data:
+        region_id = r["region_id"]
+        sde_data = sde_regions.get(region_id, {})
+        rows.append(
+            (
+                region_id,
+                r["name"],
+                r.get("description"),
+                sde_data.get("wormholeClassID"),
+                sde_data.get("factionID"),
+            )
+        )
     await session.execute_many(
-        """INSERT INTO region (id, name, description) VALUES ($1, $2, $3)
-           ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description""",
+        """INSERT INTO region (id, name, description, wormhole_class_id, faction_id) VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description,
+               wormhole_class_id = EXCLUDED.wormhole_class_id, faction_id = EXCLUDED.faction_id""",
         rows,
     )
 
 
 def merge_wormhole_data(info_data: dict, spawns_data: dict) -> dict[str, dict]:
-    """Merge wormhole_info and wormhole_spawns into a code-keyed dict.
-
-    Since multiple typeIDs can map to the same code, we merge target lists
-    and use the first encountered typeID for other values.
-    """
+    """Merge wormhole_info and wormhole_spawns into a code-keyed dict."""
     merged: dict[str, dict] = {}
 
     for type_id_str, info in info_data.items():
@@ -58,7 +153,6 @@ def merge_wormhole_data(info_data: dict, spawns_data: dict) -> dict[str, dict]:
         spawns = spawns_data.get(type_id_str, spawns_data.get(type_id, {}))
 
         if code not in merged:
-            # First typeID for this code - initialize
             merged[code] = {
                 "typeID": type_id,
                 "sources": spawns.get("sources"),
@@ -72,7 +166,6 @@ def merge_wormhole_data(info_data: dict, spawns_data: dict) -> dict[str, dict]:
                 "target_systems": info.get("target_systems", []),
             }
         else:
-            # Merge target lists from additional typeIDs
             existing = merged[code]
             for key in ["target_regions", "target_constellations", "target_systems"]:
                 new_values = info.get(key, [])
@@ -101,51 +194,104 @@ async def import_wormholes(session: AsyncpgDriver, wormholes_data: dict) -> dict
         for code, data in wormholes_data.items()
     ]
     await session.execute_many(
-        """INSERT INTO wormhole (code, eve_type_id, sources, target_class, mass_total, mass_jump_max, mass_regen, lifetime, target_regions, target_constellations, target_systems)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-           ON CONFLICT (code) DO UPDATE SET
-               eve_type_id = EXCLUDED.eve_type_id, sources = EXCLUDED.sources, target_class = EXCLUDED.target_class,
-               mass_total = EXCLUDED.mass_total, mass_jump_max = EXCLUDED.mass_jump_max, mass_regen = EXCLUDED.mass_regen,
-               lifetime = EXCLUDED.lifetime, target_regions = EXCLUDED.target_regions,
-               target_constellations = EXCLUDED.target_constellations, target_systems = EXCLUDED.target_systems""",
+        """INSERT INTO wormhole
+            (code, eve_type_id, sources, target_class, mass_total, mass_jump_max, mass_regen,
+             lifetime, target_regions, target_constellations, target_systems)
+        VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        ON CONFLICT (code) DO UPDATE SET
+            eve_type_id = EXCLUDED.eve_type_id, sources = EXCLUDED.sources, target_class = EXCLUDED.target_class,
+            mass_total = EXCLUDED.mass_total, mass_jump_max = EXCLUDED.mass_jump_max,
+            mass_regen = EXCLUDED.mass_regen, lifetime = EXCLUDED.lifetime,
+            target_regions = EXCLUDED.target_regions, target_constellations = EXCLUDED.target_constellations,
+            target_systems = EXCLUDED.target_systems""",
         rows,
     )
     return {row["code"]: row["id"] for row in await session.select("SELECT id, code FROM wormhole")}
 
 
-async def import_constellations(session: AsyncpgDriver, constellations_data: list) -> None:
-    """Import constellations."""
+async def import_constellations(session: AsyncpgDriver, constellations_data: list, sde_constellations: dict) -> None:
+    """Import constellations with SDE wormhole_class_id and faction_id."""
     click.echo(f"Importing {len(constellations_data)} constellations...")
-    rows = [(c["constellation_id"], c["region_id"], c["name"]) for c in constellations_data]
+    rows = []
+    for c in constellations_data:
+        const_id = c["constellation_id"]
+        sde_data = sde_constellations.get(const_id, {})
+        rows.append(
+            (
+                const_id,
+                c["region_id"],
+                c["name"],
+                sde_data.get("wormholeClassID"),
+                sde_data.get("factionID"),
+            )
+        )
     await session.execute_many(
-        """INSERT INTO constellation (id, region_id, name) VALUES ($1, $2, $3)
-           ON CONFLICT (id) DO UPDATE SET region_id = EXCLUDED.region_id, name = EXCLUDED.name""",
+        """INSERT INTO constellation (id, region_id, name, wormhole_class_id, faction_id) VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (id) DO UPDATE SET region_id = EXCLUDED.region_id, name = EXCLUDED.name,
+               wormhole_class_id = EXCLUDED.wormhole_class_id, faction_id = EXCLUDED.faction_id""",
         rows,
     )
 
 
-async def import_systems(session: AsyncpgDriver, systems_data: list) -> None:
-    """Import systems."""
+async def import_systems(
+    session: AsyncpgDriver,
+    systems_data: list,
+    sde_systems: dict,
+    sde_constellations: dict,
+    region_wh_class: dict[int, int | None],
+    region_faction: dict[int, int | None],
+    constellation_wh_class: dict[int, int | None],
+    constellation_faction: dict[int, int | None],
+) -> None:
+    """Import systems with resolved system_class and faction_id from SDE."""
     click.echo(f"Importing {len(systems_data)} systems...")
-    rows = [
-        (
-            s["system_id"],
-            s["constellation_id"],
-            s["name"],
-            s.get("security_status"),
-            s.get("security_class"),
-            s.get("star_id"),
-            None,  # wh_class
-            None,  # wh_effect_id
+    rows = []
+    for s in systems_data:
+        system_id = s["system_id"]
+        constellation_id = s["constellation_id"]
+        sde_data = sde_systems.get(system_id, {})
+
+        # Get position2D for pos_x/pos_y
+        pos_2d = sde_data.get("position2D", {})
+
+        # Resolve system_class and faction_id with fallback
+        system_class = resolve_system_class(
+            sde_data, constellation_id, sde_constellations, region_wh_class, constellation_wh_class
         )
-        for s in systems_data
-    ]
+        faction_id = resolve_faction_id(
+            sde_data, constellation_id, sde_constellations, region_faction, constellation_faction
+        )
+
+        rows.append(
+            (
+                system_id,
+                constellation_id,
+                s["name"],
+                s.get("security_status"),
+                s.get("security_class"),
+                system_class,
+                faction_id,
+                s.get("star_id"),
+                sde_data.get("radius"),
+                pos_2d.get("x"),
+                pos_2d.get("y"),
+                sde_data.get("stargateIDs"),
+                None,  # wh_effect_id - set later
+            )
+        )
     await session.execute_many(
-        """INSERT INTO system (id, constellation_id, name, security_status, security_class, star_id, wh_class, wh_effect_id)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           ON CONFLICT (id) DO UPDATE SET
-               constellation_id = EXCLUDED.constellation_id, name = EXCLUDED.name,
-               security_status = EXCLUDED.security_status, security_class = EXCLUDED.security_class, star_id = EXCLUDED.star_id""",
+        """INSERT INTO system
+            (id, constellation_id, name, security_status, security_class, system_class,
+             faction_id, star_id, radius, pos_x, pos_y, stargate_ids, wh_effect_id)
+        VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ON CONFLICT (id) DO UPDATE SET
+            constellation_id = EXCLUDED.constellation_id, name = EXCLUDED.name,
+            security_status = EXCLUDED.security_status, security_class = EXCLUDED.security_class,
+            system_class = EXCLUDED.system_class, faction_id = EXCLUDED.faction_id,
+            star_id = EXCLUDED.star_id, radius = EXCLUDED.radius, pos_x = EXCLUDED.pos_x, pos_y = EXCLUDED.pos_y,
+            stargate_ids = EXCLUDED.stargate_ids""",
         rows,
     )
 
@@ -157,10 +303,9 @@ async def update_wormhole_systems(
     effect_name_to_id: dict[str, int],
     wormhole_code_to_id: dict[str, int],
 ) -> list[tuple[int, int]]:
-    """Update wormhole systems with WH-specific data and return statics to insert."""
+    """Update wormhole systems with effect data and return statics to insert."""
     click.echo(f"Updating {len(wormhole_systems_data)} wormhole systems...")
 
-    # Build set of known system IDs for validation
     known_system_ids = {s["system_id"] for s in systems_data}
 
     wh_update_rows = []
@@ -176,7 +321,7 @@ async def update_wormhole_systems(
         effect_name = wh_data.get("effect")
         effect_id = effect_name_to_id.get(effect_name) if effect_name else None
 
-        wh_update_rows.append((wh_data.get("class"), effect_id, system_id))
+        wh_update_rows.append((effect_id, system_id))
 
         for static_code in wh_data.get("statics") or []:
             wormhole_id = wormhole_code_to_id.get(static_code)
@@ -184,17 +329,17 @@ async def update_wormhole_systems(
                 statics_to_insert.append((system_id, wormhole_id))
 
     await session.execute_many(
-        "UPDATE system SET wh_class = $1, wh_effect_id = $2 WHERE id = $3",
+        "UPDATE system SET wh_effect_id = $1 WHERE id = $2",
         wh_update_rows,
     )
     return statics_to_insert
 
 
 async def import_system_statics(session: AsyncpgDriver, statics_to_insert: list[tuple[int, int]]) -> None:
-    """Import system statics (many-to-many relationship). Replaces all existing statics for WH systems."""
-    # Delete existing statics for wormhole systems (full replace)
+    """Import system statics (many-to-many relationship)."""
     await session.execute(
-        "DELETE FROM system_static WHERE system_id IN (SELECT id FROM system WHERE wh_class IS NOT NULL)"
+        "DELETE FROM system_static WHERE system_id IN \
+        (SELECT id FROM system WHERE system_class IS NOT NULL AND system_class <= 18)"
     )
 
     click.echo(f"Inserting {len(statics_to_insert)} system statics...")
@@ -216,40 +361,20 @@ async def cleanup_orphaned_records(
     """Delete records not in the current import (reverse FK order)."""
     click.echo("Cleaning up orphaned records...")
 
-    # Delete systems not in import
     system_ids = [s["system_id"] for s in systems_data]
-    await session.execute(
-        "DELETE FROM system WHERE id != ALL($1::int[])",
-        [system_ids],
-    )
+    await session.execute("DELETE FROM system WHERE id != ALL($1::int[])", [system_ids])
 
-    # Delete constellations not in import
     constellation_ids = [c["constellation_id"] for c in constellations_data]
-    await session.execute(
-        "DELETE FROM constellation WHERE id != ALL($1::int[])",
-        [constellation_ids],
-    )
+    await session.execute("DELETE FROM constellation WHERE id != ALL($1::int[])", [constellation_ids])
 
-    # Delete regions not in import
     region_ids = [r["region_id"] for r in regions_data]
-    await session.execute(
-        "DELETE FROM region WHERE id != ALL($1::int[])",
-        [region_ids],
-    )
+    await session.execute("DELETE FROM region WHERE id != ALL($1::int[])", [region_ids])
 
-    # Delete wormholes not in import
     wormhole_codes = list(wormholes_data.keys())
-    await session.execute(
-        "DELETE FROM wormhole WHERE code != ALL($1::text[])",
-        [wormhole_codes],
-    )
+    await session.execute("DELETE FROM wormhole WHERE code != ALL($1::text[])", [wormhole_codes])
 
-    # Delete effects not in import
     effect_names = list(effects_data.keys())
-    await session.execute(
-        "DELETE FROM effect WHERE name != ALL($1::text[])",
-        [effect_names],
-    )
+    await session.execute("DELETE FROM effect WHERE name != ALL($1::text[])", [effect_names])
 
 
 @click.command()
@@ -268,15 +393,32 @@ async def preseed() -> None:
     systems_data = load_yaml("systems.yaml")
     wormhole_systems_data = load_yaml("wormhole_systems.yaml")
 
+    # Load SDE data for wormholeClassID and factionID
+    sde_regions, sde_constellations, sde_systems = load_sde_data()
+
+    # Build fallback lookup tables
+    region_wh_class, region_faction, constellation_wh_class, constellation_faction = build_fallback_lookups(
+        sde_regions, sde_constellations
+    )
+
     async with provide_session() as session:
         # Import in dependency order
         effect_name_to_id = await import_effects(session, effects_data)
-        await import_regions(session, regions_data)
+        await import_regions(session, regions_data, sde_regions)
         wormhole_code_to_id = await import_wormholes(session, wormholes_data)
-        await import_constellations(session, constellations_data)
-        await import_systems(session, systems_data)
+        await import_constellations(session, constellations_data, sde_constellations)
+        await import_systems(
+            session,
+            systems_data,
+            sde_systems,
+            sde_constellations,
+            region_wh_class,
+            region_faction,
+            constellation_wh_class,
+            constellation_faction,
+        )
 
-        # Update wormhole systems and get statics
+        # Update wormhole systems with effect data and get statics
         statics_to_insert = await update_wormhole_systems(
             session,
             wormhole_systems_data,
