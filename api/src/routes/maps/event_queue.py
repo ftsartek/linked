@@ -48,8 +48,8 @@ class MapEventQueue:
             id=event.event_id,
         )
 
-        # Set expiration on the stream (7 days)
-        await self.valkey.expire(stream_key, 604800)
+        # Set expiration on the stream (24 hours)
+        await self.valkey.expire(stream_key, 86400)
 
     async def get_next_event_id(self, map_id: UUID) -> str:
         """Get the next event ID for a map.
@@ -66,8 +66,8 @@ class MapEventQueue:
         counter_key = self._get_counter_key(map_id)
         counter = await self.valkey.incr(counter_key)
 
-        # Set expiration on counter (7 days)
-        await self.valkey.expire(counter_key, 604800)
+        # Set expiration on counter (24 hours)
+        await self.valkey.expire(counter_key, 86400)
 
         # Redis stream IDs are in format: <millisecondsTime>-<sequenceNumber>
         # We use counter as the timestamp portion and 0 as sequence

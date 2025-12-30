@@ -34,7 +34,6 @@ from routes.maps.service import (
     MapService,
     provide_map_service,
 )
-from routes.maps.valkey_deps import provide_valkey_client
 
 
 class MapController(Controller):
@@ -45,7 +44,6 @@ class MapController(Controller):
     dependencies = {
         "map_service": Provide(provide_map_service, sync_to_thread=False),
         "event_queue": Provide(provide_event_queue, sync_to_thread=False),
-        "valkey_client": Provide(provide_valkey_client, sync_to_thread=False),
     }
 
     @post("/")

@@ -63,9 +63,6 @@ class MapEvent(msgspec.Struct):
         event_id: str,
         map_id: UUID,
         node_id: UUID,
-        system_id: int,
-        pos_x: float,
-        pos_y: float,
         user_id: UUID | None = None,
     ) -> MapEvent:
         """Create a node_created event."""
@@ -74,12 +71,7 @@ class MapEvent(msgspec.Struct):
             event_type=EventType.NODE_CREATED,
             map_id=map_id,
             timestamp=datetime.now(UTC),
-            data={
-                "node_id": str(node_id),
-                "system_id": system_id,
-                "pos_x": pos_x,
-                "pos_y": pos_y,
-            },
+            data={"node_id": str(node_id)},
             user_id=user_id,
         )
 
@@ -131,9 +123,6 @@ class MapEvent(msgspec.Struct):
         event_id: str,
         map_id: UUID,
         link_id: UUID,
-        source_node_id: UUID,
-        target_node_id: UUID,
-        wormhole_id: int | None,
         user_id: UUID | None = None,
     ) -> MapEvent:
         """Create a link_created event."""
@@ -142,12 +131,7 @@ class MapEvent(msgspec.Struct):
             event_type=EventType.LINK_CREATED,
             map_id=map_id,
             timestamp=datetime.now(UTC),
-            data={
-                "link_id": str(link_id),
-                "source_node_id": str(source_node_id),
-                "target_node_id": str(target_node_id),
-                "wormhole_id": wormhole_id,
-            },
+            data={"link_id": str(link_id)},
             user_id=user_id,
         )
 

@@ -281,9 +281,6 @@ class MapService:
                 event_id=event_id,
                 map_id=map_id,
                 node_id=node_id,
-                system_id=system_id,
-                pos_x=pos_x,
-                pos_y=pos_y,
                 user_id=user_id,
             )
             await self.event_queue.publish_event(event)
@@ -428,9 +425,6 @@ class MapService:
                 event_id=event_id,
                 map_id=map_id,
                 link_id=link_id,
-                source_node_id=source_node_id,
-                target_node_id=target_node_id,
-                wormhole_id=wormhole_id,
                 user_id=user_id,
             )
             await self.event_queue.publish_event(event)
