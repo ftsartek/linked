@@ -181,3 +181,27 @@ class CreateLinkRequest:
     source_node_id: UUID
     target_node_id: UUID
     wormhole_id: int | None = None
+
+
+@dataclass
+class UpdateNodePositionRequest:
+    """Request body for updating a node's position."""
+
+    pos_x: float
+    pos_y: float
+
+
+@dataclass
+class UpdateNodeSystemRequest:
+    """Request body for updating a node's system."""
+
+    system_id: int
+
+
+@dataclass
+class UpdateLinkRequest:
+    """Request body for updating a link."""
+
+    wormhole_id: int | None = None
+    lifetime_status: str | None = None
+    mass_usage: int | None = None

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from typing import AsyncIterator
 from uuid import UUID
 
 from litestar import Controller, Request, delete, get, patch, post
 from litestar.di import Provide
 from litestar.exceptions import NotAuthorizedException, NotFoundException
+from litestar.response import Stream
 from litestar.status_codes import HTTP_204_NO_CONTENT
 
 from api.auth.guards import require_auth
@@ -22,12 +24,17 @@ from routes.maps.dependencies import (
     MapDetailResponseDTO,
     MapInfo,
     MapListResponse,
+    UpdateLinkRequest,
     UpdateMapRequest,
+    UpdateNodePositionRequest,
+    UpdateNodeSystemRequest,
 )
+from routes.maps.event_queue import MapEventQueue, provide_event_queue
 from routes.maps.service import (
     MapService,
     provide_map_service,
 )
+from routes.maps.valkey_deps import provide_valkey_client
 
 
 class MapController(Controller):
@@ -35,7 +42,11 @@ class MapController(Controller):
 
     path = "/maps"
     guards = [require_auth]
-    dependencies = {"map_service": Provide(provide_map_service, sync_to_thread=False)}
+    dependencies = {
+        "map_service": Provide(provide_map_service, sync_to_thread=False),
+        "event_queue": Provide(provide_event_queue, sync_to_thread=False),
+        "valkey_client": Provide(provide_valkey_client, sync_to_thread=False),
+    }
 
     @post("/")
     async def create_map(
@@ -287,7 +298,93 @@ class MapController(Controller):
             system_id=data.system_id,
             pos_x=data.pos_x,
             pos_y=data.pos_y,
+            user_id=request.user.id,
         )
+
+    @patch("/{map_id:uuid}/nodes/{node_id:uuid}/position", return_dto=EnrichedNodeInfoDTO)
+    async def update_node_position(
+        self,
+        request: Request,
+        map_service: MapService,
+        map_id: UUID,
+        node_id: UUID,
+        data: UpdateNodePositionRequest,
+    ) -> EnrichedNodeInfo:
+        """Update a node's position on the map."""
+        ctx = await map_service.get_character_context(request.user.id)
+
+        has_edit_access = await map_service.has_edit_access(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+        if not has_edit_access:
+            raise NotAuthorizedException("You do not have edit access to this map")
+
+        result = await map_service.update_node_position(
+            node_id=node_id,
+            pos_x=data.pos_x,
+            pos_y=data.pos_y,
+            user_id=request.user.id,
+        )
+        if result is None:
+            raise NotFoundException("Node not found")
+        return result
+
+    @patch("/{map_id:uuid}/nodes/{node_id:uuid}/system", return_dto=EnrichedNodeInfoDTO)
+    async def update_node_system(
+        self,
+        request: Request,
+        map_service: MapService,
+        map_id: UUID,
+        node_id: UUID,
+        data: UpdateNodeSystemRequest,
+    ) -> EnrichedNodeInfo:
+        """Update a node's system."""
+        ctx = await map_service.get_character_context(request.user.id)
+
+        has_edit_access = await map_service.has_edit_access(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+        if not has_edit_access:
+            raise NotAuthorizedException("You do not have edit access to this map")
+
+        result = await map_service.update_node_system(
+            node_id=node_id,
+            system_id=data.system_id,
+            user_id=request.user.id,
+        )
+        if result is None:
+            raise NotFoundException("Node not found")
+        return result
+
+    @delete("/{map_id:uuid}/nodes/{node_id:uuid}", status_code=HTTP_204_NO_CONTENT)
+    async def delete_node(
+        self,
+        request: Request,
+        map_service: MapService,
+        map_id: UUID,
+        node_id: UUID,
+    ) -> None:
+        """Delete a node from the map."""
+        ctx = await map_service.get_character_context(request.user.id)
+
+        has_edit_access = await map_service.has_edit_access(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+        if not has_edit_access:
+            raise NotAuthorizedException("You do not have edit access to this map")
+
+        deleted = await map_service.delete_node(node_id, request.user.id)
+        if not deleted:
+            raise NotFoundException("Node not found")
 
     # Link management
 
@@ -316,4 +413,111 @@ class MapController(Controller):
             source_node_id=data.source_node_id,
             target_node_id=data.target_node_id,
             wormhole_id=data.wormhole_id,
+            user_id=request.user.id,
         )
+
+    @patch("/{map_id:uuid}/links/{link_id:uuid}")
+    async def update_link(
+        self,
+        request: Request,
+        map_service: MapService,
+        map_id: UUID,
+        link_id: UUID,
+        data: UpdateLinkRequest,
+    ) -> EnrichedLinkInfo:
+        """Update a link between nodes."""
+        ctx = await map_service.get_character_context(request.user.id)
+
+        has_edit_access = await map_service.has_edit_access(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+        if not has_edit_access:
+            raise NotAuthorizedException("You do not have edit access to this map")
+
+        result = await map_service.update_link(
+            link_id=link_id,
+            wormhole_id=data.wormhole_id,
+            lifetime_status=data.lifetime_status,
+            mass_usage=data.mass_usage,
+            user_id=request.user.id,
+        )
+        if result is None:
+            raise NotFoundException("Link not found")
+        return result
+
+    @delete("/{map_id:uuid}/links/{link_id:uuid}", status_code=HTTP_204_NO_CONTENT)
+    async def delete_link(
+        self,
+        request: Request,
+        map_service: MapService,
+        map_id: UUID,
+        link_id: UUID,
+    ) -> None:
+        """Delete a link from the map."""
+        ctx = await map_service.get_character_context(request.user.id)
+
+        has_edit_access = await map_service.has_edit_access(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+        if not has_edit_access:
+            raise NotAuthorizedException("You do not have edit access to this map")
+
+        deleted = await map_service.delete_link(link_id, request.user.id)
+        if not deleted:
+            raise NotFoundException("Link not found")
+
+    # SSE event streaming
+
+    @get("/{map_id:uuid}/events")
+    async def stream_events(
+        self,
+        request: Request,
+        map_service: MapService,
+        event_queue: MapEventQueue,
+        map_id: UUID,
+        last_event_id: str | None = None,
+    ) -> Stream:
+        """Stream map events via Server-Sent Events (SSE).
+
+        Args:
+            map_id: The map ID to stream events for.
+            last_event_id: Optional last event ID received for replaying missed events.
+
+        Returns:
+            SSE stream of map events.
+        """
+        ctx = await map_service.get_character_context(request.user.id)
+
+        # Check access to the map
+        has_access = await map_service.can_access_map(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+        if not has_access:
+            raise NotAuthorizedException("You do not have access to this map")
+
+        async def event_generator() -> AsyncIterator[str]:
+            """Generate SSE events."""
+            # First, replay any missed events if last_event_id is provided
+            if last_event_id is not None:
+                missed_events = await event_queue.get_events_since(map_id, last_event_id)
+                for event in missed_events:
+                    yield f"id: {event.event_id}\n"
+                    yield f"event: {event.event_type.value}\n"
+                    yield f"data: {event.to_sse_data()}\n\n"
+
+            # Then stream new events as they arrive
+            async for event in event_queue.stream_events(map_id, last_event_id):
+                yield f"id: {event.event_id}\n"
+                yield f"event: {event.event_type.value}\n"
+                yield f"data: {event.to_sse_data()}\n\n"
+
+        return Stream(event_generator(), media_type="text/event-stream")

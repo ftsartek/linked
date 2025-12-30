@@ -184,3 +184,43 @@ FROM link l
 LEFT JOIN wormhole w ON l.wormhole_id = w.id
 WHERE l.id = $1;
 """
+
+UPDATE_NODE_POSITION = """
+UPDATE node
+SET pos_x = $2, pos_y = $3, date_updated = NOW()
+WHERE id = $1
+RETURNING id;
+"""
+
+UPDATE_NODE_SYSTEM = """
+UPDATE node
+SET system_id = $2, date_updated = NOW()
+WHERE id = $1
+RETURNING id;
+"""
+
+DELETE_NODE = """
+DELETE FROM node WHERE id = $1;
+"""
+
+UPDATE_LINK = """
+UPDATE link
+SET wormhole_id = COALESCE($2, wormhole_id),
+    lifetime_status = COALESCE($3, lifetime_status),
+    mass_usage = COALESCE($4, mass_usage),
+    date_updated = NOW()
+WHERE id = $1
+RETURNING id;
+"""
+
+DELETE_LINK = """
+DELETE FROM link WHERE id = $1;
+"""
+
+GET_NODE_MAP_ID = """
+SELECT map_id FROM node WHERE id = $1;
+"""
+
+GET_LINK_MAP_ID = """
+SELECT map_id FROM link WHERE id = $1;
+"""

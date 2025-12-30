@@ -18,16 +18,22 @@ from routes.maps.dependencies import (
     MapInfo,
     UserCharacter,
 )
+from routes.maps.event_queue import MapEventQueue
+from routes.maps.events import MapEvent
 from routes.maps.queries import (
     CHECK_ACCESS,
     CHECK_EDIT_ACCESS,
+    DELETE_LINK,
     DELETE_MAP,
+    DELETE_NODE,
     GET_K162_ID,
     GET_LINK_ENRICHED,
+    GET_LINK_MAP_ID,
     GET_MAP,
     GET_MAP_LINKS,
     GET_MAP_NODES,
     GET_NODE_ENRICHED,
+    GET_NODE_MAP_ID,
     GET_USER_CHARACTER,
     INSERT_LINK,
     INSERT_NODE,
@@ -35,15 +41,19 @@ from routes.maps.queries import (
     LIST_CORPORATION_MAPS,
     LIST_OWNED_MAPS,
     LIST_SHARED_MAPS,
+    UPDATE_LINK,
     UPDATE_MAP,
+    UPDATE_NODE_POSITION,
+    UPDATE_NODE_SYSTEM,
 )
 
 
 class MapService:
     """Map management business logic."""
 
-    def __init__(self, db_session: AsyncDriverAdapterBase) -> None:
+    def __init__(self, db_session: AsyncDriverAdapterBase, event_queue: MapEventQueue | None = None) -> None:
         self.db_session = db_session
+        self.event_queue = event_queue
 
     async def create_map(
         self,
@@ -248,6 +258,7 @@ class MapService:
         system_id: int,
         pos_x: float,
         pos_y: float,
+        user_id: UUID | None = None,
     ) -> EnrichedNodeInfo:
         """Create a new node on the map."""
         node_id = await self.db_session.select_value(
@@ -257,11 +268,127 @@ class MapService:
             pos_x,
             pos_y,
         )
-        return await self.db_session.select_one(
+        node = await self.db_session.select_one(
             GET_NODE_ENRICHED,
             node_id,
             schema_type=EnrichedNodeInfo,
         )
+
+        # Publish event
+        if self.event_queue:
+            event_id = await self.event_queue.get_next_event_id(map_id)
+            event = MapEvent.node_created(
+                event_id=event_id,
+                map_id=map_id,
+                node_id=node_id,
+                system_id=system_id,
+                pos_x=pos_x,
+                pos_y=pos_y,
+                user_id=user_id,
+            )
+            await self.event_queue.publish_event(event)
+
+        return node
+
+    async def update_node_position(
+        self,
+        node_id: UUID,
+        pos_x: float,
+        pos_y: float,
+        user_id: UUID | None = None,
+    ) -> EnrichedNodeInfo | None:
+        """Update a node's position."""
+        # Get the map_id for event publishing
+        map_id = await self.db_session.select_value(GET_NODE_MAP_ID, node_id)
+        if map_id is None:
+            return None
+
+        result = await self.db_session.execute(UPDATE_NODE_POSITION, node_id, pos_x, pos_y)
+        if result.num_rows == 0:
+            return None
+
+        node = await self.db_session.select_one(
+            GET_NODE_ENRICHED,
+            node_id,
+            schema_type=EnrichedNodeInfo,
+        )
+
+        # Publish event
+        if self.event_queue:
+            event_id = await self.event_queue.get_next_event_id(map_id)
+            event = MapEvent.node_updated(
+                event_id=event_id,
+                map_id=map_id,
+                node_id=node_id,
+                changes={"pos_x": pos_x, "pos_y": pos_y},
+                user_id=user_id,
+            )
+            await self.event_queue.publish_event(event)
+
+        return node
+
+    async def update_node_system(
+        self,
+        node_id: UUID,
+        system_id: int,
+        user_id: UUID | None = None,
+    ) -> EnrichedNodeInfo | None:
+        """Update a node's system."""
+        # Get the map_id for event publishing
+        map_id = await self.db_session.select_value(GET_NODE_MAP_ID, node_id)
+        if map_id is None:
+            return None
+
+        result = await self.db_session.execute(UPDATE_NODE_SYSTEM, node_id, system_id)
+        if result.num_rows == 0:
+            return None
+
+        node = await self.db_session.select_one(
+            GET_NODE_ENRICHED,
+            node_id,
+            schema_type=EnrichedNodeInfo,
+        )
+
+        # Publish event
+        if self.event_queue:
+            event_id = await self.event_queue.get_next_event_id(map_id)
+            event = MapEvent.node_updated(
+                event_id=event_id,
+                map_id=map_id,
+                node_id=node_id,
+                changes={"system_id": system_id},
+                user_id=user_id,
+            )
+            await self.event_queue.publish_event(event)
+
+        return node
+
+    async def delete_node(
+        self,
+        node_id: UUID,
+        user_id: UUID | None = None,
+    ) -> bool:
+        """Delete a node. Returns True if deleted."""
+        # Get the map_id for event publishing before deletion
+        map_id = await self.db_session.select_value(GET_NODE_MAP_ID, node_id)
+        if map_id is None:
+            return False
+
+        result = await self.db_session.execute(DELETE_NODE, node_id)
+        deleted = result.num_rows > 0
+
+        # Publish event
+        if deleted and self.event_queue:
+            event_id = await self.event_queue.get_next_event_id(map_id)
+            event = MapEvent.node_deleted(
+                event_id=event_id,
+                map_id=map_id,
+                node_id=node_id,
+                user_id=user_id,
+            )
+            await self.event_queue.publish_event(event)
+
+        return deleted
 
     # Link management
 
@@ -275,6 +402,7 @@ class MapService:
         source_node_id: UUID,
         target_node_id: UUID,
         wormhole_id: int | None = None,
+        user_id: UUID | None = None,
     ) -> EnrichedLinkInfo:
         """Create a new link between nodes. Defaults to K162 if no wormhole specified."""
         if wormhole_id is None:
@@ -287,13 +415,108 @@ class MapService:
             target_node_id,
             wormhole_id,
         )
-        return await self.db_session.select_one(
+        link = await self.db_session.select_one(
             GET_LINK_ENRICHED,
             link_id,
             schema_type=EnrichedLinkInfo,
         )
 
+        # Publish event
+        if self.event_queue:
+            event_id = await self.event_queue.get_next_event_id(map_id)
+            event = MapEvent.link_created(
+                event_id=event_id,
+                map_id=map_id,
+                link_id=link_id,
+                source_node_id=source_node_id,
+                target_node_id=target_node_id,
+                wormhole_id=wormhole_id,
+                user_id=user_id,
+            )
+            await self.event_queue.publish_event(event)
 
-def provide_map_service(db_session: AsyncDriverAdapterBase) -> MapService:
-    """Provide MapService with injected database session."""
-    return MapService(db_session)
+        return link
+
+    async def update_link(
+        self,
+        link_id: UUID,
+        wormhole_id: int | None = None,
+        lifetime_status: str | None = None,
+        mass_usage: int | None = None,
+        user_id: UUID | None = None,
+    ) -> EnrichedLinkInfo | None:
+        """Update a link."""
+        # Get the map_id for event publishing
+        map_id = await self.db_session.select_value(GET_LINK_MAP_ID, link_id)
+        if map_id is None:
+            return None
+
+        result = await self.db_session.execute(
+            UPDATE_LINK,
+            link_id,
+            wormhole_id,
+            lifetime_status,
+            mass_usage,
+        )
+        if result.num_rows == 0:
+            return None
+
+        link = await self.db_session.select_one(
+            GET_LINK_ENRICHED,
+            link_id,
+            schema_type=EnrichedLinkInfo,
+        )
+
+        # Publish event
+        if self.event_queue:
+            changes = {}
+            if wormhole_id is not None:
+                changes["wormhole_id"] = wormhole_id
+            if lifetime_status is not None:
+                changes["lifetime_status"] = lifetime_status
+            if mass_usage is not None:
+                changes["mass_usage"] = mass_usage
+
+            event_id = await self.event_queue.get_next_event_id(map_id)
+            event = MapEvent.link_updated(
+                event_id=event_id,
+                map_id=map_id,
+                link_id=link_id,
+                changes=changes,
+                user_id=user_id,
+            )
+            await self.event_queue.publish_event(event)
+
+        return link
+
+    async def delete_link(
+        self,
+        link_id: UUID,
+        user_id: UUID | None = None,
+    ) -> bool:
+        """Delete a link. Returns True if deleted."""
+        # Get the map_id for event publishing before deletion
+        map_id = await self.db_session.select_value(GET_LINK_MAP_ID, link_id)
+        if map_id is None:
+            return False
+
+        result = await self.db_session.execute(DELETE_LINK, link_id)
+        deleted = result.num_rows > 0
+
+        # Publish event
+        if deleted and self.event_queue:
+            event_id = await self.event_queue.get_next_event_id(map_id)
+            event = MapEvent.link_deleted(
+                event_id=event_id,
+                map_id=map_id,
+                link_id=link_id,
+                user_id=user_id,
+            )
+            await self.event_queue.publish_event(event)
+
+        return deleted
+
+
+def provide_map_service(db_session: AsyncDriverAdapterBase, event_queue: MapEventQueue) -> MapService:
+    """Provide MapService with injected database session and event queue."""
+    return MapService(db_session, event_queue)
