@@ -12,13 +12,14 @@
 	import '@xyflow/svelte/dist/style.css';
 	import { Progress } from '@skeletonlabs/skeleton-svelte';
 	import { apiClient } from '$lib/client/client';
-	import type { components } from '$lib/client/schema';
 	import SystemNode from './Node.svelte';
-
-	type NodeInfo =
-		components['schemas']['routes.maps.controller.MapController.create_nodeEnrichedNodeInfoResponseBody'];
-	type LinkInfo = components['schemas']['EnrichedLinkInfo'];
-	type SystemSearchResult = components['schemas']['SystemSearchResult'];
+	import {
+		transformNodes,
+		transformEdges,
+		formatSystemLabel,
+		type NodeInfo,
+		type SystemSearchResult
+	} from '$lib/helpers/mapHelpers';
 
 	const nodeTypes = {
 		default: SystemNode
@@ -58,27 +59,6 @@
 	function handleFlowInit() {
 		const flow = useSvelteFlow();
 		screenToFlowPosition = flow.screenToFlowPosition;
-	}
-
-	function transformNodes(apiNodes: NodeInfo[]): Node[] {
-		return apiNodes.map((node) => ({
-			id: node.id,
-			position: { x: node.pos_x, y: node.pos_y },
-			data: node
-		}));
-	}
-
-	function transformEdges(apiLinks: LinkInfo[]): Edge[] {
-		return apiLinks.map((link) => ({
-			id: link.id,
-			source: link.source_node_id,
-			target: link.target_node_id,
-			data: {
-				wormhole_id: link.wormhole_code,
-				mass_remaining: link.mass_usage,
-				status: link.lifetime_status
-			}
-		}));
 	}
 
 	async function loadMap() {
@@ -154,10 +134,6 @@
 		debounceTimer = setTimeout(() => {
 			searchSystems(value);
 		}, 300);
-	}
-
-	function formatSystemLabel(system: SystemSearchResult): string {
-		return system.name + ': ' + system.system_class;
 	}
 
 	async function handleSystemSelect(system: SystemSearchResult) {

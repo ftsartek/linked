@@ -5,9 +5,9 @@ export function classColour(class_name: string): string {
 		case 'C2':
 			return 'text-teal-400';
 		case 'C3':
-			return 'text-yellow-400';
+			return 'text-lime-400';
 		case 'C4':
-			return 'text-amber-400';
+			return 'text-yellow-400';
 		case 'C5':
 			return 'text-orange-400';
 		case 'C6':
@@ -29,11 +29,11 @@ export function classColour(class_name: string): string {
 		case 'Conflux':
 			return 'text-rose-400';
 		case 'HS':
-			return 'text-lime-500';
+			return 'text-green-500';
 		case 'LS':
-			return 'text-yellow-600';
+			return 'text-amber-600';
 		case 'NS':
-			return 'text-red-600';
+			return 'text-red-700';
 		default:
 			return 'gray';
 	}
@@ -70,4 +70,35 @@ export function secStatusColour(secStatus?: number | null): string {
 
 export function renderSecStatus(secStatus: number): string {
 	return secStatus.toFixed(1);
+}
+
+export function isShattered(class_name: string, system_name: string): boolean {
+	return (
+		class_name === 'C13' ||
+		class_name === 'Sentinel' ||
+		class_name === 'Conflux' ||
+		class_name === 'Barbican' ||
+		class_name === 'Vidette' ||
+		class_name === 'Redoubt' ||
+		system_name.startsWith('J0')
+	);
+}
+
+export function effectColour(effectName: string): string {
+	switch (effectName) {
+		case 'Black Hole':
+			return 'text-gray-300';
+		case 'Red Giant':
+			return 'text-red-500/90';
+		case 'Cataclysmic Variable':
+			return 'text-yellow-200';
+		case 'Pulsar':
+			return 'text-sky-400';
+		case 'Magnetar':
+			return 'text-pink-500/90 ';
+		case 'Wolf-Rayet Star':
+			return 'text-amber-500';
+		default:
+			return 'text-surface-500';
+	}
 }
