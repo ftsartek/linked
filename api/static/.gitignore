@@ -1,0 +1,5 @@
+preseed/*
+!preseed/curated/
+!preseed/sde/
+preseed/sde/*
+!.gitkeep
