@@ -1,4 +1,4 @@
-.PHONY: help dev dev-services dev-stop api web postgres postgres-stop valkey valkey-stop preseed schema clean cli
+.PHONY: help dev dev-services dev-stop api web web-build postgres postgres-stop valkey valkey-stop preseed schema clean cli
 
 # Configuration
 POSTGRES_USER ?= linked
@@ -16,6 +16,7 @@ help:
 	@echo "Individual Services:"
 	@echo "  api            - Start API server (port 8000)"
 	@echo "  web            - Start web dev server (port 5173)"
+	@echo "  web-build      - Build web for production (Node adapter)"
 	@echo "  postgres       - Start PostgreSQL container (port 5432)"
 	@echo "  valkey         - Start Valkey/Redis container (port 6379)"
 	@echo ""
@@ -64,6 +65,10 @@ api:
 # Web dev server
 web:
 	cd web && npm run dev
+
+# Web production build
+web-build:
+	cd web && npm run build
 
 # Valkey (Redis-compatible) container
 valkey:
