@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Main planet body -->
+  <path d="M32 4
+           A28 28 0 1 0 52 52
+           L44 42
+           L38 46
+           L32 32
+           L36 24
+           L32 4Z"
+        fill="currentColor"/>
+
+  <!-- Large detached chunk - upper right -->
+  <path d="M46 2
+           Q52 4, 54 10
+           L48 14
+           L44 8
+           Z"
+        fill="currentColor"/>
+
+  <!-- Medium detached chunk - right side -->
+  <path d="M56 14
+           Q60 20, 58 26
+           L52 24
+           L54 18
+           Z"
+        fill="currentColor"/>
+
+  <!-- Small detached chunk -->
+  <path d="M48 26
+           L52 30
+           L48 34
+           L44 30
+           Z"
+        fill="currentColor"/>
+</svg>

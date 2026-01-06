@@ -1,1 +1,26 @@
 @import 'tailwindcss';
+
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton-svelte';
+@import '@skeletonlabs/skeleton/themes/cerberus';
+
+/* SvelteFlow node styling - ensure node wrapper matches our content size */
+.svelte-flow__node-default {
+	width: 160px !important;
+	height: 80px !important;
+	padding: 0 !important;
+	overflow: visible !important;
+	border: none !important;
+	background: transparent !important;
+	border-radius: 0 !important;
+	box-shadow: none !important;
+}
+
+.svelte-flow__node-default.selected {
+	box-shadow: none !important;
+}
+
+/* Override SvelteFlow control button SVG fill for lucide icons */
+.svelte-flow__controls button.lucide-btn svg {
+	fill: none !important;
+}

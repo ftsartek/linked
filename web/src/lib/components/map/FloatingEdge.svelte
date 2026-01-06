@@ -1,0 +1,157 @@
+<script lang="ts" module>
+	export type EdgeType = components['schemas']['EdgeType'];
+	export type LifetimeStatus = 'stable' | 'aging' | 'critical' | 'eol';
+	export type MassStatus = 0 | 1 | 2; // 0=Fresh, 1=Reduced, 2=Critical
+
+	const lifetimeColors: Record<LifetimeStatus, string> = {
+		stable: 'rgba(59, 130, 246, 0.8)', // bright blue
+		aging: 'rgba(51, 108, 212, 0.8)', // deeper slate
+		critical: 'rgba(234, 179, 8, 0.8)', // yellow
+		eol: 'rgba(239, 68, 68, 0.8)' // red
+	};
+
+	const massDashPatterns: Record<MassStatus, string> = {
+		0: 'none', // Fresh - solid
+		1: '40 8', // Reduced - long dashes
+		2: '12 8' // Critical - short dashes
+	};
+</script>
+
+<script lang="ts">
+	import { getContext, untrack } from 'svelte';
+	import {
+		getBezierPath,
+		getSmoothStepPath,
+		getStraightPath,
+		useInternalNode,
+		useEdges,
+		useNodes,
+		type EdgeProps,
+		type InternalNode
+	} from '@xyflow/svelte';
+	import { getDistributedEdgeParams } from '$lib/helpers/floatingEdge';
+	import type { components } from '$lib/client/schema';
+
+	let { id, source, target, markerEnd, markerStart, data }: EdgeProps = $props();
+
+	// Get internal nodes to access position and dimensions
+	// useInternalNode returns { current: InternalNode | undefined }
+	// Edge source/target are static identifiers - intentionally capture initial values
+	const sourceNodeRef = untrack(() => useInternalNode(source));
+	const targetNodeRef = untrack(() => useInternalNode(target));
+
+	// Get all edges and nodes for distribution calculation
+	// useEdges/useNodes return { current: T[] } objects
+	const edges = useEdges();
+	const nodes = useNodes();
+
+	// Get edge type from context (set by Map.svelte), fallback to 'default'
+	const getEdgeType = getContext<() => EdgeType>('edgeType');
+	const edgeType: EdgeType = $derived(getEdgeType?.() ?? 'default');
+	const lifetimeStatus: LifetimeStatus = $derived((data?.status as LifetimeStatus) ?? 'stable');
+	const lifetimeStrokeColor = $derived(lifetimeColors[lifetimeStatus] ?? lifetimeColors.stable);
+	const massStatus: MassStatus = $derived((data?.mass_remaining as MassStatus) ?? 0);
+	const massDashArray = $derived(massDashPatterns[massStatus] ?? 'none');
+
+	const floatingParams = $derived.by(() => {
+		const sourceNode = sourceNodeRef.current;
+		const targetNode = targetNodeRef.current;
+		if (!sourceNode || !targetNode) {
+			return null;
+		}
+
+		// Build a node lookup from the nodes ref
+		// useNodes/useEdges return { current: T[] } objects, not stores
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- local variable in derived, not reactive state
+		const nodeMap = new Map<string, InternalNode>();
+
+		// Add our known internal nodes
+		nodeMap.set(source, sourceNode);
+		nodeMap.set(target, targetNode);
+
+		// For other nodes connected to our source/target, we need their positions
+		// The nodes.current contains Node objects which have position but not internals
+		// We'll need to construct a minimal InternalNode-like structure
+		for (const node of nodes.current) {
+			if (!nodeMap.has(node.id)) {
+				// Create a minimal internal node structure for position calculations
+				nodeMap.set(node.id, {
+					id: node.id,
+					measured: node.measured,
+					internals: {
+						positionAbsolute: node.position,
+						z: 0,
+						handleBounds: undefined
+					}
+				} as InternalNode);
+			}
+		}
+
+		const getNodeFn = (nodeId: string) => nodeMap.get(nodeId);
+
+		return getDistributedEdgeParams(sourceNode, targetNode, edges.current, getNodeFn, id, 4, 12);
+	});
+
+	const pathData = $derived.by(() => {
+		if (!floatingParams) {
+			return [''];
+		}
+
+		const { sx, sy, tx, ty, sourcePos, targetPos } = floatingParams;
+
+		switch (edgeType) {
+			case 'default':
+			case 'simplebezier':
+				return getBezierPath({
+					sourceX: sx,
+					sourceY: sy,
+					targetX: tx,
+					targetY: ty,
+					sourcePosition: sourcePos,
+					targetPosition: targetPos
+				});
+			case 'straight':
+				return getStraightPath({
+					sourceX: sx,
+					sourceY: sy,
+					targetX: tx,
+					targetY: ty
+				});
+			case 'step':
+				return getSmoothStepPath({
+					sourceX: sx,
+					sourceY: sy,
+					targetX: tx,
+					targetY: ty,
+					sourcePosition: sourcePos,
+					targetPosition: targetPos,
+					borderRadius: 0
+				});
+			case 'smoothstep':
+			default:
+				return getSmoothStepPath({
+					sourceX: sx,
+					sourceY: sy,
+					targetX: tx,
+					targetY: ty,
+					sourcePosition: sourcePos,
+					targetPosition: targetPos
+				});
+		}
+	});
+</script>
+
+{#if floatingParams}
+	<!-- Outer line (constant surface-950/80) -->
+	<path
+		d={pathData[0]}
+		style="stroke: rgba(60, 60, 60, 0.8); stroke-width: 8px; fill: none;"
+		marker-end={markerEnd}
+		marker-start={markerStart}
+	/>
+	<!-- Inner line (lifetime color with dash pattern based on mass status) -->
+	<path
+		d={pathData[0]}
+		style="stroke: {lifetimeStrokeColor}; stroke-width: 4px; fill: none; stroke-dasharray: {massDashArray};"
+	/>
+{/if}
