@@ -23,10 +23,10 @@ It also has a couple dependencies:
 While developing, if you've got a reasonably recent Docker version available, you can spin up a localhost stack with Dockerised dependencies:
 ```
 # If you haven't got the SDE/ESI data already collected, run:
-make cli CMD="collect all --user-agent='LinkedEVE/0.1.0 (linked@artek.nz)'"
+make cli CMD="collect all" # If user_agent's not set in your env, use something like `--user-agent='LinkedEVE-<owner>/0.1.0 (youremail@example.com)'`
 make dev
 ```
-This'll spin up the API at `http://localhost:8000` and web at `http://localhost:5173`.
+This'll spin up the API at `http://localhost:8000` and web at `http://localhost:5173`; Postgres & Redis will be running locally in Docker.
 
 # Production
 
