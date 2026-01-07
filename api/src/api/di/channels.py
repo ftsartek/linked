@@ -13,7 +13,7 @@ channels_plugin = ChannelsPlugin(
     backend=RedisChannelsStreamBackend(
         history=100,
         redis=channels_valkey,  # Valkey is Redis-compatible
-        key_prefix="LINKED_MAP_EVENTS",
+        key_prefix="MAP_EVENTS",
     ),
     arbitrary_channels_allowed=True,
     create_ws_route_handlers=False,

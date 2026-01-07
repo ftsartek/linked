@@ -29,7 +29,7 @@ def _resolve_user_agent(user_agent: str | None) -> str:
     except Exception:
         pass
     raise click.UsageError(
-        "User agent is required. Provide --user-agent, set LINKED_ESI_USER_AGENT, "
+        "User agent is required. Provide --user-agent, set ESI_USER_AGENT, "
         "or configure esi_user_agent in settings."
     )
 
@@ -40,7 +40,7 @@ CURATED_DIR = STATIC_DIR / "preseed" / "curated"
 
 # Dynamic data directory (configurable via env var, defaults to static/preseed for dev compatibility)
 _default_data_dir = STATIC_DIR / "preseed"
-DATA_DIR = Path(os.environ.get("LINKED_DATA_DIR", str(_default_data_dir)))
+DATA_DIR = Path(os.environ.get("DATA_DIR", str(_default_data_dir)))
 SDE_DIR = DATA_DIR / "sde"
 
 # SDE download URL
@@ -106,7 +106,7 @@ def collect() -> None:
 
 
 @collect.command()
-@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT")
+@click.option("--user-agent", envvar="ESI_USER_AGENT")
 async def regions(user_agent: str | None) -> None:
     """Collect all region data."""
     async with ESIClient(_resolve_user_agent(user_agent)) as client:
@@ -125,7 +125,7 @@ async def regions(user_agent: str | None) -> None:
 
 
 @collect.command()
-@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT")
+@click.option("--user-agent", envvar="ESI_USER_AGENT")
 async def constellations(user_agent: str | None) -> None:
     """Collect all constellation data."""
     async with ESIClient(_resolve_user_agent(user_agent)) as client:
@@ -143,7 +143,7 @@ async def constellations(user_agent: str | None) -> None:
 
 
 @collect.command()
-@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT")
+@click.option("--user-agent", envvar="ESI_USER_AGENT")
 async def systems(user_agent: str | None) -> None:
     """Collect all system data."""
     async with ESIClient(_resolve_user_agent(user_agent)) as client:
@@ -333,7 +333,7 @@ def _merge_wormhole_duplicates(
 
 
 @collect.command()
-@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT")
+@click.option("--user-agent", envvar="ESI_USER_AGENT")
 async def wormholes(user_agent: str | None) -> None:
     """Collect wormhole type data from ESI."""
     existing_spawns = load_existing_spawns()
@@ -398,7 +398,7 @@ async def download_sde() -> None:
 
 
 @collect.command("all")
-@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT")
+@click.option("--user-agent", envvar="ESI_USER_AGENT")
 async def import_all(user_agent: str | None) -> None:
     """Collect all static data (SDE, regions, constellations, systems, wormholes)."""
     # Download SDE data first
