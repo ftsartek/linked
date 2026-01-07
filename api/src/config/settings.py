@@ -11,7 +11,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_prefix="LINKED_",
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",
@@ -103,5 +102,5 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    # Required fields are loaded from LINKED_* environment variables by pydantic-settings
+    # Required fields are loaded from environment variables by pydantic-settings
     return Settings()  # type: ignore[call-arg]

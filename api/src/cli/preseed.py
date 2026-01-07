@@ -18,7 +18,7 @@ CURATED_DIR = STATIC_DIR / "preseed" / "curated"
 
 # Dynamic data directory (configurable via env var, defaults to static/preseed for dev compatibility)
 _default_data_dir = STATIC_DIR / "preseed"
-DATA_DIR = Path(os.environ.get("LINKED_DATA_DIR", str(_default_data_dir)))
+DATA_DIR = Path(os.environ.get("DATA_DIR", str(_default_data_dir)))
 SDE_DIR = DATA_DIR / "sde"
 
 # Unidentified placeholder systems with negative IDs
