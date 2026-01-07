@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -11,9 +12,14 @@ from database import init_db, provide_session
 if TYPE_CHECKING:
     from sqlspec.adapters.asyncpg import AsyncpgDriver
 
-PRESEED_DIR = Path(__file__).parent.parent.parent / "static" / "preseed"
-CURATED_DIR = PRESEED_DIR / "curated"
-SDE_DIR = PRESEED_DIR / "sde"
+# Static directory (baked into container)
+STATIC_DIR = Path(__file__).parent.parent.parent / "static"
+CURATED_DIR = STATIC_DIR / "preseed" / "curated"
+
+# Dynamic data directory (configurable via env var, defaults to static/preseed for dev compatibility)
+_default_data_dir = STATIC_DIR / "preseed"
+DATA_DIR = Path(os.environ.get("LINKED_DATA_DIR", str(_default_data_dir)))
+SDE_DIR = DATA_DIR / "sde"
 
 # Unidentified placeholder systems with negative IDs
 # Format: (id, system_class, name)
@@ -32,13 +38,13 @@ UNIDENTIFIED_SYSTEMS = [
 ]
 
 
-def load_yaml(filename: str, directory: Path = PRESEED_DIR) -> dict | list:
+def load_yaml(filename: str, directory: Path = DATA_DIR) -> dict | list:
     """Load a YAML file from the specified directory."""
     with open(directory / filename) as f:
         return yaml.safe_load(f)
 
 
-def load_yaml_dict(filename: str, directory: Path = PRESEED_DIR) -> dict:
+def load_yaml_dict(filename: str, directory: Path = DATA_DIR) -> dict:
     """Load a YAML file that contains a dict at root level."""
     result = load_yaml(filename, directory)
     if not isinstance(result, dict):
@@ -46,7 +52,7 @@ def load_yaml_dict(filename: str, directory: Path = PRESEED_DIR) -> dict:
     return result
 
 
-def load_yaml_list(filename: str, directory: Path = PRESEED_DIR) -> list:
+def load_yaml_list(filename: str, directory: Path = DATA_DIR) -> list:
     """Load a YAML file that contains a list at root level."""
     result = load_yaml(filename, directory)
     if not isinstance(result, list):
