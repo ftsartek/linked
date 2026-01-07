@@ -104,6 +104,7 @@ class Settings(BaseSettings):
     db_name: str = "linked"
     db_pool_min_size: int = 5
     db_pool_max_size: int = 20
+    db_ssl: bool = False
 
 
 @lru_cache
