@@ -64,17 +64,23 @@ class Settings(BaseSettings):
     valkey_port: int = 6379
     valkey_session_db: int = 0
     valkey_event_db: int = 1
+    valkey_user: str = "default"
+    valkey_password: str | None = None
     session_max_age: int = 604800  # 7 days in seconds
 
     @property
     def valkey_session_url(self) -> str:
         """Build Valkey URL for session storage."""
-        return f"valkey://{self.valkey_host}:{self.valkey_port}/{self.valkey_session_db}"
+        if self.valkey_password:
+            return f"valkey://{self.valkey_user}:{self.valkey_password}@{self.valkey_host}:{self.valkey_port}/{self.valkey_session_db}"
+        return f"valkey://{self.valkey_user}@{self.valkey_host}:{self.valkey_port}/{self.valkey_session_db}"
 
     @property
     def valkey_event_url(self) -> str:
         """Build Valkey URL for event storage."""
-        return f"valkey://{self.valkey_host}:{self.valkey_port}/{self.valkey_event_db}"
+        if self.valkey_password:
+            return f"valkey://{self.valkey_user}:{self.valkey_password}@{self.valkey_host}:{self.valkey_port}/{self.valkey_session_db}"
+        return f"valkey://{self.valkey_user}@{self.valkey_host}:{self.valkey_port}/{self.valkey_event_db}"
 
     # Token encryption (Fernet key, generate with:
     # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
