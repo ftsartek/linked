@@ -1,6 +1,6 @@
 import createClient, { type Middleware } from 'openapi-fetch';
 import type { paths } from './schema';
-import { PUBLIC_API_BASE_URL } from '$env/static/public';
+import { env } from '$env/dynamic/public';
 
 /**
  * Retrieves the CSRF token from cookies in the browser.
@@ -40,7 +40,7 @@ const csrfMiddleware: Middleware = {
 };
 
 export const apiClient = createClient<paths>({
-	baseUrl: PUBLIC_API_BASE_URL,
+	baseUrl: env.PUBLIC_API_BASE_URL,
 	fetch: (input: Request) => fetch(input, { credentials: 'include' })
 });
 
@@ -60,5 +60,5 @@ export function getApiUrl(path: string): string {
 	}
 	// Ensure path starts with /
 	const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-	return `${PUBLIC_API_BASE_URL}${normalizedPath}`;
+	return `${env.PUBLIC_API_BASE_URL}${normalizedPath}`;
 }

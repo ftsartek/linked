@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+import os
 import zipfile
 from collections.abc import Awaitable, Callable
 from pathlib import Path
@@ -12,13 +13,35 @@ import httpx
 import msgspec
 import yaml
 
+from config.settings import get_settings
 from esi_client import ESIClient
 from esi_client.models import DogmaAttribute
 
+
+def _resolve_user_agent(user_agent: str | None) -> str:
+    """Resolve user agent from CLI option or fall back to settings."""
+    if user_agent:
+        return user_agent
+    try:
+        settings_ua = get_settings().esi_user_agent
+        if settings_ua:
+            return settings_ua
+    except Exception:
+        pass
+    raise click.UsageError(
+        "User agent is required. Provide --user-agent, set LINKED_ESI_USER_AGENT, "
+        "or configure esi_user_agent in settings."
+    )
+
+
+# Static directory (baked into container)
 STATIC_DIR = Path(__file__).parent.parent.parent / "static"
-PRESEED_DIR = STATIC_DIR / "preseed"
-CURATED_DIR = PRESEED_DIR / "curated"
-SDE_DIR = PRESEED_DIR / "sde"
+CURATED_DIR = STATIC_DIR / "preseed" / "curated"
+
+# Dynamic data directory (configurable via env var, defaults to static/preseed for dev compatibility)
+_default_data_dir = STATIC_DIR / "preseed"
+DATA_DIR = Path(os.environ.get("LINKED_DATA_DIR", str(_default_data_dir)))
+SDE_DIR = DATA_DIR / "sde"
 
 # SDE download URL
 SDE_URL = "https://developers.eveonline.com/static-data/eve-online-static-data-latest-yaml.zip"
@@ -83,10 +106,10 @@ def collect() -> None:
 
 
 @collect.command()
-@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT", required=True)
-async def regions(user_agent: str) -> None:
+@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT")
+async def regions(user_agent: str | None) -> None:
     """Collect all region data."""
-    async with ESIClient(user_agent) as client:
+    async with ESIClient(_resolve_user_agent(user_agent)) as client:
         region_ids = await client.get_regions()
         region_list = await fetch_with_rate_limit(region_ids, client.get_region, "regions")
 
@@ -94,7 +117,7 @@ async def regions(user_agent: str) -> None:
     region_list.sort(key=lambda r: r.region_id)
     data = [struct_to_dict(r) for r in region_list]
 
-    output_path = PRESEED_DIR / "regions.yaml"
+    output_path = DATA_DIR / "regions.yaml"
     with output_path.open("w") as f:
         yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
 
@@ -102,17 +125,17 @@ async def regions(user_agent: str) -> None:
 
 
 @collect.command()
-@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT", required=True)
-async def constellations(user_agent: str) -> None:
+@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT")
+async def constellations(user_agent: str | None) -> None:
     """Collect all constellation data."""
-    async with ESIClient(user_agent) as client:
+    async with ESIClient(_resolve_user_agent(user_agent)) as client:
         constellation_ids = await client.get_constellations()
         constellation_list = await fetch_with_rate_limit(constellation_ids, client.get_constellation, "constellations")
 
     constellation_list.sort(key=lambda c: c.constellation_id)
     data = [struct_to_dict(c) for c in constellation_list]
 
-    output_path = PRESEED_DIR / "constellations.yaml"
+    output_path = DATA_DIR / "constellations.yaml"
     with output_path.open("w") as f:
         yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
 
@@ -120,17 +143,17 @@ async def constellations(user_agent: str) -> None:
 
 
 @collect.command()
-@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT", required=True)
-async def systems(user_agent: str) -> None:
+@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT")
+async def systems(user_agent: str | None) -> None:
     """Collect all system data."""
-    async with ESIClient(user_agent) as client:
+    async with ESIClient(_resolve_user_agent(user_agent)) as client:
         system_ids = await client.get_systems()
         system_list = await fetch_with_rate_limit(system_ids, client.get_system, "systems")
 
     system_list.sort(key=lambda s: s.system_id)
     data = [struct_to_dict(s) for s in system_list]
 
-    output_path = PRESEED_DIR / "systems.yaml"
+    output_path = DATA_DIR / "systems.yaml"
     with output_path.open("w") as f:
         yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
 
@@ -210,7 +233,7 @@ def load_existing_spawns() -> dict[str, list[int] | None]:
     Returns a mapping of wormhole code -> source class IDs.
     """
     spawns_path = CURATED_DIR / "wormhole_spawns.yaml"  # Curated data
-    info_path = PRESEED_DIR / "wormhole_info.yaml"  # Generated data
+    info_path = DATA_DIR / "wormhole_info.yaml"  # Generated data
 
     if not spawns_path.exists() or not info_path.exists():
         return {}
@@ -310,13 +333,13 @@ def _merge_wormhole_duplicates(
 
 
 @collect.command()
-@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT", required=True)
-async def wormholes(user_agent: str) -> None:
+@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT")
+async def wormholes(user_agent: str | None) -> None:
     """Collect wormhole type data from ESI."""
     existing_spawns = load_existing_spawns()
     click.echo(f"Loaded {len(existing_spawns)} existing wormhole spawn mappings")
 
-    async with ESIClient(user_agent) as client:
+    async with ESIClient(_resolve_user_agent(user_agent)) as client:
         click.echo("Fetching wormhole group...")
         wh_group = await client.get_group(WORMHOLE_GROUP_ID)
         type_ids = [t for t in wh_group.types if t not in SKIP_TYPE_IDS]
@@ -335,7 +358,7 @@ async def wormholes(user_agent: str) -> None:
         click.echo(f"  Existing codes not found in ESI: {sorted(missing_codes)}")
 
     # Write wormhole_info.yaml (wormhole_spawns.yaml is curated, not generated)
-    info_path = PRESEED_DIR / "wormhole_info.yaml"
+    info_path = DATA_DIR / "wormhole_info.yaml"
     with info_path.open("w") as f:
         yaml.safe_dump(wormhole_info, f, sort_keys=True, allow_unicode=True)
     click.echo(f"Wrote {len(wormhole_info)} wormhole entries to {info_path}")
@@ -375,13 +398,13 @@ async def download_sde() -> None:
 
 
 @collect.command("all")
-@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT", required=True)
-async def import_all(user_agent: str) -> None:
+@click.option("--user-agent", envvar="LINKED_ESI_USER_AGENT")
+async def import_all(user_agent: str | None) -> None:
     """Collect all static data (SDE, regions, constellations, systems, wormholes)."""
     # Download SDE data first
     await download_sde()
 
-    async with ESIClient(user_agent) as client:
+    async with ESIClient(_resolve_user_agent(user_agent)) as client:
         # Regions
         region_ids = await client.get_regions()
         region_list = await fetch_with_rate_limit(region_ids, client.get_region, "regions")
@@ -409,7 +432,7 @@ async def import_all(user_agent: str) -> None:
         ("systems", system_list),
     ]:
         data = [struct_to_dict(item) for item in items]
-        output_path = PRESEED_DIR / f"{name}.yaml"
+        output_path = DATA_DIR / f"{name}.yaml"
         with output_path.open("w") as f:
             yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
         click.echo(f"Wrote {len(data)} {name} to {output_path}")
@@ -420,7 +443,7 @@ async def import_all(user_agent: str) -> None:
     wormhole_info = _merge_wormhole_duplicates(code_to_types)
 
     # Write wormhole_info.yaml (wormhole_spawns.yaml is curated, not generated)
-    info_path = PRESEED_DIR / "wormhole_info.yaml"
+    info_path = DATA_DIR / "wormhole_info.yaml"
     with info_path.open("w") as f:
         yaml.safe_dump(wormhole_info, f, sort_keys=True, allow_unicode=True)
     click.echo(f"Wrote {len(wormhole_info)} wormhole entries to {info_path}")

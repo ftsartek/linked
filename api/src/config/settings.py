@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
+from cryptography.fernet import Fernet
 from litestar.types import Method
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -41,6 +42,7 @@ class Settings(BaseSettings):
     eve_client_id: str = Field(description="EVE SSO application client ID")
     eve_client_secret: str = Field(description="EVE SSO application client secret")
     eve_callback_url: str = "http://localhost:8000/auth/callback"
+    # TODO: Actually set these to useful values
     eve_scopes: list[str] = Field(
         default_factory=lambda: [
             "publicData",
@@ -77,7 +79,10 @@ class Settings(BaseSettings):
 
     # Token encryption (Fernet key, generate with:
     # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
-    token_encryption_key: str = Field(min_length=32, description="Fernet key for encrypting refresh tokens")
+    token_encryption_key: str = Field(
+        min_length=32,
+        description="Fernet key for encrypting refresh tokens",
+    )
 
     # Frontend redirect URL after auth
     frontend_url: str = "http://localhost:5173"
