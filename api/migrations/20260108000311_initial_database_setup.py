@@ -1,4 +1,4 @@
-"""SQLSpec Migration - Initial database setup
+"""Initial database setup
 Description: Initial database setup
 Version: 20260108000311
 Created: 2026-01-08T00:03:11.262237+00:00
