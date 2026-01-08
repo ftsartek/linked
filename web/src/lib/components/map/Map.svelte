@@ -169,6 +169,31 @@
 		await updateNodePosition(map_id, targetNode.id, targetNode.position.x, targetNode.position.y);
 	}
 
+	async function handleSelectionDragStop(_event: MouseEvent, draggedNodes: Node[]) {
+		for (const node of draggedNodes) {
+			await updateNodePosition(map_id, node.id, node.position.x, node.position.y);
+		}
+	}
+
+	async function handleBeforeDelete({
+		nodes: deletedNodes,
+		edges: deletedEdges
+	}: {
+		nodes: Node[];
+		edges: Edge[];
+	}): Promise<boolean> {
+		// Attempt all deletions and only allow local removal if all succeed
+		for (const node of deletedNodes) {
+			const result = await removeNode(map_id, node.id);
+			if (!result.success) return false;
+		}
+		for (const edge of deletedEdges) {
+			const result = await removeEdge(map_id, edge.id);
+			if (!result.success) return false;
+		}
+		return true;
+	}
+
 	const handleBeforeConnect = (connection: { source: string; target: string }) => {
 		createEdge(map_id, connection.source, connection.target);
 		return null;
@@ -488,6 +513,7 @@
 				elementsSelectable={!isLocked}
 				nodesDraggable={!isLocked}
 				nodesConnectable={!isLocked}
+				deleteKey={isLocked ? null : ['Backspace', 'Delete']}
 				connectionLineType={ConnectionLineType.Straight}
 				oninit={handleFlowInit}
 				onmoveend={handleMoveEnd}
@@ -495,9 +521,11 @@
 				onpaneclick={handlePaneClick}
 				onbeforeconnect={handleBeforeConnect}
 				onnodedragstop={handleNodeDragStop}
+				onselectiondragstop={handleSelectionDragStop}
 				onnodecontextmenu={handleNodeContextMenu}
 				onedgecontextmenu={handleEdgeContextMenu}
 				onselectionchange={handleSelectionChange}
+				onbeforedelete={handleBeforeDelete}
 				style="background-color: rgba(0, 0, 0, 0.75);"
 				class="backdrop-blur-2xl"
 			>
