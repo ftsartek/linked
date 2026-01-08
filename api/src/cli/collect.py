@@ -29,8 +29,7 @@ def _resolve_user_agent(user_agent: str | None) -> str:
     except Exception:
         pass
     raise click.UsageError(
-        "User agent is required. Provide --user-agent, set ESI_USER_AGENT, "
-        "or configure esi_user_agent in settings."
+        "User agent is required. Provide --user-agent, set ESI_USER_AGENT, or configure esi_user_agent in settings."
     )
 
 
@@ -39,7 +38,7 @@ STATIC_DIR = Path(__file__).parent.parent.parent / "static"
 CURATED_DIR = STATIC_DIR / "preseed" / "curated"
 
 # Dynamic data directory (configurable via env var, defaults to static/preseed for dev compatibility)
-_default_data_dir = STATIC_DIR / "preseed"
+_default_data_dir = Path("/var/lib/linked/preseed")
 DATA_DIR = Path(os.environ.get("DATA_DIR", str(_default_data_dir)))
 SDE_DIR = DATA_DIR / "sde"
 

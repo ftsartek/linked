@@ -24,11 +24,14 @@ COPY svelte.config.js vite.config.ts tsconfig.json ./
 RUN npm run build
 
 # Copy supervisor configuration
-COPY supervisord.conf /etc/supervisor/supervisord.conf
+COPY supervisord.conf /etc/linked/supervisord.conf
 
-# Set ownership of app directory
-RUN chown -R www-data:www-data /app
+# Set up directories and ownership
+RUN mkdir -p /var/run/supervisor && \
+    chown -R www-data:www-data /app /var/run/supervisor /etc/linked
 
 EXPOSE 3000
 
-CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+USER www-data
+
+CMD ["supervisord", "-c", "/etc/linked/supervisord.conf"]

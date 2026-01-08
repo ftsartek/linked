@@ -4,17 +4,6 @@ from uuid import UUID
 
 import msgspec
 
-CREATE_STMT = """\
-CREATE TABLE IF NOT EXISTS map_character (
-    map_id UUID NOT NULL REFERENCES map(id) ON DELETE CASCADE,
-    character_id BIGINT NOT NULL REFERENCES character(id) ON DELETE CASCADE,
-    read_only BOOLEAN NOT NULL DEFAULT true,
-    PRIMARY KEY (map_id, character_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_map_character_character_id ON map_character(character_id);
-"""
-
 INSERT_STMT = """\
 INSERT INTO map_character (map_id, character_id, read_only)
 VALUES ($1, $2, $3)

@@ -2,27 +2,6 @@ from __future__ import annotations
 
 import msgspec
 
-CREATE_STMT = """
-CREATE TABLE IF NOT EXISTS wormhole (
-    id SERIAL PRIMARY KEY,
-    code TEXT UNIQUE NOT NULL,
-    eve_type_id INTEGER,
-    sources INTEGER[],
-    target_class INTEGER,
-    mass_total BIGINT,
-    mass_jump_max BIGINT,
-    mass_regen BIGINT,
-    lifetime REAL,
-    target_regions INTEGER[],
-    target_constellations INTEGER[],
-    target_systems INTEGER[]
-);
-
-CREATE INDEX IF NOT EXISTS idx_wormhole_sources ON wormhole USING GIN (sources);
-CREATE INDEX IF NOT EXISTS idx_wormhole_target_class ON wormhole(target_class);
-CREATE INDEX IF NOT EXISTS idx_wormhole_code_trgm ON wormhole USING GIN (code gin_trgm_ops);
-"""
-
 INSERT_STMT = """
 INSERT INTO wormhole
     (code, eve_type_id, sources, target_class, mass_total, mass_jump_max, mass_regen,

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import asyncclick as click
 import yaml
 
-from database import init_db, provide_session
+from database import provide_session
 
 if TYPE_CHECKING:
     from sqlspec.adapters.asyncpg import AsyncpgDriver
@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 STATIC_DIR = Path(__file__).parent.parent.parent / "static"
 CURATED_DIR = STATIC_DIR / "preseed" / "curated"
 
-# Dynamic data directory (configurable via env var, defaults to static/preseed for dev compatibility)
-_default_data_dir = STATIC_DIR / "preseed"
+# Dynamic data directory (configurable via env var)
+_default_data_dir = Path("/var/lib/linked/preseed")
 DATA_DIR = Path(os.environ.get("DATA_DIR", str(_default_data_dir)))
 SDE_DIR = DATA_DIR / "sde"
 
@@ -453,9 +453,6 @@ async def cleanup_orphaned_records(
 @click.command()
 async def preseed() -> None:
     """Import static universe data into the database."""
-    click.echo("Initializing database tables...")
-    await init_db()
-
     click.echo("Loading YAML files...")
     # Curated data (manually maintained)
     effects_data = load_yaml_dict("effects.yaml", CURATED_DIR)

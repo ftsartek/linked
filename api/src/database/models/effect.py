@@ -2,14 +2,6 @@ from __future__ import annotations
 
 import msgspec
 
-CREATE_STMT = """\
-CREATE TABLE IF NOT EXISTS effect (
-    id SERIAL PRIMARY KEY,
-    name TEXT UNIQUE NOT NULL,
-    buffs JSONB,
-    debuffs JSONB
-);"""
-
 INSERT_STMT = """\
 INSERT INTO effect (name, buffs, debuffs)
 VALUES ($1, $2, $3)

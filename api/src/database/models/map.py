@@ -5,29 +5,6 @@ from uuid import UUID
 
 import msgspec
 
-CREATE_STMT = """\
-CREATE TABLE IF NOT EXISTS map (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    description TEXT,
-    is_public BOOLEAN NOT NULL DEFAULT FALSE,
-    public_read_only BOOLEAN NOT NULL DEFAULT TRUE,
-    edge_type TEXT NOT NULL DEFAULT 'default',
-    rankdir TEXT NOT NULL DEFAULT 'TB',
-    auto_layout BOOLEAN NOT NULL DEFAULT FALSE,
-    node_sep INTEGER NOT NULL DEFAULT 80,
-    rank_sep INTEGER NOT NULL DEFAULT 60,
-    date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    date_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_map_owner_id ON map(owner_id);
-CREATE INDEX IF NOT EXISTS idx_map_name ON map(name);
-CREATE INDEX IF NOT EXISTS idx_map_is_public ON map(is_public);
-CREATE INDEX IF NOT EXISTS idx_map_date_created ON map(date_created);
-"""
-
 INSERT_STMT = """\
 INSERT INTO map
     (owner_id, name, description, is_public, public_read_only, edge_type, rankdir, auto_layout, node_sep, rank_sep)
