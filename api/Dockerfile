@@ -54,7 +54,7 @@ COPY entrypoint.sh /entrypoint.sh
 
 # Create virtual environment, sync dependencies, and set up directories
 RUN uv sync --frozen && \
-    mkdir -p /var/lib/linked/preseed/sde /var/cache/linked/images /var/cache/uv /var/run/supervisor && \
+    mkdir -p /var/lib/linked/preseed/sde /var/cache/linked/images /var/cache/uv /var/run/supervisor /etc/linked && \
     chown -R www-data:www-data /var/lib/linked /var/cache/linked /var/cache/uv /opt/uv /app /var/run/supervisor /etc/linked && \
     chmod +x /entrypoint.sh
 
