@@ -5,18 +5,6 @@ from uuid import UUID
 
 import msgspec
 
-CREATE_STMT = """\
-CREATE TABLE IF NOT EXISTS map_subscription (
-    map_id UUID NOT NULL REFERENCES map(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-    date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (map_id, user_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_map_subscription_user_id ON map_subscription(user_id);
-CREATE INDEX IF NOT EXISTS idx_map_subscription_map_id ON map_subscription(map_id);
-"""
-
 INSERT_STMT = """\
 INSERT INTO map_subscription (map_id, user_id)
 VALUES ($1, $2)

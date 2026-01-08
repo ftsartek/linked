@@ -4,24 +4,6 @@ from datetime import datetime
 
 import msgspec
 
-CREATE_STMT = """\
-CREATE TABLE IF NOT EXISTS corporation (
-    id BIGINT PRIMARY KEY,
-    name TEXT NOT NULL,
-    ticker TEXT NOT NULL,
-    alliance_id BIGINT,
-    member_count INTEGER,
-    date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    date_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_corporation_alliance_id ON corporation(alliance_id);
-CREATE INDEX IF NOT EXISTS idx_corporation_name ON corporation(name);
-CREATE INDEX IF NOT EXISTS idx_corporation_ticker ON corporation(ticker);
-CREATE INDEX IF NOT EXISTS idx_corporation_name_trgm ON corporation USING GIN (name gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS idx_corporation_ticker_trgm ON corporation USING GIN (ticker gin_trgm_ops);
-"""
-
 INSERT_STMT = """\
 INSERT INTO corporation (id, name, ticker, alliance_id, member_count)
 VALUES ($1, $2, $3, $4, $5)

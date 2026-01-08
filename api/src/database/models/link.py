@@ -7,35 +7,6 @@ import msgspec
 
 from utils.enums import LifetimeStatus
 
-CREATE_STMT = """
-CREATE TABLE IF NOT EXISTS link (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    map_id UUID NOT NULL REFERENCES map(id) ON DELETE CASCADE,
-    source_node_id UUID NOT NULL REFERENCES node(id) ON DELETE CASCADE,
-    target_node_id UUID NOT NULL REFERENCES node(id) ON DELETE CASCADE,
-    wormhole_id INTEGER REFERENCES wormhole(id),
-    lifetime_status TEXT NOT NULL DEFAULT 'stable',
-    date_lifetime_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    mass_usage BIGINT NOT NULL DEFAULT 0,
-    date_mass_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    date_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    date_deleted TIMESTAMPTZ
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_link_map_nodes_unique
-ON link(map_id, source_node_id, target_node_id)
-WHERE date_deleted IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_link_map_id ON link(map_id);
-CREATE INDEX IF NOT EXISTS idx_link_source_node_id ON link(source_node_id);
-CREATE INDEX IF NOT EXISTS idx_link_target_node_id ON link(target_node_id);
-CREATE INDEX IF NOT EXISTS idx_link_wormhole_id ON link(wormhole_id);
-CREATE INDEX IF NOT EXISTS idx_link_lifetime_status ON link(lifetime_status);
-CREATE INDEX IF NOT EXISTS idx_link_mass_usage ON link(mass_usage);
-CREATE INDEX IF NOT EXISTS idx_link_date_deleted ON link(date_deleted);
-"""
-
 INSERT_STMT = """
 INSERT INTO link (map_id, source_node_id, target_node_id, wormhole_id,
                   lifetime_status, date_lifetime_updated, mass_usage, date_mass_updated)

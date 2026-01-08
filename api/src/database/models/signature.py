@@ -25,39 +25,6 @@ class SignatureSubgroup(StrEnum):
     WORMHOLE = "wormhole"  # Wormhole
 
 
-CREATE_STMT = """\
-CREATE TABLE IF NOT EXISTS signature (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    node_id UUID NOT NULL REFERENCES node(id) ON DELETE CASCADE,
-    map_id UUID NOT NULL REFERENCES map(id) ON DELETE CASCADE,
-    code TEXT NOT NULL,
-    group_type TEXT NOT NULL,
-    subgroup TEXT,
-    type TEXT,
-    link_id UUID REFERENCES link(id) ON DELETE SET NULL,
-    wormhole_id INTEGER REFERENCES wormhole(id),
-    date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    date_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    date_deleted TIMESTAMPTZ
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS idx_signature_node_code_unique
-ON signature(node_id, code)
-WHERE date_deleted IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_signature_node_id ON signature(node_id);
-CREATE INDEX IF NOT EXISTS idx_signature_map_id ON signature(map_id);
-CREATE INDEX IF NOT EXISTS idx_signature_link_id ON signature(link_id);
-CREATE INDEX IF NOT EXISTS idx_signature_wormhole_id ON signature(wormhole_id);
-CREATE INDEX IF NOT EXISTS idx_signature_date_deleted ON signature(date_deleted);
-
-DROP TRIGGER IF EXISTS trigger_signature_updated_at ON signature;
-CREATE TRIGGER trigger_signature_updated_at
-    BEFORE UPDATE ON signature
-    FOR EACH ROW
-    EXECUTE FUNCTION trigger_updated_at();
-"""
-
 INSERT_STMT = """\
 INSERT INTO signature (node_id, map_id, code, group_type, subgroup, type, link_id, wormhole_id)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)

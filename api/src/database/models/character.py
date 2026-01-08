@@ -5,24 +5,6 @@ from uuid import UUID
 
 import msgspec
 
-CREATE_STMT = """\
-CREATE TABLE IF NOT EXISTS character (
-    id BIGINT PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-    name TEXT NOT NULL,
-    corporation_id BIGINT,
-    alliance_id BIGINT,
-    date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    date_updated TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_character_user_id ON character(user_id);
-CREATE INDEX IF NOT EXISTS idx_character_corporation_id ON character(corporation_id);
-CREATE INDEX IF NOT EXISTS idx_character_alliance_id ON character(alliance_id);
-CREATE INDEX IF NOT EXISTS idx_character_name ON character(name);
-CREATE INDEX IF NOT EXISTS idx_character_name_trgm ON character USING GIN (name gin_trgm_ops);
-"""
-
 INSERT_STMT = """\
 INSERT INTO character (id, user_id, name, corporation_id, alliance_id)
 VALUES ($1, $2, $3, $4, $5)

@@ -5,21 +5,6 @@ from uuid import UUID
 
 import msgspec
 
-CREATE_STMT = """
-CREATE TABLE IF NOT EXISTS refresh_token (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    character_id BIGINT NOT NULL REFERENCES character(id) ON DELETE CASCADE,
-    token BYTEA NOT NULL,
-    scopes TEXT[] NOT NULL DEFAULT '{}',
-    expires_at TIMESTAMPTZ,
-    date_created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    date_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE(character_id)
-);
-
-CREATE INDEX IF NOT EXISTS idx_refresh_token_character_id ON refresh_token(character_id);
-"""
-
 UPSERT_STMT = """
 INSERT INTO refresh_token (character_id, token, scopes, expires_at)
 VALUES ($1, $2, $3, $4)

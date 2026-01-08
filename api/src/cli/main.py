@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncclick as click
 
 from .collect import collect
+from .migrate import migrate
 from .preseed import preseed
 from .schema import schema
 
@@ -14,6 +15,7 @@ def cli() -> None:
 
 
 cli.add_command(collect)
+cli.add_command(migrate)
 cli.add_command(preseed)
 cli.add_command(schema)
 
