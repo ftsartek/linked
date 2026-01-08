@@ -3,7 +3,6 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from cryptography.fernet import Fernet
 from litestar.types import Method
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -93,7 +92,7 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:5173"
 
     # Image cache
-    image_cache_dir: str = "./cache/images"
+    image_cache_dir: str = "/var/cache/linked/images"
     image_cache_ttl_seconds: int = 259200  # 3 days
 
     # Database

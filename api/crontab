@@ -1,0 +1,4 @@
+# Linked EVE crontab - managed by supercronic
+# Format: minute hour day month weekday command
+# Example: */5 * * * * uv run linked some-command
+
