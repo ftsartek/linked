@@ -4,7 +4,8 @@ Version: 20260108000311
 Created: 2026-01-08T00:03:11.262237+00:00
 Author: Jordan Russell <jordan@artek.nz>"""
 
-from typing import Iterable
+from collections.abc import Iterable
+
 
 async def up(context: object | None = None) -> str | Iterable[str]:
     """Apply the migration (upgrade)."""
@@ -316,6 +317,7 @@ async def up(context: object | None = None) -> str | Iterable[str]:
         EXECUTE FUNCTION trigger_updated_at();
     """,
     ]
+
 
 async def down(context: object | None = None) -> str | Iterable[str]:
     """Reverse the migration."""

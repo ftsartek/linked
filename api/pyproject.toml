@@ -67,20 +67,16 @@ target-version = "py314"
 
 [tool.ruff.lint]
 
-select = ["E", "F", "W", "C", "I", "N", "A", "COM", "C4", "INP", "Q", "RET", "SIM", "ARG", "PLW", "UP", "ANN", "TID"]
+select = ["E", "F", "W", "C", "I", "N", "A", "COM", "C4", "INP", "Q", "RET", "SIM", "ARG", "PLW", "UP", "ANN", "TID", "FA102"]
 ignore = ["COM812", "A005", "ANN401"]
 fixable = ["ALL"]
 unfixable = []
 
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-
-[tool.ruff.lint.isort]
-required-imports = ["from __future__ import annotations"]
-
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["I002"]
-"migrations/versions/*.py" = ["INP001"]
+"migrations/*.py" = ["INP001", "ARG001"]
 
 [tool.ruff.format]
 quote-style = "double"
