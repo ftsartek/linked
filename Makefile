@@ -1,4 +1,4 @@
-.PHONY: help dev dev-services dev-stop api web web-build postgres postgres-stop valkey valkey-stop preseed schema clean cli
+.PHONY: help dev dev-services dev-stop api web web-build postgres postgres-stop valkey valkey-stop migrations preseed schema clean cli
 
 # Configuration
 POSTGRES_USER ?= linked
@@ -21,6 +21,7 @@ help:
 	@echo "  valkey         - Start Valkey/Redis container (port 6379)"
 	@echo ""
 	@echo "Database:"
+	@echo "  migrations     - Run database migrations"
 	@echo "  preseed        - Import static EVE data"
 	@echo ""
 	@echo "Code Generation:"
@@ -38,6 +39,7 @@ help:
 dev: dev-services
 	@echo "Waiting for PostgreSQL to be ready..."
 	@sleep 2
+	@$(MAKE) migrations
 	@$(MAKE) preseed
 	@echo "Starting API and Web servers..."
 	@echo "Press Ctrl+C to stop all services"
@@ -110,6 +112,10 @@ postgres-stop:
 # Import static EVE data
 preseed:
 	cd api && uv run linked preseed
+
+# Run migrations
+migrations:
+	cd api && uv run linked migrate
 
 # Run CLI commands
 cli:
