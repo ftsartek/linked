@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -106,6 +107,9 @@ from routes.maps.queries import (
 
 # Reason codes for sync errors
 SYNC_ERROR_INVALID_EVENT_ID = "invalid_event_id"
+
+# SSE response headers
+SSE_HEADERS = {"X-Accel-Buffering": "no", "Cache-Control": "no-cache"}
 
 
 class NodeLockedError(Exception):
@@ -990,9 +994,15 @@ class MapService:
             is_valid, requested_id, error_data = self._validate_last_event(last_event_id, current_seq)
 
             if not is_valid and error_data is not None:
-                return ServerSentEvent(self._error_generator(error_data))
+                return ServerSentEvent(
+                    self._error_generator(error_data),
+                    headers=SSE_HEADERS,
+                )
 
-        return ServerSentEvent(self._event_generator(ctx, channels, channel_name, last_event_id, map_id))
+        return ServerSentEvent(
+            self._event_generator(ctx, channels, channel_name, last_event_id, map_id),
+            headers=SSE_HEADERS,
+        )
 
     # SSE event subscription helpers
 
@@ -1009,7 +1019,24 @@ class MapService:
             await channels.put_subscriber_history(subscriber, [channel_name], limit=50)
             seen_last_event = last_event_id is None  # If no ID, don't skip anything
 
-            async for event_data in subscriber.iter_events():
+            # Send connection comment
+            yield ServerSentEventMessage(comment="connect")
+
+            # Access the underlying queue directly for timeout support
+            queue = subscriber._queue
+            while True:
+                try:
+                    event_data = await asyncio.wait_for(queue.get(), timeout=30.0)
+                except TimeoutError:
+                    yield ServerSentEventMessage(comment="keepalive")
+                    continue
+
+                # None signals subscription shutdown
+                if event_data is None:
+                    queue.task_done()
+                    break
+
+                queue.task_done()
                 event = msgspec.json.decode(event_data, type=MapEvent)
 
                 # Filter events based on last_event_id
