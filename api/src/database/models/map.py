@@ -48,3 +48,4 @@ class Map(msgspec.Struct):
     id: UUID | None = None
     date_created: datetime | None = None
     date_updated: datetime | None = None
+    date_deleted: datetime | None = None

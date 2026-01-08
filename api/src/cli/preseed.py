@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -12,14 +11,7 @@ from database import provide_session
 if TYPE_CHECKING:
     from sqlspec.adapters.asyncpg import AsyncpgDriver
 
-# Static directory (baked into container)
-STATIC_DIR = Path(__file__).parent.parent.parent / "static"
-CURATED_DIR = STATIC_DIR / "preseed" / "curated"
-
-# Dynamic data directory (configurable via env var)
-_default_data_dir = Path("/var/lib/linked/preseed")
-DATA_DIR = Path(os.environ.get("DATA_DIR", str(_default_data_dir)))
-SDE_DIR = DATA_DIR / "sde"
+    from config.settings import Settings
 
 # Unidentified placeholder systems with negative IDs
 # Format: (id, system_class, name)
@@ -38,13 +30,13 @@ UNIDENTIFIED_SYSTEMS = [
 ]
 
 
-def load_yaml(filename: str, directory: Path = DATA_DIR) -> dict | list:
+def load_yaml(filename: str, directory: Path) -> dict | list:
     """Load a YAML file from the specified directory."""
     with open(directory / filename) as f:
         return yaml.safe_load(f)
 
 
-def load_yaml_dict(filename: str, directory: Path = DATA_DIR) -> dict:
+def load_yaml_dict(filename: str, directory: Path) -> dict:
     """Load a YAML file that contains a dict at root level."""
     result = load_yaml(filename, directory)
     if not isinstance(result, dict):
@@ -52,7 +44,7 @@ def load_yaml_dict(filename: str, directory: Path = DATA_DIR) -> dict:
     return result
 
 
-def load_yaml_list(filename: str, directory: Path = DATA_DIR) -> list:
+def load_yaml_list(filename: str, directory: Path) -> list:
     """Load a YAML file that contains a list at root level."""
     result = load_yaml(filename, directory)
     if not isinstance(result, list):
@@ -60,12 +52,13 @@ def load_yaml_list(filename: str, directory: Path = DATA_DIR) -> list:
     return result
 
 
-def load_sde_data() -> tuple[dict, dict, dict]:
+def load_sde_data(settings: Settings) -> tuple[dict, dict, dict]:
     """Load SDE map data files and return (regions, constellations, systems) dicts."""
     click.echo("Loading SDE data...")
-    sde_regions = load_yaml_dict("mapRegions.yaml", SDE_DIR)
-    sde_constellations = load_yaml_dict("mapConstellations.yaml", SDE_DIR)
-    sde_systems = load_yaml_dict("mapSolarSystems.yaml", SDE_DIR)
+    sde_dir = settings.sde_dir
+    sde_regions = load_yaml_dict("mapRegions.yaml", sde_dir)
+    sde_constellations = load_yaml_dict("mapConstellations.yaml", sde_dir)
+    sde_systems = load_yaml_dict("mapSolarSystems.yaml", sde_dir)
     return sde_regions, sde_constellations, sde_systems
 
 
@@ -451,22 +444,23 @@ async def cleanup_orphaned_records(
 
 
 @click.command()
-async def preseed() -> None:
+@click.pass_obj
+async def preseed(settings: Settings) -> None:
     """Import static universe data into the database."""
     click.echo("Loading YAML files...")
     # Curated data (manually maintained)
-    effects_data = load_yaml_dict("effects.yaml", CURATED_DIR)
-    wormhole_spawns_data = load_yaml_dict("wormhole_spawns.yaml", CURATED_DIR)
-    wormhole_systems_data = load_yaml_dict("wormhole_systems.yaml", CURATED_DIR)
+    effects_data = load_yaml_dict("effects.yaml", settings.curated_dir)
+    wormhole_spawns_data = load_yaml_dict("wormhole_spawns.yaml", settings.curated_dir)
+    wormhole_systems_data = load_yaml_dict("wormhole_systems.yaml", settings.curated_dir)
     # Generated data (from collect command)
-    regions_data = load_yaml_list("regions.yaml")
-    wormhole_info_data = load_yaml_dict("wormhole_info.yaml")
+    regions_data = load_yaml_list("regions.yaml", settings.data_dir)
+    wormhole_info_data = load_yaml_dict("wormhole_info.yaml", settings.data_dir)
     wormholes_data = merge_wormhole_data(wormhole_info_data, wormhole_spawns_data)
-    constellations_data = load_yaml_list("constellations.yaml")
-    systems_data = load_yaml_list("systems.yaml")
+    constellations_data = load_yaml_list("constellations.yaml", settings.data_dir)
+    systems_data = load_yaml_list("systems.yaml", settings.data_dir)
 
     # Load SDE data for wormholeClassID and factionID
-    sde_regions, sde_constellations, sde_systems = load_sde_data()
+    sde_regions, sde_constellations, sde_systems = load_sde_data(settings)
 
     # Build fallback lookup tables
     region_wh_class, region_faction, constellation_wh_class, constellation_faction = build_fallback_lookups(

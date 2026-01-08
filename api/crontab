@@ -1,4 +1,8 @@
 # Linked EVE crontab - managed by supercronic
 # Format: minute hour day month weekday command
-# Example: */5 * * * * uv run linked some-command
 
+# Update wormhole lifetime statuses and soft-delete expired links
+*/2 * * * * cd /app && uv run linked cron lifecycle
+
+# Hard-delete old soft-deleted records
+40 * * * * cd /app && uv run linked cron cleanup --all
