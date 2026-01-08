@@ -11,14 +11,24 @@ uv run linked migrate
 if [ ! -f "$LOCKFILE" ]; then
     echo "Collecting static data..."
     uv run linked collect all
-    
+
     echo "Preseeding database..."
     uv run linked preseed
-    
+
     touch "$LOCKFILE"
     echo "Initial setup complete."
 else
     echo "Data already collected, skipping..."
+fi
+
+if [ ! -f "/etc/linked/crontab" ]; then
+    echo "Copying crontab..."
+    cp /var/www/.crontab /etc/linked/crontab
+fi
+
+if [ ! -f "/etc/linked/supervisord.conf" ]; then
+    echo "Copying supervisord.conf..."
+    cp /var/www/.supervisord.conf /etc/linked/supervisord.conf
 fi
 
 exec "$@"

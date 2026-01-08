@@ -48,8 +48,8 @@ COPY static/preseed/curated/ ./static/preseed/curated/
 COPY migrations/ ./migrations/
 
 # Copy configuration files
-COPY supervisord.conf /etc/linked/supervisord.conf
-COPY crontab /etc/linked/crontab
+COPY supervisord.conf /var/www/.supervisord.conf
+COPY crontab /var/www/.crontab
 COPY entrypoint.sh /entrypoint.sh
 
 # Create virtual environment, sync dependencies, and set up directories
