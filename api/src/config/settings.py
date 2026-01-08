@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 from litestar.types import Method
@@ -104,6 +105,24 @@ class Settings(BaseSettings):
     db_pool_min_size: int = 5
     db_pool_max_size: int = 20
     db_ssl: bool = False
+
+    # Data directories
+    data_dir: Path = Path("/var/lib/linked/preseed")
+
+    @property
+    def static_dir(self) -> Path:
+        """Static directory path (baked in, up 3)"""
+        return Path(__file__).parent.parent.parent / "static"
+
+    @property
+    def curated_dir(self) -> Path:
+        """Curated data directory within static."""
+        return self.static_dir / "preseed" / "curated"
+
+    @property
+    def sde_dir(self) -> Path:
+        """SDE data directory within data_dir."""
+        return self.data_dir / "sde"
 
 
 @lru_cache

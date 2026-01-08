@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import asyncclick as click
 import valkey.asyncio as valkey
 from litestar.channels import ChannelsPlugin
 from litestar.channels.backends.redis import RedisChannelsStreamBackend
 from sqlspec.adapters.asyncpg.driver import AsyncpgDriver
 
-from config import get_settings
 from database import provide_session
 from routes.maps.publisher import EventPublisher
 from services.cleanup import (
@@ -21,10 +22,12 @@ from services.cleanup import (
 )
 from services.lifecycle import update_link_lifetimes
 
+if TYPE_CHECKING:
+    from config.settings import Settings
 
-async def _create_event_publisher() -> EventPublisher:
+
+async def _create_event_publisher(settings: Settings) -> EventPublisher:
     """Create an event publisher for cron context."""
-    settings = get_settings()
     valkey_client = valkey.from_url(settings.valkey_event_url, decode_responses=False)
     channels_plugin = ChannelsPlugin(
         backend=RedisChannelsStreamBackend(
@@ -47,18 +50,17 @@ def cron() -> None:
 @cron.command()
 @click.option("--verbose", "-v", is_flag=True, help="Show detailed per-link output")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
-async def lifecycle(verbose: bool, dry_run: bool) -> None:
+@click.pass_obj
+async def lifecycle(settings: Settings, verbose: bool, dry_run: bool) -> None:
     """Update link lifetime statuses and soft-delete expired links.
 
     This command should be run every 2 minutes via cron.
     """
     # Only create event publisher if we're actually making changes
-    event_publisher = None if dry_run else await _create_event_publisher()
+    event_publisher = None if dry_run else await _create_event_publisher(settings)
 
     async with provide_session() as session:
-        result = await update_link_lifetimes(
-            session, dry_run=dry_run, event_publisher=event_publisher
-        )
+        result = await update_link_lifetimes(session, dry_run=dry_run, event_publisher=event_publisher)
 
     if dry_run:
         click.echo("[lifecycle] DRY RUN - no changes made")
