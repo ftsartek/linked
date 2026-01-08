@@ -26,7 +26,8 @@ packages = ["src/cli", "src/config", "src/database", "src/api", "src/esi_client"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
 pythonpath = ["src"]
 
@@ -101,4 +102,11 @@ dev = [
     "basedpyright>=1.37.0",
     "ruff>=0.14.10",
     "ty>=0.0.8",
+]
+test = [
+    "polyfactory>=3.2.0",
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "pytest-docker>=3.2.5",
+    "pytest-order>=1.3.0",
 ]
