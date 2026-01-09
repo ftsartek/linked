@@ -298,8 +298,8 @@ class MapService:
         Returns DeleteMapResponse with all deleted IDs, or None if map not found.
         """
         # Get node and link IDs before deletion
-        node_ids = [row[0] for row in await self.db_session.select(GET_MAP_NODE_IDS, map_id)]  # type: ignore[index]
-        link_ids = [row[0] for row in await self.db_session.select(GET_MAP_LINK_IDS, map_id)]  # type: ignore[index]
+        node_ids = [row["id"] for row in await self.db_session.select(GET_MAP_NODE_IDS, map_id)]
+        link_ids = [row["id"] for row in await self.db_session.select(GET_MAP_LINK_IDS, map_id)]
 
         # Soft-delete links first, then nodes, then the map
         await self.db_session.execute(SOFT_DELETE_MAP_LINKS, map_id)

@@ -100,8 +100,8 @@ exclude = ["test/*"]
 [dependency-groups]
 dev = [
     "basedpyright>=1.37.0",
-    "ruff>=0.14.10",
-    "ty>=0.0.8",
+    "ruff>=0.14.11",
+    "ty>=0.0.10",
 ]
 test = [
     "polyfactory>=3.2.0",

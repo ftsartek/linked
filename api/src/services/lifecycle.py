@@ -171,22 +171,16 @@ async def process_map_lifecycle(
                 if event_publisher:
                     from routes.maps.dependencies import DeleteLinkResponse
 
-                    await event_publisher.link_deleted(
-                        map_id, DeleteLinkResponse(link_id=link_id), user_id=None
-                    )
+                    await event_publisher.link_deleted(map_id, DeleteLinkResponse(link_id=link_id), user_id=None)
             result.deleted_ids.append(link_id)
             result.deleted_count += 1
             result.maps_affected.add(map_id)
 
         elif new_status is not None:
             if not dry_run:
-                await session.execute(
-                    UPDATE_LINK_LIFETIME_STATUS, [link_id, new_status.value, current_time]
-                )
+                await session.execute(UPDATE_LINK_LIFETIME_STATUS, [link_id, new_status.value, current_time])
                 if event_publisher:
-                    enriched = await session.select_one(
-                        GET_LINK_ENRICHED, link_id, schema_type=EnrichedLinkInfo
-                    )
+                    enriched = await session.select_one(GET_LINK_ENRICHED, link_id, schema_type=EnrichedLinkInfo)
                     if enriched:
                         await event_publisher.link_updated(map_id, enriched, user_id=None)
 

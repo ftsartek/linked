@@ -1,0 +1,46 @@
+repos:
+  - repo: local
+    hooks:
+      # Python
+      - id: ruff-format
+        name: ruff format
+        entry: bash -c 'cd api && .venv/bin/ruff format .'
+        language: system
+        files: ^api/.*\.py$
+        pass_filenames: false
+
+      - id: ruff-check
+        name: ruff check
+        entry: bash -c 'cd api && .venv/bin/ruff check --fix .'
+        language: system
+        files: ^api/.*\.py$
+        pass_filenames: false
+
+      - id: ty-check
+        name: ty check
+        entry: bash -c 'cd api && .venv/bin/ty check'
+        language: system
+        files: ^api/.*\.py$
+        pass_filenames: false
+
+      # Frontend
+      - id: web-format
+        name: web format
+        entry: bash -c 'cd web && npm run format'
+        language: system
+        files: ^web/
+        pass_filenames: false
+
+      - id: web-lint
+        name: web lint
+        entry: bash -c 'cd web && npm run lint'
+        language: system
+        files: ^web/
+        pass_filenames: false
+
+      - id: web-check
+        name: web check
+        entry: bash -c 'cd web && npm run check'
+        language: system
+        files: ^web/
+        pass_filenames: false
