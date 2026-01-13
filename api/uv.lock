@@ -353,7 +353,6 @@ dependencies = [
     { name = "cryptography" },
     { name = "httpx" },
     { name = "litestar", extra = ["brotli", "standard", "valkey"] },
-    { name = "pydantic-settings" },
     { name = "pyjwt" },
     { name = "pyyaml" },
     { name = "sqlspec", extra = ["asyncpg", "litestar", "msgspec"] },
@@ -372,7 +371,6 @@ requires-dist = [
     { name = "cryptography", specifier = ">=45.0.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "litestar", extras = ["standard", "brotli", "valkey"], specifier = ">=2.19.0" },
-    { name = "pydantic-settings", specifier = ">=2.12.0" },
     { name = "pyjwt", specifier = ">=2.10.0" },
     { name = "pyyaml", specifier = ">=6.0" },
     { name = "sqlspec", extras = ["asyncpg", "msgspec", "litestar"], specifier = ">=0.34.0" },
@@ -381,8 +379,9 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "basedpyright", specifier = ">=1.37.0" },
-    { name = "ruff", specifier = ">=0.14.10" },
-    { name = "ty", specifier = ">=0.0.8" },
+    { name = "respx", specifier = ">=0.22.0" },
+    { name = "ruff", specifier = ">=0.14.11" },
+    { name = "ty", specifier = ">=0.0.10" },
 ]
 
 [[package]]

@@ -28,6 +28,10 @@ make dev
 ```
 This'll spin up the API at `http://localhost:8000` and web at `http://localhost:5173`; Postgres & Redis will be running locally in Docker.
 
+### Quality Control
+
+Use [pre-commit](https://pre-commit.com/) to ensure your code is up to spec. Easiest way to install it is `uv tool install pre-commit` (or `pipx` if you prefer, but we assume you've got `uv` anyway). Simply install the hooks with `pre-commit install` and the code will be checked before each commit.
+
 # Production
 
 When hosting a production environment, both the frontend and backend should be behind a reverse proxy. NGINX is recommended, but you can use any solution that does the trick.
