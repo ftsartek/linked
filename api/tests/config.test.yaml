@@ -1,0 +1,76 @@
+# Linked API Test Configuration
+# Used by setting CONFIG_FILE=config.test.yaml before running pytest
+
+debug: true
+
+frontend_url: http://localhost:5173
+
+cors:
+  allow_origins: []
+  allow_methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+    - OPTIONS
+  allow_headers: []
+  allow_credentials: true
+
+compression:
+  minimum_size: 500
+  brotli_quality: 5
+
+esi:
+  user_agent: "LinkedTest/1.0 (test@example.com)"
+  timeout: 30.0
+
+eve_sso:
+  callback_url: http://localhost:8000/auth/callback
+  scopes:
+    - publicData
+    - esi-search.search_structures.v1
+    - esi-corporations.read_corporation_membership.v1
+    - esi-corporations.read_structures.v1
+    - esi-corporations.track_members.v1
+    - esi-corporations.read_divisions.v1
+    - esi-corporations.read_standings.v1
+    - esi-planets.read_customs_offices.v1
+    - esi-corporations.read_facilities.v1
+    - esi-universe.read_structures.v1
+    - esi-corporations.read_starbases.v1
+
+valkey:
+  host: localhost
+  port: 6380 # Test port (matches docker-compose.yml)
+  session_db: 0
+  event_db: 1
+  user: default
+
+session:
+  max_age: 604800
+
+image_cache:
+  dir: /tmp/linked_cache
+  ttl_seconds: 259200
+
+postgres:
+  host: localhost
+  port: 5433 # Test port (matches docker-compose.yml)
+  user: linked_test
+  name: linked_test
+  pool_min_size: 1
+  pool_max_size: 5
+  ssl: false
+  password: linked_test
+
+data:
+  dir: /tmp/preseed
+
+# Test environment variables:
+#   CSRF_SECRET=test_csrf_secret_key_32_chars_!!
+#   TOKEN_ENCRYPTION_KEY=dGVzdF90b2tlbl9lbmNyeXB0aW9uX2tleV80NF9jaDEy
+#   EVE_CLIENT_ID=test_client_id
+#   EVE_CLIENT_SECRET=test_client_secret
+#   DB_PASSWORD=linked_test
+#   VALKEY_PASSWORD=

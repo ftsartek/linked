@@ -1,4 +1,4 @@
-.PHONY: help dev dev-services dev-stop api web web-build postgres postgres-stop valkey valkey-stop migrations preseed schema clean cli
+.PHONY: help dev dev-services dev-stop api web web-build postgres postgres-stop valkey valkey-stop migrations preseed schema clean cli test
 
 # Configuration
 POSTGRES_USER ?= linked
@@ -26,6 +26,9 @@ help:
 	@echo ""
 	@echo "Code Generation:"
 	@echo "  schema         - Generate OpenAPI schema and TypeScript types"
+	@echo ""
+	@echo "Testing:"
+	@echo "  test           - Run API integration tests (requires Docker)"
 	@echo ""
 	@echo "CLI:"
 	@echo "  cli            - Run CLI command (make cli CMD=\"...\")"
@@ -120,6 +123,10 @@ migrations:
 # Run CLI commands
 cli:
 	cd api && uv run linked $(CMD)
+
+# Run API integration tests
+test:
+	cd api && CONFIG_FILE=tests/config.test.yaml uv run pytest tests/ -v
 
 clean: postgres-stop valkey-stop
 	@echo "Cleanup complete"

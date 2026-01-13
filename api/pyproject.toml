@@ -7,6 +7,7 @@ dependencies = [
     "asyncclick>=8.3.0.7",
     "cryptography>=45.0.0",
     "httpx>=0.28.1",
+    "httpx-sse>=0.4.3",
     "litestar[standard,brotli,valkey]>=2.19.0",
     "PyJWT>=2.10.0",
     "pyyaml>=6.0",
@@ -25,9 +26,16 @@ packages = ["src/cli", "src/config", "src/database", "src/api", "src/esi_client"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 testpaths = ["tests"]
 pythonpath = ["src"]
+filterwarnings = [
+    "ignore:EVE client secret is not set:UserWarning:config.settings",
+    "ignore:EVE client ID is not set:UserWarning:config.settings",
+    "ignore:Token encryption key is not set:UserWarning:config.settings",
+    "ignore:CSRF secret is not set:UserWarning:config.settings",
+]
 
 [tool.ruff]
 exclude = [
@@ -101,4 +109,11 @@ dev = [
     "respx>=0.22.0",
     "ruff>=0.14.11",
     "ty>=0.0.10",
+]
+test = [
+    "polyfactory>=3.2.0",
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
+    "pytest-docker>=3.2.5",
+    "pytest-order>=1.3.0",
 ]
