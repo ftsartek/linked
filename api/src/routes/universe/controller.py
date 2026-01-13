@@ -19,7 +19,6 @@ from routes.universe.service import (
     provide_universe_service_with_auth,
 )
 from services.encryption import provide_encryption_service
-from services.eve_sso import provide_sso_service
 from services.image_cache import ImageCacheService, provide_image_cache_service
 
 # Session key for cached ESI access token
@@ -38,7 +37,6 @@ class UniverseController(Controller):
         "universe_service": Provide(provide_universe_service),
         "universe_service_auth": Provide(provide_universe_service_with_auth),
         "encryption_service": Provide(provide_encryption_service),
-        "sso_service": Provide(provide_sso_service),
         "image_cache_service": Provide(provide_image_cache_service),
     }
 

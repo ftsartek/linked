@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import asyncclick as click
 import valkey.asyncio as valkey
 from litestar.channels import ChannelsPlugin
 from litestar.channels.backends.redis import RedisChannelsStreamBackend
 from sqlspec.adapters.asyncpg.driver import AsyncpgDriver
 
+from config.settings import Settings
 from database import provide_session
 from routes.maps.publisher import EventPublisher
 from services.cleanup import (
@@ -21,9 +20,6 @@ from services.cleanup import (
     cleanup_signatures,
 )
 from services.lifecycle import update_link_lifetimes
-
-if TYPE_CHECKING:
-    from config.settings import Settings
 
 
 async def _create_event_publisher(settings: Settings) -> EventPublisher:

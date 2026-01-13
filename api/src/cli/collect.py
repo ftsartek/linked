@@ -4,19 +4,16 @@ import asyncio
 import io
 import zipfile
 from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import asyncclick as click
 import httpx
 import msgspec
 import yaml
 
+from config.settings import Settings
 from esi_client import ESIClient
 from esi_client.models import DogmaAttribute
-
-if TYPE_CHECKING:
-    from config.settings import Settings
-
 
 # SDE download URL
 SDE_URL = "https://developers.eveonline.com/static-data/eve-online-static-data-latest-yaml.zip"

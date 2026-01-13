@@ -1,4 +1,5 @@
 from .channels import get_channels_plugin
+from .settings import provide_settings
 from .sqlspec import sqlspec_plugin
 from .valkey import get_rl_store, get_root_store, get_sessions_store, provide_valkey_client
 
@@ -9,4 +10,5 @@ __all__ = [
     "get_root_store",
     "get_rl_store",
     "get_sessions_store",
+    "provide_settings",
 ]
