@@ -48,7 +48,7 @@ async def collect_sse_events(
     params = {"last_event_id": last_event_id} if last_event_id is not None else None
 
     try:
-        async with asyncio.timeout(timeout):
+        async with asyncio.timeout(timeout):  # ty: ignore
             async with aconnect_sse(client, "GET", url, params=params) as event_source:
                 if connected_event:
                     connected_event.set()

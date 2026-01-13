@@ -9,7 +9,7 @@ from litestar.params import Parameter
 from litestar.response import Redirect
 
 from api.auth.guards import require_auth
-from config import get_settings
+from config import Settings
 from routes.auth.dependencies import ERR_AUTH_INVALID_STATE, auth_rate_limit_config
 from routes.auth.service import AuthService, UserInfo, provide_auth_service
 from services.encryption import provide_encryption_service
@@ -62,10 +62,10 @@ class AuthController(Controller):
         request: Request,
         auth_service: AuthService,
         code: str,
+        settings: Settings,
         oauth_state: str = Parameter(query="state"),
     ) -> Redirect:
         """Handle EVE SSO callback."""
-        settings = get_settings()
 
         # Validate state parameter
         expected_state = request.session.get("oauth_state")

@@ -18,7 +18,7 @@ from routes.users.service import (
     UserService,
     provide_user_service,
 )
-from services.eve_sso import EveSSOService, provide_sso_service
+from services.eve_sso import EveSSOService
 
 
 @dataclass
@@ -65,7 +65,6 @@ class UserController(Controller):
     path = "/users"
     guards = [require_auth]
     dependencies = {
-        "sso_service": Provide(provide_sso_service),
         "user_service": Provide(provide_user_service),
     }
 

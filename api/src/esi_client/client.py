@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from typing import TypeVar
 
 import httpx
 import msgspec
 
-if TYPE_CHECKING:
-    from config import Settings
+from config import Settings
 
 from .exceptions import ESIError, ESINotFoundError, ESIRateLimitError, ESIServerError
 from .models import (
@@ -200,7 +199,7 @@ class ESIClient:
         return msgspec.json.decode(response.content, type=list[ESINameResult])
 
 
-def provide_esi_client(settings: Settings) -> ESIClient:
+async def provide_esi_client(settings: Settings) -> ESIClient:
     """Provide ESIClient for dependency injection.
 
     Args:

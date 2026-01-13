@@ -8,19 +8,19 @@ from __future__ import annotations
 
 from litestar.di import Provide
 
-from config import Settings, get_settings
 from esi_client import provide_esi_client
 from services.eve_sso import provide_sso_service
 
 from .app import create_app
-from .di import get_channels_plugin, get_rl_store, get_sessions_store, provide_valkey_client, sqlspec_plugin
+from .di import (
+    get_channels_plugin,
+    get_rl_store,
+    get_sessions_store,
+    provide_settings,
+    provide_valkey_client,
+    sqlspec_plugin,
+)
 from .middleware import auth_middleware, cors_config, csrf_config, session_config
-
-
-def provide_settings() -> Settings:
-    """Provide application settings for dependency injection."""
-    return get_settings()
-
 
 app = create_app(
     plugins=[sqlspec_plugin, get_channels_plugin()],
