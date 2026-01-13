@@ -363,9 +363,9 @@ class EventPublisher:
         self,
         map_id: UUID,
         node_id: UUID,
-        created: list[EnrichedSignatureInfo],
-        updated: list[EnrichedSignatureInfo],
-        deleted: list[UUID],
+        created_ids: list[UUID],
+        updated_ids: list[UUID],
+        deleted_ids: list[UUID],
         user_id: UUID | None = None,
     ) -> None:
         """Publish a signatures_bulk_updated event."""
@@ -374,9 +374,9 @@ class EventPublisher:
             event_id=event_id,
             map_id=map_id,
             node_id=node_id,
-            created=[self._struct_to_dict(s) for s in created],
-            updated=[self._struct_to_dict(s) for s in updated],
-            deleted=deleted,
+            created_ids=created_ids,
+            updated_ids=updated_ids,
+            deleted_ids=deleted_ids,
             user_id=user_id,
         )
         await self._publish(map_id, event)
