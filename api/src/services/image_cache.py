@@ -24,8 +24,8 @@ class ImageCacheService:
 
     def __init__(self) -> None:
         settings = get_settings()
-        self.cache_dir = Path(settings.image_cache_dir)
-        self.ttl_seconds = settings.image_cache_ttl_seconds
+        self.cache_dir = Path(settings.image_cache.dir)
+        self.ttl_seconds = settings.image_cache.ttl_seconds
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     def _get_cache_path(self, entity_type: str, entity_id: int, size: int) -> Path:

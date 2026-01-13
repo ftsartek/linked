@@ -11,7 +11,7 @@ INSERT INTO map
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING
     id, owner_id, name, description, is_public, public_read_only, edge_type,
-    rankdir, auto_layout, node_sep, rank_sep, date_created, date_updated;
+    rankdir, auto_layout, node_sep, rank_sep, date_created, date_updated, true AS edit_access;
 """
 
 UPDATE_STMT = """\
@@ -28,7 +28,7 @@ SET name = $2,
     date_updated = NOW()
 WHERE id = $1
 RETURNING id, owner_id, name, description, is_public, public_read_only, edge_type,
-    rankdir, auto_layout, node_sep, rank_sep, date_created, date_updated;
+    rankdir, auto_layout, node_sep, rank_sep, date_created, date_updated, true AS edit_access;
 """
 
 

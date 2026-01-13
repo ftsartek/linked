@@ -9,5 +9,5 @@ settings = get_settings()
 # Session configuration with Valkey backend
 session_config = ServerSideSessionConfig(
     key="session",
-    max_age=settings.session_max_age,
+    max_age=settings.session.max_age,
 )

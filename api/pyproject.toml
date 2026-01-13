@@ -8,7 +8,6 @@ dependencies = [
     "cryptography>=45.0.0",
     "httpx>=0.28.1",
     "litestar[standard,brotli,valkey]>=2.19.0",
-    "pydantic-settings>=2.12.0",
     "PyJWT>=2.10.0",
     "pyyaml>=6.0",
     "sqlspec[asyncpg,msgspec,litestar]>=0.34.0",

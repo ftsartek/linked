@@ -85,7 +85,7 @@ def collect() -> None:
 @click.pass_obj
 async def regions(settings: Settings, user_agent: str | None) -> None:
     """Collect all region data."""
-    ua = user_agent or settings.esi_user_agent
+    ua = user_agent or settings.esi.user_agent
     async with ESIClient(ua) as client:
         region_ids = await client.get_regions()
         region_list = await fetch_with_rate_limit(region_ids, client.get_region, "regions")
@@ -94,7 +94,7 @@ async def regions(settings: Settings, user_agent: str | None) -> None:
     region_list.sort(key=lambda r: r.region_id)
     data = [struct_to_dict(r) for r in region_list]
 
-    output_path = settings.data_dir / "regions.yaml"
+    output_path = settings.data.base_dir / "regions.yaml"
     with output_path.open("w") as f:
         yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
 
@@ -106,7 +106,7 @@ async def regions(settings: Settings, user_agent: str | None) -> None:
 @click.pass_obj
 async def constellations(settings: Settings, user_agent: str | None) -> None:
     """Collect all constellation data."""
-    ua = user_agent or settings.esi_user_agent
+    ua = user_agent or settings.esi.user_agent
     async with ESIClient(ua) as client:
         constellation_ids = await client.get_constellations()
         constellation_list = await fetch_with_rate_limit(constellation_ids, client.get_constellation, "constellations")
@@ -114,7 +114,7 @@ async def constellations(settings: Settings, user_agent: str | None) -> None:
     constellation_list.sort(key=lambda c: c.constellation_id)
     data = [struct_to_dict(c) for c in constellation_list]
 
-    output_path = settings.data_dir / "constellations.yaml"
+    output_path = settings.data.base_dir / "constellations.yaml"
     with output_path.open("w") as f:
         yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
 
@@ -126,7 +126,7 @@ async def constellations(settings: Settings, user_agent: str | None) -> None:
 @click.pass_obj
 async def systems(settings: Settings, user_agent: str | None) -> None:
     """Collect all system data."""
-    ua = user_agent or settings.esi_user_agent
+    ua = user_agent or settings.esi.user_agent
     async with ESIClient(ua) as client:
         system_ids = await client.get_systems()
         system_list = await fetch_with_rate_limit(system_ids, client.get_system, "systems")
@@ -134,7 +134,7 @@ async def systems(settings: Settings, user_agent: str | None) -> None:
     system_list.sort(key=lambda s: s.system_id)
     data = [struct_to_dict(s) for s in system_list]
 
-    output_path = settings.data_dir / "systems.yaml"
+    output_path = settings.data.base_dir / "systems.yaml"
     with output_path.open("w") as f:
         yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
 
@@ -214,8 +214,8 @@ def load_existing_spawns(settings: Settings) -> dict[str, list[int] | None]:
 
     Returns a mapping of wormhole code -> source class IDs.
     """
-    spawns_path = settings.curated_dir / "wormhole_spawns.yaml"  # Curated data
-    info_path = settings.data_dir / "wormhole_info.yaml"  # Generated data
+    spawns_path = settings.data.curated_dir / "wormhole_spawns.yaml"  # Curated data
+    info_path = settings.data.base_dir / "wormhole_info.yaml"  # Generated data
 
     if not spawns_path.exists() or not info_path.exists():
         return {}
@@ -322,7 +322,7 @@ async def wormholes(settings: Settings, user_agent: str | None) -> None:
     existing_spawns = load_existing_spawns(settings)
     click.echo(f"Loaded {len(existing_spawns)} existing wormhole spawn mappings")
 
-    ua = user_agent or settings.esi_user_agent
+    ua = user_agent or settings.esi.user_agent
     async with ESIClient(ua) as client:
         click.echo("Fetching wormhole group...")
         wh_group = await client.get_group(WORMHOLE_GROUP_ID)
@@ -342,7 +342,7 @@ async def wormholes(settings: Settings, user_agent: str | None) -> None:
         click.echo(f"  Existing codes not found in ESI: {sorted(missing_codes)}")
 
     # Write wormhole_info.yaml (wormhole_spawns.yaml is curated, not generated)
-    info_path = settings.data_dir / "wormhole_info.yaml"
+    info_path = settings.data.base_dir / "wormhole_info.yaml"
     with info_path.open("w") as f:
         yaml.safe_dump(wormhole_info, f, sort_keys=True, allow_unicode=True)
     click.echo(f"Wrote {len(wormhole_info)} wormhole entries to {info_path}")
@@ -350,7 +350,7 @@ async def wormholes(settings: Settings, user_agent: str | None) -> None:
 
 async def download_sde(settings: Settings) -> None:
     """Download and extract SDE data (shared logic for sde and all commands)."""
-    sde_dir = settings.sde_dir
+    sde_dir = settings.data.sde_dir
     click.echo(f"Downloading SDE from {SDE_URL}...")
 
     async with httpx.AsyncClient(follow_redirects=True) as client:
@@ -390,7 +390,7 @@ async def import_all(settings: Settings, user_agent: str | None) -> None:
     # Download SDE data first
     await download_sde(settings)
 
-    ua = user_agent or settings.esi_user_agent
+    ua = user_agent or settings.esi.user_agent
     async with ESIClient(ua) as client:
         # Regions
         region_ids = await client.get_regions()
@@ -419,7 +419,7 @@ async def import_all(settings: Settings, user_agent: str | None) -> None:
         ("systems", system_list),
     ]:
         data = [struct_to_dict(item) for item in items]
-        output_path = settings.data_dir / f"{name}.yaml"
+        output_path = settings.data.base_dir / f"{name}.yaml"
         with output_path.open("w") as f:
             yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
         click.echo(f"Wrote {len(data)} {name} to {output_path}")
@@ -430,7 +430,7 @@ async def import_all(settings: Settings, user_agent: str | None) -> None:
     wormhole_info = _merge_wormhole_duplicates(code_to_types)
 
     # Write wormhole_info.yaml (wormhole_spawns.yaml is curated, not generated)
-    info_path = settings.data_dir / "wormhole_info.yaml"
+    info_path = settings.data.base_dir / "wormhole_info.yaml"
     with info_path.open("w") as f:
         yaml.safe_dump(wormhole_info, f, sort_keys=True, allow_unicode=True)
     click.echo(f"Wrote {len(wormhole_info)} wormhole entries to {info_path}")

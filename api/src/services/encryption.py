@@ -10,7 +10,7 @@ class EncryptionService:
 
     def __init__(self, key: str | bytes | None = None) -> None:
         if key is None:
-            key = get_settings().token_encryption_key
+            key = get_settings().eve_sso.token_encryption_key
         if isinstance(key, str):
             key = key.encode()
         self._fernet = Fernet(key)

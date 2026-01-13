@@ -46,9 +46,9 @@ class EveSSOService:
         callback_url: str | None = None,
     ) -> None:
         settings = get_settings()
-        self.client_id = client_id or settings.eve_client_id
-        self.client_secret = client_secret or settings.eve_client_secret
-        self.callback_url = callback_url or settings.eve_callback_url
+        self.client_id = client_id or settings.esi.client_id
+        self.client_secret = client_secret or settings.esi.client_secret
+        self.callback_url = callback_url or settings.eve_sso.callback_url
         self._jwks_client: PyJWKClient | None = None
 
     @property
@@ -69,7 +69,7 @@ class EveSSOService:
             Full authorization URL to redirect user to
         """
         if scopes is None:
-            scopes = get_settings().eve_scopes
+            scopes = get_settings().eve_sso.scopes
 
         params = {
             "response_type": "code",

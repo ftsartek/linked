@@ -1,0 +1,82 @@
+# Linked API Configuration
+# Copy this file to config.yaml and adjust as needed.
+
+debug: false
+
+frontend_url: https://linked.example.com
+
+cors:
+  # CORS is optional if you're using the same URI for both web + API
+  allow_origins: []
+  allow_methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - PATCH
+    - OPTIONS
+  allow_headers: []
+  allow_credentials: true
+
+compression:
+  minimum_size: 500
+  brotli_quality: 5
+
+esi:
+  # Include app name and contact email
+  user_agent: "LinkedEVE/0.0.1 (you@example.com)"
+  timeout: 30.0
+
+eve_sso:
+  # EVE SSO credentials - set via environment variables:
+  #   EVE_CLIENT_ID - from https://developers.eveonline.com/
+  #   EVE_CLIENT_SECRET - from https://developers.eveonline.com/
+  callback_url: https://linked.example.com/api/auth/callback
+  scopes:
+    - publicData
+    - esi-search.search_structures.v1
+    - esi-corporations.read_corporation_membership.v1
+    - esi-corporations.read_structures.v1
+    - esi-corporations.track_members.v1
+    - esi-corporations.read_divisions.v1
+    - esi-corporations.read_standings.v1
+    - esi-planets.read_customs_offices.v1
+    - esi-corporations.read_facilities.v1
+    - esi-universe.read_structures.v1
+    - esi-corporations.read_starbases.v1
+
+valkey:
+  host: localhost
+  port: 6379
+  session_db: 0
+  event_db: 1
+  user: default
+  # Password set via VALKEY_PASSWORD env var (optional, leave unset if no auth)
+
+session:
+  max_age: 604800 # 7 days in seconds
+
+image_cache:
+  dir: /var/cache/linked/images
+  ttl_seconds: 259200 # 3 days
+
+database:
+  host: localhost
+  port: 5432
+  user: linked
+  name: linked
+  pool_min_size: 5
+  pool_max_size: 20
+  ssl: false
+  # Password set via DB_PASSWORD env var
+
+data:
+  dir: /var/lib/linked/preseed
+
+# Additional sensitive environment variables required:
+#
+#   CSRF_SECRET - generate with:
+#     python -c "from secrets import token_urlsafe; print(token_urlsafe(32))"
+#
+#   TOKEN_ENCRYPTION_KEY - Fernet key, generate with:
+#     python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"

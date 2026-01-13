@@ -55,7 +55,7 @@ def load_yaml_list(filename: str, directory: Path) -> list:
 def load_sde_data(settings: Settings) -> tuple[dict, dict, dict]:
     """Load SDE map data files and return (regions, constellations, systems) dicts."""
     click.echo("Loading SDE data...")
-    sde_dir = settings.sde_dir
+    sde_dir = settings.data.sde_dir
     sde_regions = load_yaml_dict("mapRegions.yaml", sde_dir)
     sde_constellations = load_yaml_dict("mapConstellations.yaml", sde_dir)
     sde_systems = load_yaml_dict("mapSolarSystems.yaml", sde_dir)
@@ -449,15 +449,15 @@ async def preseed(settings: Settings) -> None:
     """Import static universe data into the database."""
     click.echo("Loading YAML files...")
     # Curated data (manually maintained)
-    effects_data = load_yaml_dict("effects.yaml", settings.curated_dir)
-    wormhole_spawns_data = load_yaml_dict("wormhole_spawns.yaml", settings.curated_dir)
-    wormhole_systems_data = load_yaml_dict("wormhole_systems.yaml", settings.curated_dir)
+    effects_data = load_yaml_dict("effects.yaml", settings.data.curated_dir)
+    wormhole_spawns_data = load_yaml_dict("wormhole_spawns.yaml", settings.data.curated_dir)
+    wormhole_systems_data = load_yaml_dict("wormhole_systems.yaml", settings.data.curated_dir)
     # Generated data (from collect command)
-    regions_data = load_yaml_list("regions.yaml", settings.data_dir)
-    wormhole_info_data = load_yaml_dict("wormhole_info.yaml", settings.data_dir)
+    regions_data = load_yaml_list("regions.yaml", settings.data.base_dir)
+    wormhole_info_data = load_yaml_dict("wormhole_info.yaml", settings.data.base_dir)
     wormholes_data = merge_wormhole_data(wormhole_info_data, wormhole_spawns_data)
-    constellations_data = load_yaml_list("constellations.yaml", settings.data_dir)
-    systems_data = load_yaml_list("systems.yaml", settings.data_dir)
+    constellations_data = load_yaml_list("constellations.yaml", settings.data.base_dir)
+    systems_data = load_yaml_list("systems.yaml", settings.data.base_dir)
 
     # Load SDE data for wormholeClassID and factionID
     sde_regions, sde_constellations, sde_systems = load_sde_data(settings)

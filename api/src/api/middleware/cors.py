@@ -7,8 +7,8 @@ from config import get_settings
 settings = get_settings()
 
 cors_config = CORSConfig(
-    allow_origins=settings.cors_allow_origins,
-    allow_methods=settings.cors_allow_methods,
-    allow_headers=settings.cors_allow_headers,
-    allow_credentials=settings.cors_allow_credentials,
+    allow_origins=settings.cors.allow_origins,
+    allow_methods=settings.cors.allow_methods,  # type: ignore
+    allow_headers=settings.cors.allow_headers,
+    allow_credentials=settings.cors.allow_credentials,
 )

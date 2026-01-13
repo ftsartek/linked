@@ -7,22 +7,16 @@ from sqlspec.adapters.asyncpg.driver import AsyncpgDriver
 
 from config.settings import get_settings
 
-sql = SQLSpec()
-
 
 def get_db_config() -> AsyncpgConfig:
     """Create database configuration from settings."""
     settings = get_settings()
     return AsyncpgConfig(
         connection_config=AsyncpgPoolConfig(
-            host=settings.db_host,
-            port=settings.db_port,
-            user=settings.db_user,
-            password=settings.db_password,
-            database=settings.db_name,
-            min_size=settings.db_pool_min_size,
-            max_size=settings.db_pool_max_size,
-            ssl=settings.db_ssl,
+            dsn=settings.postgres.uri,
+            min_size=settings.postgres.pool_min_size,
+            max_size=settings.postgres.pool_max_size,
+            ssl=settings.postgres.ssl,
         ),
         migration_config={
             "enabled": True,
@@ -37,6 +31,7 @@ def get_db_config() -> AsyncpgConfig:
     )
 
 
+sql = SQLSpec()
 db = sql.add_config(get_db_config())
 
 

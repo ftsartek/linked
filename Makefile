@@ -44,7 +44,7 @@ dev: dev-services
 	@echo "Starting API and Web servers..."
 	@echo "Press Ctrl+C to stop all services"
 	@trap '$(MAKE) dev-stop; exit 0' INT TERM; \
-		(cd api && uv run uvicorn src.api.app:app --reload --timeout-graceful-shutdown=5 --host 0.0.0.0 --port 8000) & \
+		(cd api && uv run uvicorn src.api.main:app --reload --timeout-graceful-shutdown=5 --host 0.0.0.0 --port 8000) & \
 		(cd web && npm run dev) & \
 		wait
 
@@ -62,7 +62,7 @@ dev-stop: postgres-stop valkey-stop
 
 # API server
 api:
-	cd api && uv run uvicorn src.api.app:app --reload --host 0.0.0.0 --port 8000
+	cd api && uv run uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 
 # Web dev server
 web:
