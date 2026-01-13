@@ -509,31 +509,13 @@ WHERE node_id = $1 AND date_deleted IS NULL;
 """
 
 UPSERT_SIGNATURE = """
-INSERT INTO signature (node_id, map_id, code, group_type, subgroup, type, link_id, wormhole_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO signature (node_id, map_id, code, group_type, subgroup, type)
+VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (node_id, code) WHERE date_deleted IS NULL
 DO UPDATE SET
     group_type = EXCLUDED.group_type,
     subgroup = EXCLUDED.subgroup,
     type = EXCLUDED.type,
-    link_id = EXCLUDED.link_id,
-    wormhole_id = EXCLUDED.wormhole_id,
-    date_updated = NOW();
-"""
-
-# Batch upsert signatures using UNNEST - returns id, code, and whether it was an insert (xmax = 0)
-BULK_UPSERT_SIGNATURES = """
-INSERT INTO signature (node_id, map_id, code, group_type, subgroup, type, link_id, wormhole_id)
-SELECT $1, $2, code, group_type, subgroup, type, link_id, wormhole_id
-FROM UNNEST($3::text[], $4::text[], $5::text[], $6::text[], $7::uuid[], $8::int[])
-    AS t(code, group_type, subgroup, type, link_id, wormhole_id)
-ON CONFLICT (node_id, code) WHERE date_deleted IS NULL
-DO UPDATE SET
-    group_type = EXCLUDED.group_type,
-    subgroup = EXCLUDED.subgroup,
-    type = EXCLUDED.type,
-    link_id = EXCLUDED.link_id,
-    wormhole_id = EXCLUDED.wormhole_id,
     date_updated = NOW()
 RETURNING id, code, (xmax = 0) AS is_insert;
 """

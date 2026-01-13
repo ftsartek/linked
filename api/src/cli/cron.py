@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 async def _create_event_publisher(settings: Settings) -> EventPublisher:
     """Create an event publisher for cron context."""
-    valkey_client = valkey.from_url(settings.valkey_event_url, decode_responses=False)
+    valkey_client = valkey.from_url(settings.valkey.event_url, decode_responses=False)
     channels_plugin = ChannelsPlugin(
         backend=RedisChannelsStreamBackend(
             history=100,

@@ -6,4 +6,4 @@ from config import get_settings
 
 settings = get_settings()
 
-csrf_config = CSRFConfig(secret=settings.csrf_secret)
+csrf_config = CSRFConfig(secret=settings.csrf.secret)

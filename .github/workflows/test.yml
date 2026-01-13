@@ -1,0 +1,30 @@
+name: Tests
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  api:
+    name: API Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install 3.14
+
+      - name: Install dependencies
+        working-directory: api
+        run: uv sync --all-groups
+
+      - name: Run tests
+        working-directory: api
+        run: uv run pytest tests/ -v --tb=short
+        env:
+          CONFIG_FILE: tests/config.test.yaml

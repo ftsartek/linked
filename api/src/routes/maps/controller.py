@@ -921,7 +921,7 @@ class MapController(Controller):
             for s in data.signatures
         ]
 
-        created, updated, deleted = await map_service.bulk_upsert_signatures(
+        created_ids, updated_ids, deleted_ids = await map_service.bulk_upsert_signatures(
             node_id=node_id,
             map_id=map_id,
             signatures=sig_dicts,
@@ -929,13 +929,13 @@ class MapController(Controller):
         )
 
         await event_publisher.signatures_bulk_updated(
-            map_id, node_id, created, updated, deleted, user_id=request.user.id
+            map_id, node_id, created_ids, updated_ids, deleted_ids, user_id=request.user.id
         )
 
         return BulkSignatureResponse(
-            created=[s.id for s in created],
-            updated=[s.id for s in updated],
-            deleted=deleted,
+            created=created_ids,
+            updated=updated_ids,
+            deleted=deleted_ids,
         )
 
     # Node connections

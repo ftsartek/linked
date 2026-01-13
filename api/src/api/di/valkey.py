@@ -6,7 +6,21 @@ from valkey.asyncio import Valkey
 
 from config import get_settings
 
-settings = get_settings()
+
+def get_root_store() -> ValkeyStore:
+    """Create the root Valkey store."""
+    settings = get_settings()
+    return ValkeyStore.with_client(url=settings.valkey.session_url)
+
+
+def get_sessions_store() -> ValkeyStore:
+    """Create the sessions store (namespaced under root)."""
+    return get_root_store().with_namespace("sessions")
+
+
+def get_rl_store() -> ValkeyStore:
+    """Create the rate limit store (namespaced under root)."""
+    return get_root_store().with_namespace("rate_limit")
 
 
 async def provide_valkey_client() -> Valkey:
@@ -14,10 +28,5 @@ async def provide_valkey_client() -> Valkey:
 
     Uses valkey_event_db for event storage (separate from sessions).
     """
-    return valkey.from_url(settings.valkey_event_url, decode_responses=False)
-
-
-# Create root Valkey store and namespaced children
-root_store = ValkeyStore.with_client(url=settings.valkey_session_url)
-rl_store = root_store.with_namespace("rate_limit")
-sessions_store = root_store.with_namespace("sessions")
+    settings = get_settings()
+    return valkey.from_url(settings.valkey.event_url, decode_responses=False)

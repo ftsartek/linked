@@ -8,7 +8,6 @@ from uuid import UUID
 from sqlspec import AsyncDriverAdapterBase
 
 from api.auth.middleware import SessionUser
-from config import get_settings
 from database.models.alliance import INSERT_STMT as ALLIANCE_INSERT
 from database.models.character import INSERT_STMT as CHARACTER_INSERT
 from database.models.corporation import INSERT_STMT as CORPORATION_INSERT
@@ -68,10 +67,12 @@ class AuthService:
         db_session: AsyncDriverAdapterBase,
         sso_service: EveSSOService,
         encryption_service: EncryptionService,
+        esi_client: ESIClient,
     ) -> None:
         self.db_session = db_session
         self.sso_service = sso_service
         self.encryption_service = encryption_service
+        self.esi_client = esi_client
 
     async def get_character_by_id(self, character_id: int) -> CharacterUserInfo | None:
         """Fetch character by EVE character ID.
@@ -169,12 +170,11 @@ class AuthService:
         Returns:
             Tuple of (corporation_id, alliance_id)
         """
-        settings = get_settings()
         corporation_id: int | None = None
         alliance_id: int | None = None
 
         try:
-            async with ESIClient(settings.esi_user_agent, settings.esi_timeout) as client:
+            async with self.esi_client as client:
                 # Fetch character public info
                 char_info = await client.get_character(character_id)
                 corporation_id = char_info.corporation_id
@@ -351,6 +351,7 @@ async def provide_auth_service(
     db_session: AsyncDriverAdapterBase,
     sso_service: EveSSOService,
     encryption_service: EncryptionService,
+    esi_client: ESIClient,
 ) -> AuthService:
     """Provide AuthService with injected dependencies."""
-    return AuthService(db_session, sso_service, encryption_service)
+    return AuthService(db_session, sso_service, encryption_service, esi_client)

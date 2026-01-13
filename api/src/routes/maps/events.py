@@ -414,9 +414,9 @@ class MapEvent(msgspec.Struct):
         event_id: str,
         map_id: UUID,
         node_id: UUID,
-        created: list[dict[str, Any]],
-        updated: list[dict[str, Any]],
-        deleted: list[UUID],
+        created_ids: list[UUID],
+        updated_ids: list[UUID],
+        deleted_ids: list[UUID],
         user_id: UUID | None = None,
     ) -> MapEvent:
         """Create a signatures_bulk_updated event for paste/sync operations."""
@@ -427,9 +427,9 @@ class MapEvent(msgspec.Struct):
             timestamp=datetime.now(UTC),
             data={
                 "node_id": str(node_id),
-                "created": created,
-                "updated": updated,
-                "deleted": [str(s) for s in deleted],
+                "created_ids": [str(s) for s in created_ids],
+                "updated_ids": [str(s) for s in updated_ids],
+                "deleted_ids": [str(s) for s in deleted_ids],
             },
             user_id=user_id,
         )

@@ -4,7 +4,7 @@ Version: 20260108183524
 Created: 2026-01-08T18:35:24.421997+00:00
 Author: Jordan Russell <jordan@artek.nz>"""
 
-from typing import Iterable
+from collections.abc import Iterable
 
 
 async def up(context: object | None = None) -> str | Iterable[str]:

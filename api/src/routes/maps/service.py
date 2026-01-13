@@ -46,7 +46,6 @@ from routes.maps.dependencies import (
 )
 from routes.maps.events import ACCESS_REVOCATION_TYPES, EventType, MapEvent
 from routes.maps.queries import (
-    BULK_UPSERT_SIGNATURES,
     CHECK_ACCESS,
     CHECK_EDIT_ACCESS,
     CHECK_MAP_PUBLIC,
@@ -73,7 +72,6 @@ from routes.maps.queries import (
     GET_NODE_SIGNATURES,
     GET_SIGNATURE_ENRICHED,
     GET_SIGNATURE_NODE,
-    GET_SIGNATURES_ENRICHED_BATCH,
     GET_SUBSCRIPTION_COUNT,
     GET_USER_CHARACTER,
     GET_USER_CHARACTER_IDS,
@@ -103,6 +101,7 @@ from routes.maps.queries import (
     UPDATE_NODE_POSITION,
     UPDATE_NODE_SYSTEM,
     UPDATE_SIGNATURE_LINK,
+    UPSERT_SIGNATURE,
 )
 
 # Reason codes for sync errors
@@ -298,8 +297,8 @@ class MapService:
         Returns DeleteMapResponse with all deleted IDs, or None if map not found.
         """
         # Get node and link IDs before deletion
-        node_ids = [row[0] for row in await self.db_session.select(GET_MAP_NODE_IDS, map_id)]  # type: ignore[index]
-        link_ids = [row[0] for row in await self.db_session.select(GET_MAP_LINK_IDS, map_id)]  # type: ignore[index]
+        node_ids = [row["id"] for row in await self.db_session.select(GET_MAP_NODE_IDS, map_id)]
+        link_ids = [row["id"] for row in await self.db_session.select(GET_MAP_LINK_IDS, map_id)]
 
         # Soft-delete links first, then nodes, then the map
         await self.db_session.execute(SOFT_DELETE_MAP_LINKS, map_id)
@@ -799,65 +798,81 @@ class MapService:
         )
         return [row["id"] for row in deleted_rows]
 
+    # TODO: Revert to SQLSpec execute() once upstream fixes RETURNING results
+    # being discarded for INSERT ... ON CONFLICT ... WHERE queries.
+    # See: mcve.py at project root for reproduction case.
+    async def _upsert_signature(
+        self,
+        node_id: UUID,
+        map_id: UUID,
+        code: str,
+        group_type: str,
+        subgroup: str | None,
+        sig_type: str | None,
+    ) -> dict:
+        """Execute a single signature upsert and return the result row.
+
+        Uses raw connection to work around SQLSpec discarding RETURNING results
+        for INSERT ... ON CONFLICT ... WHERE statements.
+        """
+        import asyncpg.exceptions
+        from sqlspec.exceptions import IntegrityError, UniqueViolationError
+
+        try:
+            rows = await self.db_session.connection.fetch(
+                UPSERT_SIGNATURE,
+                node_id,
+                map_id,
+                code,
+                group_type,
+                subgroup,
+                sig_type,
+            )
+            return dict(rows[0])
+        except asyncpg.exceptions.UniqueViolationError as e:
+            raise UniqueViolationError(str(e)) from e
+        except asyncpg.exceptions.IntegrityConstraintViolationError as e:
+            raise IntegrityError(str(e)) from e
+
     async def bulk_upsert_signatures(
         self,
         node_id: UUID,
         map_id: UUID,
         signatures: list[dict],
         delete_missing: bool = False,
-    ) -> tuple[list[EnrichedSignatureInfo], list[EnrichedSignatureInfo], list[UUID]]:
+    ) -> tuple[list[UUID], list[UUID], list[UUID]]:
         """Bulk upsert signatures for a node.
 
-        Returns (created, updated, deleted) lists.
+        Returns (created_ids, updated_ids, deleted_ids) tuples of UUIDs.
         If delete_missing is True, signatures not in the input list will be soft-deleted.
-
-        Optimized to use batch operations: 2 queries total instead of 3N queries.
         """
         if not signatures:
-            deleted = await self._delete_missing_signatures(node_id, []) if delete_missing else []
-            return [], [], deleted
+            deleted_ids = await self._delete_missing_signatures(node_id, []) if delete_missing else []
+            return [], [], deleted_ids
 
-        # Prepare arrays for batch upsert
         codes = [s["code"].upper() for s in signatures]
-        group_types = [s.get("group_type", "signature") for s in signatures]
-        subgroups = [s.get("subgroup") for s in signatures]
-        types = [s.get("type") for s in signatures]
-        link_ids = [s.get("link_id") for s in signatures]
-        wormhole_ids = [s.get("wormhole_id") for s in signatures]
 
-        # Batch upsert - returns id, code, is_insert for each signature
-        upsert_results = await self.db_session.select(
-            BULK_UPSERT_SIGNATURES,
-            node_id,
-            map_id,
-            codes,
-            group_types,
-            subgroups,
-            types,
-            link_ids,
-            wormhole_ids,
-        )
+        # Execute upserts and classify by is_insert from RETURNING
+        created_ids: list[UUID] = []
+        updated_ids: list[UUID] = []
 
-        # Collect IDs and track which were inserts vs updates
-        created_ids = [row["id"] for row in upsert_results if row["is_insert"]]
-        updated_ids = [row["id"] for row in upsert_results if not row["is_insert"]]
-
-        # Batch fetch enriched data for all upserted signatures
-        all_ids = created_ids + updated_ids
-        enriched_by_id: dict[UUID, EnrichedSignatureInfo] = {}
-        if all_ids:
-            enriched_rows = await self.db_session.select(
-                GET_SIGNATURES_ENRICHED_BATCH,
-                all_ids,
-                schema_type=EnrichedSignatureInfo,
+        for s in signatures:
+            row = await self._upsert_signature(
+                node_id,
+                map_id,
+                s["code"].upper(),
+                s.get("group_type", "signature"),
+                s.get("subgroup"),
+                s.get("type"),
             )
-            enriched_by_id = {e.id: e for e in enriched_rows}
+            if row["is_insert"]:
+                created_ids.append(row["id"])
+            else:
+                updated_ids.append(row["id"])
 
-        created = [enriched_by_id[sid] for sid in created_ids if sid in enriched_by_id]
-        updated = [enriched_by_id[sid] for sid in updated_ids if sid in enriched_by_id]
-        deleted = await self._delete_missing_signatures(node_id, codes) if delete_missing else []
+        deleted_ids = await self._delete_missing_signatures(node_id, codes) if delete_missing else []
 
-        return created, updated, deleted
+        return created_ids, updated_ids, deleted_ids
 
     # Node connection methods
 

@@ -4,7 +4,6 @@ from datetime import timedelta
 
 from sqlspec import AsyncDriverAdapterBase
 
-from config import get_settings
 from database.models.refresh_token import SELECT_BY_CHARACTER_STMT, RefreshToken
 from esi_client import ESIClient
 from routes.universe.dependencies import (
@@ -41,10 +40,12 @@ class UniverseService:
         db_session: AsyncDriverAdapterBase,
         encryption_service: EncryptionService | None = None,
         sso_service: EveSSOService | None = None,
+        esi_client: ESIClient | None = None,
     ) -> None:
         self.db_session = db_session
         self.encryption_service = encryption_service
         self.sso_service = sso_service
+        self.esi_client = esi_client
 
     async def search_systems(self, query: str) -> list[SystemSearchResult]:
         """Search systems by name using trigram similarity."""
@@ -158,10 +159,15 @@ class UniverseService:
 
         Returns:
             Dict mapping category names to lists of EntitySearchResult
-        """
-        settings = get_settings()
 
-        async with ESIClient(settings.esi_user_agent, settings.esi_timeout) as client:
+        Raises:
+            ValueError: If ESI client is not configured
+        """
+        if self.esi_client is None:
+            msg = "ESI client required for entity search"
+            raise ValueError(msg)
+
+        async with self.esi_client as client:
             # Call ESI search
             search_result = await client.search(
                 access_token=access_token,
@@ -224,6 +230,7 @@ async def provide_universe_service_with_auth(
     db_session: AsyncDriverAdapterBase,
     encryption_service: EncryptionService,
     sso_service: EveSSOService,
+    esi_client: ESIClient,
 ) -> UniverseService:
     """Provide UniverseService with auth dependencies for ESI search."""
-    return UniverseService(db_session, encryption_service, sso_service)
+    return UniverseService(db_session, encryption_service, sso_service, esi_client)

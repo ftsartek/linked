@@ -13,7 +13,7 @@ from config import get_settings
 from routes.auth.dependencies import ERR_AUTH_INVALID_STATE, auth_rate_limit_config
 from routes.auth.service import AuthService, UserInfo, provide_auth_service
 from services.encryption import provide_encryption_service
-from services.eve_sso import EveSSOService, provide_sso_service
+from services.eve_sso import EveSSOService
 
 
 class AuthController(Controller):
@@ -22,7 +22,6 @@ class AuthController(Controller):
     path = "/auth"
     middleware = [auth_rate_limit_config.middleware]
     dependencies = {
-        "sso_service": Provide(provide_sso_service),
         "encryption_service": Provide(provide_encryption_service),
         "auth_service": Provide(provide_auth_service),
     }

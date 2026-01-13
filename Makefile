@@ -1,4 +1,4 @@
-.PHONY: help dev dev-services dev-stop api web web-build postgres postgres-stop valkey valkey-stop migrations preseed schema clean cli
+.PHONY: help dev dev-services dev-stop api web web-build postgres postgres-stop valkey valkey-stop migrations preseed schema clean cli test
 
 # Configuration
 POSTGRES_USER ?= linked
@@ -27,6 +27,9 @@ help:
 	@echo "Code Generation:"
 	@echo "  schema         - Generate OpenAPI schema and TypeScript types"
 	@echo ""
+	@echo "Testing:"
+	@echo "  test           - Run API integration tests (requires Docker)"
+	@echo ""
 	@echo "CLI:"
 	@echo "  cli            - Run CLI command (make cli CMD=\"...\")"
 	@echo ""
@@ -44,7 +47,7 @@ dev: dev-services
 	@echo "Starting API and Web servers..."
 	@echo "Press Ctrl+C to stop all services"
 	@trap '$(MAKE) dev-stop; exit 0' INT TERM; \
-		(cd api && uv run uvicorn src.api.app:app --reload --timeout-graceful-shutdown=5 --host 0.0.0.0 --port 8000) & \
+		(cd api && uv run uvicorn src.api.main:app --reload --timeout-graceful-shutdown=5 --host 0.0.0.0 --port 8000) & \
 		(cd web && npm run dev) & \
 		wait
 
@@ -62,7 +65,7 @@ dev-stop: postgres-stop valkey-stop
 
 # API server
 api:
-	cd api && uv run uvicorn src.api.app:app --reload --host 0.0.0.0 --port 8000
+	cd api && uv run uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 
 # Web dev server
 web:
@@ -120,6 +123,10 @@ migrations:
 # Run CLI commands
 cli:
 	cd api && uv run linked $(CMD)
+
+# Run API integration tests
+test:
+	cd api && CONFIG_FILE=tests/config.test.yaml uv run pytest tests/ -v
 
 clean: postgres-stop valkey-stop
 	@echo "Cleanup complete"

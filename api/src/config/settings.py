@@ -1,117 +1,176 @@
 from __future__ import annotations
 
+import secrets
+import warnings
 from functools import lru_cache
+from os import getenv
 from pathlib import Path
 from typing import Literal
 
-from litestar.types import Method
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from cryptography.fernet import Fernet
+from msgspec import Struct, field
+
+from .loader import ConfigLoader
 
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
+class BaseStruct(Struct, omit_defaults=False, kw_only=True):
+    """Base struct with common configuration."""
+
+    pass
+
+
+class CSRFSettings(BaseStruct):
+    """CSRF settings."""
+
+    secret: str = ""
+
+    def __post_init__(self) -> None:
+        self.secret = getenv("CSRF_SECRET", "") or self.secret
+        if not self.secret:
+            warnings.warn("CSRF secret is not set, autogenerating.")
+            self.secret = secrets.token_urlsafe(32)
+
+
+class CORSSettings(BaseStruct):
+    """CORS settings."""
+
+    allow_origins: list[str] = field(default_factory=list)
+    allow_methods: list[Literal["GET", "POST", "DELETE", "PATCH", "PUT", "HEAD", "TRACE", "OPTIONS", "*"]] = field(
+        default_factory=lambda: [
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "PATCH",
+            "OPTIONS",
+        ]
     )
+    allow_headers: list[str] = field(default_factory=list)
+    allow_credentials: bool = True
 
-    debug: bool = False
 
-    # CSRF
-    csrf_secret: str = Field(min_length=32)
+class CompressionSettings(BaseStruct):
+    """Response compression settings."""
 
-    # CORS
-    cors_allow_origins: list[str] = Field(default_factory=list)
-    cors_allow_methods: list[Method | Literal["*"]] = Field(
-        default_factory=lambda: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-    )
-    cors_allow_headers: list[str] = Field(default_factory=list)
-    cors_allow_credentials: bool = True
+    minimum_size: int = 500
+    brotli_quality: int = 5
 
-    # Compression
-    compression_minimum_size: int = 500
-    compression_brotli_quality: int = 5
 
-    # ESI
-    esi_user_agent: str = Field(description="User-Agent for ESI requests (include app name and contact)")
-    esi_timeout: float = 30.0
+class ESISettings(BaseStruct):
+    """EVE ESI API settings."""
 
-    # EVE SSO
-    eve_client_id: str = Field(description="EVE SSO application client ID")
-    eve_client_secret: str = Field(description="EVE SSO application client secret")
-    eve_callback_url: str = "http://localhost:8000/auth/callback"
-    # TODO: Actually set these to useful values
-    eve_scopes: list[str] = Field(
+    user_agent: str = ""
+    timeout: float = 30.0
+    client_secret: str = ""
+    client_id: str = ""
+
+    def __post_init__(self) -> None:
+        self.client_secret = getenv("EVE_CLIENT_SECRET", "") or self.client_secret
+        if not self.client_secret:
+            warnings.warn("EVE client secret is not set.")
+
+        if not self.client_id:
+            warnings.warn("EVE client ID is not set.")
+
+
+class EVESSOSettings(BaseStruct):
+    """EVE SSO authentication settings."""
+
+    callback_url: str = "http://localhost:8000/auth/callback"
+    scopes: list[str] = field(
         default_factory=lambda: [
             "publicData",
             "esi-search.search_structures.v1",
-            "esi-corporations.read_corporation_membership.v1",
-            "esi-corporations.read_structures.v1",
-            "esi-corporations.track_members.v1",
-            "esi-corporations.read_divisions.v1",
-            "esi-corporations.read_standings.v1",
-            "esi-planets.read_customs_offices.v1",
-            "esi-corporations.read_facilities.v1",
-            "esi-universe.read_structures.v1",
-            "esi-corporations.read_starbases.v1",
-        ],
-        description="ESI scopes to request",
+        ]
     )
 
-    # Valkey
-    valkey_host: str = "localhost"
-    valkey_port: int = 6379
-    valkey_session_db: int = 0
-    valkey_event_db: int = 1
-    valkey_user: str = "default"
-    valkey_password: str | None = None
-    session_max_age: int = 604800  # 7 days in seconds
+    token_encryption_key: str = ""
+
+    def __post_init__(self) -> None:
+        self.token_encryption_key = getenv("TOKEN_ENCRYPTION_KEY", "") or self.token_encryption_key
+        if not self.token_encryption_key:
+            warnings.warn("Token encryption key is not set, autogenerating.")
+            self.token_encryption_key = Fernet.generate_key().decode()
+
+
+class ValkeySettings(BaseStruct):
+    """Valkey (Redis-compatible) settings."""
+
+    password: str = ""
+    host: str = "localhost"
+    port: int = 6379
+    session_db: int = 0
+    event_db: int = 1
+    user: str = "default"
+
+    def __post_init__(self) -> None:
+        env_pass = getenv("VALKEY_PASSWORD")
+        if env_pass:
+            self.password = env_pass
 
     @property
-    def valkey_session_url(self) -> str:
+    def session_url(self) -> str:
         """Build Valkey URL for session storage."""
-        if self.valkey_password:
-            return f"valkey://{self.valkey_user}:{self.valkey_password}@{self.valkey_host}:{self.valkey_port}/{self.valkey_session_db}"
-        return f"valkey://{self.valkey_user}@{self.valkey_host}:{self.valkey_port}/{self.valkey_session_db}"
+        if self.password:
+            return f"valkey://{self.user}:{self.password}@{self.host}:{self.port}/{self.session_db}"
+        return f"valkey://{self.user}@{self.host}:{self.port}/{self.session_db}"
 
     @property
-    def valkey_event_url(self) -> str:
+    def event_url(self) -> str:
         """Build Valkey URL for event storage."""
-        if self.valkey_password:
-            return f"valkey://{self.valkey_user}:{self.valkey_password}@{self.valkey_host}:{self.valkey_port}/{self.valkey_session_db}"
-        return f"valkey://{self.valkey_user}@{self.valkey_host}:{self.valkey_port}/{self.valkey_event_db}"
+        if self.password:
+            return f"valkey://{self.user}:{self.password}@{self.host}:{self.port}/{self.event_db}"
+        return f"valkey://{self.user}@{self.host}:{self.port}/{self.event_db}"
 
-    # Token encryption (Fernet key, generate with:
-    # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
-    token_encryption_key: str = Field(
-        min_length=32,
-        description="Fernet key for encrypting refresh tokens",
-    )
 
-    # Frontend redirect URL after auth
-    frontend_url: str = "http://localhost:5173"
+class SessionSettings(BaseStruct):
+    """Session management settings."""
 
-    # Image cache
-    image_cache_dir: str = "/var/cache/linked/images"
-    image_cache_ttl_seconds: int = 259200  # 3 days
+    max_age: int = 604800  # 7 days in seconds
 
-    # Database
-    db_host: str = "localhost"
-    db_port: int = 5432
-    db_user: str = "linked"
-    db_password: str = ""
-    db_name: str = "linked"
-    db_pool_min_size: int = 5
-    db_pool_max_size: int = 20
-    db_ssl: bool = False
 
-    # Data directories
-    data_dir: Path = Path("/var/lib/linked/preseed")
+class ImageCacheSettings(BaseStruct):
+    """Image cache settings."""
+
+    dir: str = "/var/cache/linked/images"
+    ttl_seconds: int = 259200  # 3 days
+
+
+class PostgresSettings(BaseStruct):
+    """Database connection settings."""
+
+    password: str = ""
+    host: str = "localhost"
+    port: int = 5432
+    user: str = "postgres"
+    name: str = "linked"
+    pool_min_size: int = 5
+    pool_max_size: int = 20
+    ssl: bool = False
+
+    def __post_init__(self) -> None:
+        env_pass = getenv("VALKEY_PASSWORD")
+        if env_pass:
+            self.password = env_pass
+
+    @property
+    def uri(self) -> str:
+        return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
+
+
+class DataSettings(BaseStruct):
+    """Data directory settings."""
+
+    dir: str = "/var/lib/linked/preseed"
+
+    @property
+    def base_dir(self) -> Path:
+        """Base directory path."""
+        return Path(self.dir)
 
     @property
     def static_dir(self) -> Path:
-        """Static directory path (baked in, up 3)"""
+        """Static directory path (baked in, up 3)."""
         return Path(__file__).parent.parent.parent / "static"
 
     @property
@@ -122,10 +181,33 @@ class Settings(BaseSettings):
     @property
     def sde_dir(self) -> Path:
         """SDE data directory within data_dir."""
-        return self.data_dir / "sde"
+        return Path(self.base_dir) / "sde"
+
+
+class Settings(BaseStruct):
+    """Application settings."""
+
+    debug: bool = False
+    frontend_url: str = "http://localhost:5173"
+
+    csrf: CSRFSettings = field(default_factory=lambda: CSRFSettings())
+    cors: CORSSettings = field(default_factory=lambda: CORSSettings())
+    compression: CompressionSettings = field(default_factory=lambda: CompressionSettings())
+    esi: ESISettings = field(default_factory=lambda: ESISettings())
+    eve_sso: EVESSOSettings = field(default_factory=lambda: EVESSOSettings())
+    valkey: ValkeySettings = field(default_factory=lambda: ValkeySettings())
+    session: SessionSettings = field(default_factory=lambda: SessionSettings())
+    image_cache: ImageCacheSettings = field(default_factory=lambda: ImageCacheSettings())
+    postgres: PostgresSettings = field(default_factory=lambda: PostgresSettings())
+    data: DataSettings = field(default_factory=lambda: DataSettings())
 
 
 @lru_cache
 def get_settings() -> Settings:
-    # Required fields are loaded from environment variables by pydantic-settings
-    return Settings()  # type: ignore[call-arg]
+    """Load settings from config file."""
+    loader = ConfigLoader(
+        mapped_class=Settings,
+        source_file=Path("config.yaml"),
+        source_override_env="CONFIG_FILE",
+    )
+    return loader.get_config()
