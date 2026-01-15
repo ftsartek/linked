@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import secrets
+from typing import Annotated
 
 from litestar import Controller, Request, get, post
 from litestar.di import Provide
 from litestar.exceptions import NotAuthorizedException
-from litestar.params import Parameter
+from litestar.params import Dependency, Parameter
 from litestar.response import Redirect
 
 from api.auth.guards import require_auth
@@ -62,7 +63,7 @@ class AuthController(Controller):
         request: Request,
         auth_service: AuthService,
         code: str,
-        settings: Settings,
+        app_settings: Annotated[Settings, Dependency(skip_validation=True)],
         oauth_state: str = Parameter(query="state"),
     ) -> Redirect:
         """Handle EVE SSO callback."""
@@ -90,7 +91,7 @@ class AuthController(Controller):
         request.session["character_id"] = result.character_id
         request.session["character_name"] = result.character_name
 
-        return Redirect(path=settings.frontend_url)
+        return Redirect(path=app_settings.frontend_url)
 
     @post("/logout")
     async def logout(self, request: Request) -> dict[str, bool]:
