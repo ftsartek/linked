@@ -149,7 +149,7 @@ class PostgresSettings(BaseStruct):
     ssl: bool = False
 
     def __post_init__(self) -> None:
-        env_pass = getenv("VALKEY_PASSWORD")
+        env_pass = getenv("POSTGRES_PASSWORD")
         if env_pass:
             self.password = env_pass
 
