@@ -27,6 +27,7 @@ UNIDENTIFIED_SYSTEMS = [
     (-9, 8, "Unidentified"),
     (-10, 9, "Unidentified"),
     (-11, 13, "Unidentified"),
+    (-12, 25, "Unidentified"),
 ]
 
 
