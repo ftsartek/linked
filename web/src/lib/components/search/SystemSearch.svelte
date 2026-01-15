@@ -22,6 +22,7 @@
 	}: Props = $props();
 
 	let wrapperElement: HTMLDivElement | null = $state(null);
+	let highlightedValue = $state<string | null>(null);
 
 	$effect(() => {
 		if (autofocus && wrapperElement) {
@@ -36,6 +37,13 @@
 		if (event.key === 'Escape' && oncancel) {
 			oncancel();
 		}
+		if (event.key === 'Enter' && highlightedValue) {
+			event.preventDefault();
+			const selected = items.find((item) => String(item.id) === highlightedValue);
+			if (selected && onselect) {
+				onselect(selected);
+			}
+		}
 	}
 
 	let items = $state<SystemSearchResult[]>([]);
@@ -45,6 +53,7 @@
 	async function searchSystems(query: string) {
 		if (query.length < 2) {
 			items = [];
+			highlightedValue = null;
 			return;
 		}
 
@@ -53,6 +62,9 @@
 			params: { query: { q: query } }
 		});
 		items = data?.systems ?? [];
+		// Auto-highlight first item when results are loaded
+		const firstItem = items[0];
+		highlightedValue = firstItem ? String(firstItem.id) : null;
 		loading = false;
 	}
 
@@ -85,6 +97,8 @@
 <div class="w-56" bind:this={wrapperElement}>
 	<Combobox
 		{placeholder}
+		{highlightedValue}
+		inputBehavior="autohighlight"
 		onInputValueChange={handleInputChange}
 		onValueChange={handleValueChange}
 		onOpenChange={handleOpenChange}

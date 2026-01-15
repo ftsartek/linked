@@ -29,6 +29,7 @@
 
 	let currentQuery = $state('');
 	let comboboxOpen = $state(false);
+	let highlightedValue = $state<string | null>(null);
 
 	// Auto-search on mount if enabled
 	$effect(() => {
@@ -50,6 +51,9 @@
 			}
 		});
 		items = data ?? [];
+		// Auto-highlight first item when results are loaded
+		const firstItem = items[0];
+		highlightedValue = firstItem ? String(firstItem.id) : null;
 		loading = false;
 	}
 
@@ -80,17 +84,30 @@
 			searchWormholes(currentQuery);
 		}
 	}
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter' && highlightedValue) {
+			event.preventDefault();
+			const selected = items.find((item) => String(item.id) === highlightedValue);
+			if (selected && onselect) {
+				onselect(selected);
+			}
+		}
+	}
 </script>
 
 <Combobox
 	{placeholder}
 	open={comboboxOpen}
+	{highlightedValue}
+	inputBehavior="autohighlight"
 	onInputValueChange={handleInputChange}
 	onValueChange={handleValueChange}
 	onOpenChange={handleOpenChange}
 >
 	<Combobox.Control>
 		<Combobox.Input
+			onkeydown={handleKeydown}
 			class="w-full rounded-lg border-2 border-primary-950 bg-black px-3 py-2 text-white placeholder-surface-400 focus:border-primary-800 focus:outline-none"
 		/>
 		<Combobox.Trigger class="btn-icon preset-tonal-surface">
