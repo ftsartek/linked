@@ -24,6 +24,7 @@ export interface ContextMenuState {
 	// For add-connection flow
 	sourceNodeId?: string;
 	sourceSystemClass?: number;
+	targetSystemClass?: number;
 	pendingWormholeId?: number;
 	pendingWormholeTargetClass?: number;
 }

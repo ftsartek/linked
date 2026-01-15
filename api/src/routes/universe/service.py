@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from sqlspec import AsyncDriverAdapterBase
+from sqlspec import AsyncDriverAdapterBase, sql
+from sqlspec.builder import Select
 
 from database.models.refresh_token import SELECT_BY_CHARACTER_STMT, RefreshToken
 from esi_client import ESIClient
@@ -17,7 +18,6 @@ from routes.universe.queries import (
     LIST_UNIDENTIFIED_SYSTEMS,
     SEARCH_LOCAL_ENTITIES,
     SEARCH_SYSTEMS,
-    SEARCH_WORMHOLES,
 )
 from services.encryption import EncryptionService
 from services.eve_sso import EveSSOService
@@ -31,6 +31,69 @@ CATEGORY_MAP = {
     "corporation": "corporation",
     "alliance": "alliance",
 }
+
+
+def _build_wormhole_search_query(
+    query: str | None,
+    target_class: int | None,
+    source_class: int | None,
+) -> tuple[Select, dict[str, str | int]]:
+    """Build dynamic wormhole search query with optional filters.
+
+    Args:
+        query: Wormhole code to search for (None or empty returns all matching filters)
+        target_class: Filter by target system class
+        source_class: Filter by source system class (includes K162 which can appear anywhere)
+
+    Returns:
+        Tuple of (query builder, parameters dict)
+    """
+    q = sql.select("id", "code", "target_class", "sources").from_("wormhole")
+    params: dict[str, str | int] = {}
+
+    # Add search condition only if query provided
+    if query:
+        pattern = f"{query}%"
+        q = q.where("(code ILIKE :pattern OR code % :query)")
+        params["pattern"] = pattern
+        params["query"] = query
+
+        # When searching by name, apply filters strictly
+        if target_class is not None:
+            q = q.where("target_class = :target_class")
+            params["target_class"] = target_class
+
+        if source_class is not None:
+            q = q.where("(:source_class = ANY(sources) OR code = 'K162')")
+            params["source_class"] = source_class
+    else:
+        # When browsing (no query), always include K162 regardless of filters
+        if target_class is not None and source_class is not None:
+            q = q.where("((target_class = :target_class AND :source_class = ANY(sources)) OR code = 'K162')")
+            params["target_class"] = target_class
+            params["source_class"] = source_class
+        elif target_class is not None:
+            q = q.where("(target_class = :target_class OR code = 'K162')")
+            params["target_class"] = target_class
+        elif source_class is not None:
+            q = q.where("(:source_class = ANY(sources) OR code = 'K162')")
+            params["source_class"] = source_class
+
+    # Dynamic ordering based on query presence
+    # Always put K162 last since it's a special catch-all type
+    if query:
+        q = q.order_by(
+            "CASE WHEN code = 'K162' THEN 1 ELSE 0 END",
+            "CASE WHEN code ILIKE :pattern THEN code ELSE 'ZZZZ' || code END",
+            "similarity(code, :query) DESC",
+        )
+    else:
+        q = q.order_by(
+            "CASE WHEN code = 'K162' THEN 1 ELSE 0 END",
+            "code",
+        )
+
+    return q, params
 
 
 class UniverseService:
@@ -72,16 +135,8 @@ class UniverseService:
             target_class: Filter by target system class
             source_class: Filter by source system class (includes K162 which can appear anywhere)
         """
-        # Handle None/empty query - pass empty string for pattern matching bypass
-        pattern = f"{query}%" if query else ""
-        query_value = query or ""
-        items = await self.db_session.select(
-            SEARCH_WORMHOLES,
-            pattern,
-            query_value,
-            target_class,
-            source_class,
-        )
+        q, params = _build_wormhole_search_query(query, target_class, source_class)
+        items = await self.db_session.select(q, params)
 
         return [
             WormholeSearchResult(

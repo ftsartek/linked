@@ -19,7 +19,13 @@ from services.cleanup import (
     cleanup_nodes,
     cleanup_signatures,
 )
-from services.lifecycle import update_link_lifetimes
+from services.lifecycle import (
+    DEFAULT_SIGNATURE_EXPIRY_DAYS,
+    LifecycleResult,
+    SignatureLifecycleResult,
+    expire_old_signatures,
+    update_link_lifetimes,
+)
 
 
 async def _create_event_publisher(settings: Settings) -> EventPublisher:
@@ -43,41 +49,113 @@ def cron() -> None:
     pass
 
 
+def _print_lifecycle_results(
+    link_result: LifecycleResult,
+    sig_result: SignatureLifecycleResult,
+    signature_expiry_days: int,
+    dry_run: bool,
+    verbose: bool,
+) -> None:
+    """Print lifecycle command results."""
+    if dry_run:
+        click.echo("[lifecycle] DRY RUN - no changes made")
+
+    _print_link_lifecycle_results(link_result, dry_run, verbose)
+    _print_signature_lifecycle_results(link_result, sig_result, signature_expiry_days, dry_run, verbose)
+
+    # No changes summary
+    total_changes = (
+        link_result.updated_count
+        + link_result.deleted_count
+        + link_result.cascade_deleted_signature_count
+        + sig_result.expired_count
+    )
+    if total_changes == 0 and verbose:
+        click.echo("[lifecycle] No changes needed")
+
+
+def _print_link_lifecycle_results(link_result: LifecycleResult, dry_run: bool, verbose: bool) -> None:
+    """Print link lifecycle results."""
+    # Link updates
+    if link_result.updated_count > 0:
+        parts = [f"{count} {status}" for status, count in link_result.status_counts.items() if count > 0]
+        action = "Would update" if dry_run else "Updated"
+        click.echo(f"[lifecycle] {action} {link_result.updated_count} links: {', '.join(parts)}")
+        if verbose:
+            for link_id in link_result.updated_ids:
+                click.echo(f"  {link_id}")
+
+    # Link deletions
+    if link_result.deleted_count > 0:
+        action = "Would soft-delete" if dry_run else "Soft-deleted"
+        click.echo(f"[lifecycle] {action} {link_result.deleted_count} expired links")
+        if verbose:
+            for link_id in link_result.deleted_ids:
+                click.echo(f"  {link_id}")
+
+
+def _print_signature_lifecycle_results(
+    link_result: LifecycleResult,
+    sig_result: SignatureLifecycleResult,
+    signature_expiry_days: int,
+    dry_run: bool,
+    verbose: bool,
+) -> None:
+    """Print signature lifecycle results."""
+    # Cascade-deleted signatures (from link deletion)
+    if link_result.cascade_deleted_signature_count > 0:
+        action = "Would cascade-delete" if dry_run else "Cascade-deleted"
+        click.echo(f"[lifecycle] {action} {link_result.cascade_deleted_signature_count} signatures from expired links")
+        if verbose:
+            for sig_id in link_result.cascade_deleted_signature_ids:
+                click.echo(f"  {sig_id}")
+
+    # Expired signatures (age-based)
+    if sig_result.expired_count > 0:
+        action = "Would soft-delete" if dry_run else "Soft-deleted"
+        click.echo(
+            f"[lifecycle] {action} {sig_result.expired_count} expired signatures (>{signature_expiry_days} days old)"
+        )
+        if verbose:
+            for sig_id in sig_result.expired_ids:
+                click.echo(f"  {sig_id}")
+
+
 @cron.command()
 @click.option("--verbose", "-v", is_flag=True, help="Show detailed per-link output")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
+@click.option(
+    "--signature-expiry-days",
+    default=DEFAULT_SIGNATURE_EXPIRY_DAYS,
+    show_default=True,
+    help="Days after creation before signatures are soft-deleted",
+)
 @click.pass_obj
-async def lifecycle(settings: Settings, verbose: bool, dry_run: bool) -> None:
-    """Update link lifetime statuses and soft-delete expired links.
+async def lifecycle(settings: Settings, verbose: bool, dry_run: bool, signature_expiry_days: int) -> None:
+    """Update link lifetime statuses, soft-delete expired links and signatures.
 
     This command should be run every 2 minutes via cron.
+
+    Links are soft-deleted when they reach end-of-life based on wormhole lifetime.
+    Signatures are soft-deleted after --signature-expiry-days (default 7 days).
+    When a link is soft-deleted, its associated signatures are also cascade-deleted.
     """
     # Only create event publisher if we're actually making changes
     event_publisher = None if dry_run else await _create_event_publisher(settings)
 
     async with provide_session() as session:
-        result = await update_link_lifetimes(session, dry_run=dry_run, event_publisher=event_publisher)
+        # Process link lifecycle (includes cascade deletion of signatures)
+        link_result = await update_link_lifetimes(session, dry_run=dry_run, event_publisher=event_publisher)
 
-    if dry_run:
-        click.echo("[lifecycle] DRY RUN - no changes made")
+        # Process signature expiration
+        sig_result = await expire_old_signatures(
+            session,
+            expiry_days=signature_expiry_days,
+            dry_run=dry_run,
+            event_publisher=event_publisher,
+        )
 
-    if result.updated_count > 0:
-        parts = [f"{count} {status}" for status, count in result.status_counts.items() if count > 0]
-        action = "Would update" if dry_run else "Updated"
-        click.echo(f"[lifecycle] {action} {result.updated_count} links: {', '.join(parts)}")
-        if verbose:
-            for link_id in result.updated_ids:
-                click.echo(f"  {link_id}")
-
-    if result.deleted_count > 0:
-        action = "Would soft-delete" if dry_run else "Soft-deleted"
-        click.echo(f"[lifecycle] {action} {result.deleted_count} expired links")
-        if verbose:
-            for link_id in result.deleted_ids:
-                click.echo(f"  {link_id}")
-
-    if result.updated_count == 0 and result.deleted_count == 0 and verbose:
-        click.echo("[lifecycle] No changes needed")
+    _print_lifecycle_results(link_result, sig_result, signature_expiry_days, dry_run, verbose)
 
 
 async def _run_individual_cleanups(
