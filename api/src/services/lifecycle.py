@@ -1,19 +1,20 @@
-"""Link lifecycle management service.
+"""Link and signature lifecycle management service.
 
-Provides functions for updating link lifetime statuses and soft-deleting expired links.
+Provides functions for updating link lifetime statuses, soft-deleting expired links,
+expiring old signatures, and cascading signature deletion when links are deleted.
 """
 
 from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from sqlspec.adapters.asyncpg.driver import AsyncpgDriver
 
-from routes.maps.dependencies import EnrichedLinkInfo
+from routes.maps.dependencies import DeleteSignatureResponse, EnrichedLinkInfo
 from utils.enums import LifetimeStatus
 from utils.wormhole_status import (
     DEFAULT_LIFETIME_HOURS,
@@ -67,6 +68,41 @@ LEFT JOIN wormhole w ON l.wormhole_id = w.id
 WHERE l.id = $1 AND l.date_deleted IS NULL;
 """
 
+# Signature lifecycle queries
+GET_EXPIRED_SIGNATURES = """
+SELECT id, map_id, node_id
+FROM signature
+WHERE date_deleted IS NULL AND date_created < $1;
+"""
+
+SOFT_DELETE_SIGNATURE = """
+UPDATE signature
+SET date_deleted = $2, date_updated = $2
+WHERE id = $1 AND date_deleted IS NULL
+RETURNING id;
+"""
+
+SOFT_DELETE_SIGNATURES_BY_LINK = """
+UPDATE signature
+SET date_deleted = $2, date_updated = $2
+WHERE link_id = $1 AND date_deleted IS NULL
+RETURNING id, map_id;
+"""
+
+# Default signature expiry in days
+DEFAULT_SIGNATURE_EXPIRY_DAYS = 7
+
+
+@dataclass
+class SignatureLifecycleResult:
+    """Result of a signature lifecycle operation."""
+
+    expired_count: int = 0
+    cascade_deleted_count: int = 0
+    expired_ids: list[UUID] = field(default_factory=list)
+    cascade_deleted_ids: list[UUID] = field(default_factory=list)
+    maps_affected: set[UUID] = field(default_factory=set)
+
 
 @dataclass
 class LifecycleResult:
@@ -74,9 +110,11 @@ class LifecycleResult:
 
     updated_count: int = 0
     deleted_count: int = 0
+    cascade_deleted_signature_count: int = 0
     status_counts: dict[str, int] = field(default_factory=dict)
     updated_ids: list[UUID] = field(default_factory=list)
     deleted_ids: list[UUID] = field(default_factory=list)
+    cascade_deleted_signature_ids: list[UUID] = field(default_factory=list)
     maps_affected: set[UUID] = field(default_factory=set)
 
 
@@ -138,6 +176,39 @@ def _process_link(
     return None, False
 
 
+async def _cascade_delete_link_signatures_internal(
+    session: AsyncpgDriver,
+    link_id: UUID,
+    map_id: UUID,
+    current_time: datetime,
+    dry_run: bool,
+    event_publisher: EventPublisher | None,
+) -> list[UUID]:
+    """Internal helper to cascade delete signatures when a link is deleted.
+
+    This is used by process_map_lifecycle to avoid circular dependencies.
+    """
+    if dry_run:
+        result = await session.select(
+            "SELECT id FROM signature WHERE link_id = $1 AND date_deleted IS NULL",
+            [link_id],
+        )
+        return [row["id"] for row in result]
+
+    result = await session.select(SOFT_DELETE_SIGNATURES_BY_LINK, [link_id, current_time])
+    deleted_ids = [row["id"] for row in result]
+
+    if event_publisher and deleted_ids:
+        for sig_id in deleted_ids:
+            await event_publisher.signature_deleted(
+                map_id,
+                DeleteSignatureResponse(signature_id=sig_id),
+                user_id=None,
+            )
+
+    return deleted_ids
+
+
 async def process_map_lifecycle(
     session: AsyncpgDriver,
     map_id: UUID,
@@ -166,6 +237,18 @@ async def process_map_lifecycle(
         new_status, should_delete = _process_link(link, current_time)
 
         if should_delete:
+            # Cascade delete signatures associated with this link
+            cascade_sig_ids = await _cascade_delete_link_signatures_internal(
+                session=session,
+                link_id=link_id,
+                map_id=map_id,
+                current_time=current_time,
+                dry_run=dry_run,
+                event_publisher=event_publisher,
+            )
+            result.cascade_deleted_signature_ids.extend(cascade_sig_ids)
+            result.cascade_deleted_signature_count += len(cascade_sig_ids)
+
             if not dry_run:
                 await session.execute(SOFT_DELETE_LINK, [link_id, current_time])
                 if event_publisher:
@@ -237,10 +320,96 @@ async def update_link_lifetimes(
         # Merge results
         total_result.updated_count += map_result.updated_count
         total_result.deleted_count += map_result.deleted_count
+        total_result.cascade_deleted_signature_count += map_result.cascade_deleted_signature_count
         total_result.updated_ids.extend(map_result.updated_ids)
         total_result.deleted_ids.extend(map_result.deleted_ids)
+        total_result.cascade_deleted_signature_ids.extend(map_result.cascade_deleted_signature_ids)
         total_result.maps_affected.update(map_result.maps_affected)
         for status, count in map_result.status_counts.items():
             total_result.status_counts[status] = total_result.status_counts.get(status, 0) + count
 
     return total_result
+
+
+async def cascade_delete_link_signatures(
+    session: AsyncpgDriver,
+    link_id: UUID,
+    map_id: UUID,
+    current_time: datetime,
+    dry_run: bool = False,
+    event_publisher: EventPublisher | None = None,
+) -> list[UUID]:
+    """Soft-delete all signatures associated with a deleted link.
+
+    Args:
+        session: Database session
+        link_id: The link ID whose signatures should be deleted
+        map_id: The map ID for event publishing
+        current_time: Current time for deletion timestamp
+        dry_run: If True, calculate changes but don't apply them
+        event_publisher: Optional event publisher for SSE notifications
+
+    Returns:
+        List of deleted signature IDs
+    """
+    return await _cascade_delete_link_signatures_internal(
+        session=session,
+        link_id=link_id,
+        map_id=map_id,
+        current_time=current_time,
+        dry_run=dry_run,
+        event_publisher=event_publisher,
+    )
+
+
+async def expire_old_signatures(
+    session: AsyncpgDriver,
+    expiry_days: int = DEFAULT_SIGNATURE_EXPIRY_DAYS,
+    current_time: datetime | None = None,
+    dry_run: bool = False,
+    event_publisher: EventPublisher | None = None,
+) -> SignatureLifecycleResult:
+    """Soft-delete signatures older than expiry_days based on date_created.
+
+    Args:
+        session: Database session
+        expiry_days: Days after creation before signatures are soft-deleted
+        current_time: Current time for calculations (defaults to now UTC)
+        dry_run: If True, calculate changes but don't apply them
+        event_publisher: Optional event publisher for SSE notifications
+
+    Returns:
+        SignatureLifecycleResult with counts and IDs of expired signatures
+    """
+    if current_time is None:
+        current_time = datetime.now(UTC)
+
+    cutoff = current_time - timedelta(days=expiry_days)
+    result = SignatureLifecycleResult()
+
+    # Get all expired signatures
+    expired_sigs = await session.select(GET_EXPIRED_SIGNATURES, [cutoff])
+
+    # Group by map_id for event publishing
+    sigs_by_map: dict[UUID, list[dict[str, Any]]] = defaultdict(list)
+    for sig in expired_sigs:
+        sigs_by_map[sig["map_id"]].append(sig)
+
+    for map_id, signatures in sigs_by_map.items():
+        for sig in signatures:
+            sig_id: UUID = sig["id"]
+
+            if not dry_run:
+                await session.execute(SOFT_DELETE_SIGNATURE, [sig_id, current_time])
+                if event_publisher:
+                    await event_publisher.signature_deleted(
+                        map_id,
+                        DeleteSignatureResponse(signature_id=sig_id),
+                        user_id=None,
+                    )
+
+            result.expired_ids.append(sig_id)
+            result.expired_count += 1
+            result.maps_affected.add(map_id)
+
+    return result
