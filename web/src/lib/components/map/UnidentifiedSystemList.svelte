@@ -4,7 +4,7 @@
 	import { classColour } from '$lib/helpers/renderClass';
 
 	type SystemSearchResult =
-		components['schemas']['routes.universe.controller.UniverseController.search_systemsSystemSearchResponse_0SystemSearchResultResponseBody'];
+		components['schemas']['ListUnidentifiedSystemsSystemSearchResponse_0SystemSearchResultResponseBody'];
 
 	interface Props {
 		onselect?: (system: SystemSearchResult) => void;

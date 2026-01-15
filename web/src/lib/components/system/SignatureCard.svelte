@@ -5,11 +5,15 @@
 	import type { components } from '$lib/client/schema';
 	import WormholeSearch from '../search/WormholeSearch.svelte';
 	import SystemSearch from '../search/SystemSearch.svelte';
+	import { getSystemClassId } from '$lib/helpers/mapHelpers';
 
 	type EnrichedSignatureInfo = components['schemas']['EnrichedSignatureInfo'];
 	type BulkSignatureItem = components['schemas']['BulkSignatureItem'];
 	type NodeConnectionInfo = components['schemas']['NodeConnectionInfo'];
-	type WormholeSearchResult = components['schemas']['WormholeSearchResult'];
+	type WormholeSearchResult =
+		components['schemas']['SearchWormholesWormholeSearchResultResponseBody'];
+	type UnidentifiedSystem =
+		components['schemas']['ListUnidentifiedSystemsSystemSearchResponse_0SystemSearchResultResponseBody'];
 
 	// Available subgroups for signatures
 	const SUBGROUPS = [
@@ -30,10 +34,35 @@
 	// Track expanded signatures for editing
 	let expandedSigId = $state<string | null>(null);
 	let creatingConnection = $state<string | null>(null); // signature ID being connected
+	let connectionStep = $state<'type' | 'system' | null>(null);
+	let pendingConnectionWormhole = $state<WormholeSearchResult | null>(null);
+
+	// Unidentified systems for creating connections to unknown destinations
+	let unidentifiedSystems = $state<UnidentifiedSystem[]>([]);
 
 	// Track the last loaded state to avoid duplicate fetches
 	let lastLoadedNodeId: string | null = null;
 	let lastRefreshTrigger: number = 0;
+
+	// Load unidentified systems once on mount
+	$effect(() => {
+		loadUnidentifiedSystems();
+	});
+
+	async function loadUnidentifiedSystems() {
+		const { data } = await apiClient.GET('/universe/systems/unidentified');
+		unidentifiedSystems = data?.systems ?? [];
+	}
+
+	function getUnidentifiedSystemForClass(
+		targetClass: number | null | undefined
+	): UnidentifiedSystem | undefined {
+		if (targetClass == null) {
+			// Return the "unknown" unidentified system (class 0)
+			return unidentifiedSystems.find((s) => s.system_class === 0);
+		}
+		return unidentifiedSystems.find((s) => s.system_class === targetClass);
+	}
 
 	// Reactive: fetch signatures and connections when selected node changes or refresh triggered
 	$effect(() => {
@@ -56,6 +85,8 @@
 			connections = [];
 			expandedSigId = null;
 			creatingConnection = null;
+			connectionStep = null;
+			pendingConnectionWormhole = null;
 		}
 	});
 
@@ -186,9 +217,13 @@
 		if (expandedSigId === sigId) {
 			expandedSigId = null;
 			creatingConnection = null;
+			connectionStep = null;
+			pendingConnectionWormhole = null;
 		} else {
 			expandedSigId = sigId;
 			creatingConnection = null;
+			connectionStep = null;
+			pendingConnectionWormhole = null;
 		}
 	}
 
@@ -250,9 +285,17 @@
 		// SSE will trigger refresh
 	}
 
-	// Start creating a new connection
+	// Start creating a new connection - now starts with wormhole type selection
 	function startCreateConnection(sigId: string) {
 		creatingConnection = sigId;
+		connectionStep = 'type';
+		pendingConnectionWormhole = null;
+	}
+
+	// Handle wormhole type selection in the connection flow
+	function handleConnectionWormholeSelect(wormhole: WormholeSearchResult) {
+		pendingConnectionWormhole = wormhole;
+		connectionStep = 'system';
 	}
 
 	// Handle system selection for new connection
@@ -272,16 +315,74 @@
 			body: {
 				system_id: system.id,
 				pos_x: posX,
-				pos_y: posY
+				pos_y: posY,
+				wormhole_id: pendingConnectionWormhole?.id
 			}
 		});
 
 		creatingConnection = null;
+		connectionStep = null;
+		pendingConnectionWormhole = null;
 		// SSE will trigger refresh
+	}
+
+	// Handle creating connection to an unidentified system
+	async function handleCreateConnectionUnidentified(sig: EnrichedSignatureInfo) {
+		const state = $mapSelection;
+		if (!state.mapId || !state.selectedNode) return;
+
+		const unidentifiedSystem = getUnidentifiedSystemForClass(pendingConnectionWormhole?.target?.id);
+		if (!unidentifiedSystem) {
+			// Fallback to unknown if target class not found
+			const fallback = unidentifiedSystems.find((s) => s.system_class === 0);
+			if (!fallback) return;
+			await doCreateConnection(sig, fallback.id);
+		} else {
+			await doCreateConnection(sig, unidentifiedSystem.id);
+		}
+	}
+
+	async function doCreateConnection(sig: EnrichedSignatureInfo, systemId: number) {
+		const state = $mapSelection;
+		if (!state.mapId || !state.selectedNode) return;
+
+		const posX = state.selectedNode.pos_x + 200;
+		const posY = state.selectedNode.pos_y;
+
+		await apiClient.POST('/maps/{map_id}/signatures/{signature_id}/connect', {
+			params: { path: { map_id: state.mapId, signature_id: sig.id } },
+			body: {
+				system_id: systemId,
+				pos_x: posX,
+				pos_y: posY,
+				wormhole_id: pendingConnectionWormhole?.id
+			}
+		});
+
+		creatingConnection = null;
+		connectionStep = null;
+		pendingConnectionWormhole = null;
 	}
 
 	function cancelCreateConnection() {
 		creatingConnection = null;
+		connectionStep = null;
+		pendingConnectionWormhole = null;
+	}
+
+	// Handle setting wormhole type directly on signature (when no link)
+	async function handleSetSignatureWormholeType(
+		sig: EnrichedSignatureInfo,
+		wormhole: WormholeSearchResult
+	) {
+		const state = $mapSelection;
+		if (!state.mapId) return;
+
+		await apiClient.PATCH('/maps/{map_id}/signatures/{signature_id}', {
+			params: { path: { map_id: state.mapId, signature_id: sig.id } },
+			body: { wormhole_id: wormhole.id }
+		});
+		// SSE will trigger refresh
 	}
 
 	// Get wormhole display for a signature based on its link
@@ -397,6 +498,20 @@
 
 								<!-- Wormhole-specific controls -->
 								{#if isWormhole}
+									<!-- Wormhole type selector for unconnected signatures -->
+									{#if !sig.link_id}
+										<div class="flex items-center gap-2">
+											<span class="w-20 text-xs text-surface-400">Type:</span>
+											<div class="flex-1">
+												<WormholeSearch
+													source_class={getSystemClassId($mapSelection.selectedNode?.class_name)}
+													placeholder={sig.wormhole_code || 'Set type...'}
+													onselect={(wh) => handleSetSignatureWormholeType(sig, wh)}
+												/>
+											</div>
+										</div>
+									{/if}
+
 									<!-- Connection selector -->
 									<div class="flex items-center gap-2">
 										<span class="w-20 text-xs text-surface-400">Connection:</span>
@@ -426,6 +541,7 @@
 												<span class="w-20 text-xs text-surface-400">Type:</span>
 												<div class="flex-1">
 													<WormholeSearch
+														source_class={getSystemClassId($mapSelection.selectedNode?.class_name)}
 														placeholder={conn?.wormhole_code || 'Search type...'}
 														onselect={(wh) => handleWormholeTypeSelect(sig, wh)}
 													/>
@@ -449,8 +565,34 @@
 											<span>+</span>
 											<span>Create New Connection</span>
 										</button>
-									{:else}
+									{:else if connectionStep === 'type'}
 										<div class="space-y-2">
+											<div class="flex items-center gap-2">
+												<span class="w-20 text-xs text-surface-400">Type:</span>
+												<div class="flex-1">
+													<WormholeSearch
+														source_class={getSystemClassId($mapSelection.selectedNode?.class_name)}
+														placeholder="Select wormhole type..."
+														onselect={handleConnectionWormholeSelect}
+													/>
+												</div>
+											</div>
+											<button
+												type="button"
+												class="text-xs text-surface-500 hover:text-surface-400"
+												onclick={cancelCreateConnection}
+											>
+												Cancel
+											</button>
+										</div>
+									{:else if connectionStep === 'system'}
+										<div class="space-y-2">
+											<div class="flex items-center gap-2">
+												<span class="w-20 text-xs text-surface-400">Type:</span>
+												<span class="font-mono text-xs text-purple-300"
+													>{pendingConnectionWormhole?.code}</span
+												>
+											</div>
 											<div class="flex items-center gap-2">
 												<span class="w-20 text-xs text-surface-400">Destination:</span>
 												<div class="flex-1">
@@ -462,6 +604,14 @@
 													/>
 												</div>
 											</div>
+											<button
+												type="button"
+												class="flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300"
+												onclick={() => handleCreateConnectionUnidentified(sig)}
+											>
+												<span>+</span>
+												<span>Create as Unidentified System</span>
+											</button>
 											<button
 												type="button"
 												class="text-xs text-surface-500 hover:text-surface-400"

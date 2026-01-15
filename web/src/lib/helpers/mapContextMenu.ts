@@ -7,7 +7,10 @@ export type ContextMenuMode =
 	| 'search'
 	| 'unidentified'
 	| 'mass-status'
-	| 'lifetime-status';
+	| 'lifetime-status'
+	| 'wormhole-type'
+	| 'add-connection-type'
+	| 'add-connection-system';
 
 export interface ContextMenuState {
 	x: number;
@@ -18,6 +21,11 @@ export interface ContextMenuState {
 	nodeId?: string;
 	edgeId?: string;
 	isNodeLocked?: boolean;
+	// For add-connection flow
+	sourceNodeId?: string;
+	sourceSystemClass?: number;
+	pendingWormholeId?: number;
+	pendingWormholeTargetClass?: number;
 }
 
 export const MASS_STATUS_OPTIONS = [

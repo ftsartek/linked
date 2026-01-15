@@ -31,7 +31,20 @@ class SystemSearchResponse(msgspec.Struct):
 class SystemSearchResponseDTO(MsgspecDTO[SystemSearchResponse]):
     """DTO for a single system search result."""
 
-    config = DTOConfig(exclude={"systems.0.system_class"})
+    config = DTOConfig()
+
+
+class ClassMapping(msgspec.Struct):
+    """Mapping of wormhole classes to their names."""
+
+    id: int
+
+    @property
+    def class_name(self) -> str:
+        class_name = SYSTEM_CLASS_MAPPING.get(self.id)
+        if class_name is None:
+            return "?"
+        return class_name
 
 
 class WormholeSearchResult(msgspec.Struct):
@@ -39,12 +52,14 @@ class WormholeSearchResult(msgspec.Struct):
 
     id: int
     code: str
+    target: ClassMapping
+    sources: list[ClassMapping]
 
 
-class WormholeSearchResponse(msgspec.Struct):
-    """Response containing wormhole search results."""
+class WormholeSearchResponseDTO(MsgspecDTO[WormholeSearchResult]):
+    """DTO for a single wormhole search result."""
 
-    wormholes: list[WormholeSearchResult]
+    config = DTOConfig()
 
 
 class EntitySearchResult(msgspec.Struct):

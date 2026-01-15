@@ -9,8 +9,7 @@ WHERE (name ILIKE $1 OR name % $2)
   AND id > 0
 ORDER BY
     CASE WHEN name ILIKE $1 THEN 0 ELSE 1 END,
-    similarity(name, $2) DESC
-LIMIT 20;
+    similarity(name, $2) DESC;
 """
 
 # Search local entities (characters, corporations, alliances) by name
@@ -69,8 +68,7 @@ WITH ranked_entities AS (
 )
 SELECT id, name, entity_type, ticker
 FROM ranked_entities
-ORDER BY rank_tier ASC, sim_score DESC
-LIMIT 20;
+ORDER BY rank_tier ASC, sim_score DESC;
 """
 
 # List all unidentified placeholder systems (negative IDs)
@@ -82,15 +80,17 @@ ORDER BY system_class;
 """
 
 # Search wormholes by code with trigram similarity
-# Supports optional filtering by target_class and source (both integers)
+# Supports optional filtering by target_class and source_class (both integers)
+# source_class filters wormholes that can spawn in systems of that class, OR K162
 SEARCH_WORMHOLES = """\
-SELECT id, code
+SELECT id, code, target_class, sources
 FROM wormhole
-WHERE (code ILIKE $1 OR code % $2)
+WHERE ($1::text IS NULL OR $1 = '' OR code ILIKE $1 OR code % $2)
   AND ($3::int IS NULL OR target_class = $3)
-  AND ($4::int IS NULL OR $4 = ANY(sources))
+  AND ($4::int IS NULL OR $4 = ANY(sources) OR code = 'K162')
 ORDER BY
-    CASE WHEN code ILIKE $1 THEN 0 ELSE 1 END,
-    similarity(code, $2) DESC
-LIMIT 20;
+    CASE WHEN $1::text IS NULL OR $1 = '' THEN code
+         WHEN code ILIKE $1 THEN code
+         ELSE 'ZZZZ' || code END,
+    similarity(code, COALESCE(NULLIF($2, ''), 'ZZZZ')) DESC;
 """

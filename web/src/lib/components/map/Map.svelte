@@ -27,7 +27,12 @@
 		triggerSignatureRefresh,
 		type EnrichedNodeInfo
 	} from '$lib/stores/mapSelection';
-	import { transformNodes, transformEdges, type LinkInfo } from '$lib/helpers/mapHelpers';
+	import {
+		transformNodes,
+		transformEdges,
+		getSystemClassId,
+		type LinkInfo
+	} from '$lib/helpers/mapHelpers';
 	import type { MapInfo, Rankdir, LifetimeStatus } from '$lib/helpers/mapTypes';
 	import { type EdgeType } from '$lib/helpers/mapTypes';
 	import type { ContextMenuState } from '$lib/helpers/mapContextMenu';
@@ -44,8 +49,14 @@
 		updateEdgeMassStatus,
 		updateEdgeLifetimeStatus,
 		reverseEdge,
-		createEdge
+		createEdge,
+		setEdgeWormholeType,
+		createNodeWithConnection
 	} from '$lib/helpers/mapContextActions';
+	import type { components } from '$lib/client/schema';
+
+	type WormholeSearchResult =
+		components['schemas']['SearchWormholesWormholeSearchResultResponseBody'];
 	import { loadViewport, setSelectedMap, createViewportPersister } from '$lib/helpers/mapViewport';
 
 	// Components
@@ -337,6 +348,70 @@
 		contextMenu = null;
 	}
 
+	function handleSetWormholeType() {
+		if (!contextMenu?.edgeId) return;
+		const edgeId = contextMenu.edgeId;
+		const edge = edges.find((e) => e.id === edgeId);
+		if (!edge) return;
+		const sourceNode = nodes.find((n) => n.id === edge.source);
+		const sourceNodeData = sourceNode?.data as EnrichedNodeInfo | undefined;
+		contextMenu = {
+			...contextMenu,
+			mode: 'wormhole-type',
+			sourceSystemClass: getSystemClassId(sourceNodeData?.class_name) ?? undefined
+		};
+	}
+
+	async function handleWormholeTypeSelect(wormhole: WormholeSearchResult) {
+		if (!contextMenu?.edgeId) return;
+		await setEdgeWormholeType(map_id, contextMenu.edgeId, wormhole.id);
+		contextMenu = null;
+	}
+
+	// ============================================
+	// Add Connection Flow Handlers
+	// ============================================
+
+	function handleAddConnection() {
+		if (!contextMenu?.nodeId) return;
+		const nodeId = contextMenu.nodeId;
+		const node = nodes.find((n) => n.id === nodeId);
+		const nodeData = node?.data as EnrichedNodeInfo | undefined;
+		contextMenu = {
+			...contextMenu,
+			mode: 'add-connection-type',
+			sourceNodeId: nodeId,
+			sourceSystemClass: getSystemClassId(nodeData?.class_name) ?? undefined
+		};
+	}
+
+	function handleConnectionWormholeSelect(wormhole: WormholeSearchResult) {
+		if (!contextMenu) return;
+		contextMenu = {
+			...contextMenu,
+			mode: 'add-connection-system',
+			pendingWormholeId: wormhole.id,
+			pendingWormholeTargetClass: wormhole.target?.id
+		};
+	}
+
+	async function handleConnectionSystemSelect(system: {
+		id: number;
+		name: string;
+		class_name?: string | null;
+	}) {
+		if (!contextMenu?.sourceNodeId) return;
+		await createNodeWithConnection(
+			map_id,
+			contextMenu.sourceNodeId,
+			system.id,
+			contextMenu.flowX + 200,
+			contextMenu.flowY,
+			contextMenu.pendingWormholeId
+		);
+		contextMenu = null;
+	}
+
 	async function handleSystemSelect(system: {
 		id: number;
 		name: string;
@@ -425,6 +500,8 @@
 							e.id === linkData.id
 								? {
 										...e,
+										source: linkData.source_node_id,
+										target: linkData.target_node_id,
 										data: {
 											wormhole_id: linkData.wormhole_code,
 											mass_remaining: linkData.mass_usage,
@@ -509,6 +586,7 @@
 				{edgeTypes}
 				colorMode="dark"
 				snapGrid={[20, 20]}
+				elevateEdgesOnSelect={false}
 				proOptions={{ hideAttribution: true }}
 				elementsSelectable={!isLocked}
 				nodesDraggable={!isLocked}
@@ -588,8 +666,13 @@
 					onUpdateLifetimeStatus={handleUpdateLifetimeStatus}
 					onReverseConnection={handleReverseConnection}
 					onRemoveEdge={handleRemoveEdge}
+					onSetWormholeType={handleSetWormholeType}
+					onAddConnection={handleAddConnection}
 					onMassStatusSelect={handleMassStatusSelect}
 					onLifetimeStatusSelect={handleLifetimeStatusSelect}
+					onWormholeTypeSelect={handleWormholeTypeSelect}
+					onConnectionWormholeSelect={handleConnectionWormholeSelect}
+					onConnectionSystemSelect={handleConnectionSystemSelect}
 					onSystemSelect={handleSystemSelect}
 					onCancel={handleSearchCancel}
 				/>

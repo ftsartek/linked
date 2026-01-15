@@ -3,6 +3,7 @@ from __future__ import annotations
 from litestar import Controller, Request, Response, get
 from litestar.di import Provide
 from litestar.exceptions import ClientException, NotAuthorizedException, NotFoundException
+from litestar.params import Parameter
 from litestar.status_codes import HTTP_200_OK
 
 from api.auth.guards import require_auth
@@ -11,7 +12,8 @@ from routes.universe.dependencies import (
     SystemSearchResponse,
     SystemSearchResponseDTO,
     UniverseSearchResponse,
-    WormholeSearchResponse,
+    WormholeSearchResponseDTO,
+    WormholeSearchResult,
 )
 from routes.universe.service import (
     UniverseService,
@@ -50,17 +52,22 @@ class UniverseController(Controller):
         systems = await universe_service.search_systems(q)
         return SystemSearchResponse(systems=systems)
 
-    @get("/wormholes")
+    @get("/wormholes", return_dto=WormholeSearchResponseDTO)
     async def search_wormholes(
         self,
         universe_service: UniverseService,
-        q: str,
-        target_class: int | None = None,
-        source: int | None = None,
-    ) -> WormholeSearchResponse:
-        """Search wormholes by code with optional target_class/source filters."""
-        wormholes = await universe_service.search_wormholes(q, target_class, source)
-        return WormholeSearchResponse(wormholes=wormholes)
+        q: str | None = Parameter(query="q", default=None),
+        target_class: int | None = Parameter(query="target", default=None),
+        source_class: int | None = Parameter(query="source_class", default=None),
+    ) -> list[WormholeSearchResult]:
+        """Search wormholes by code with optional filters.
+
+        Args:
+            q: Wormhole code to search for
+            target_class: Filter by target system class
+            source_class: Filter by source system class (includes K162 which can appear anywhere)
+        """
+        return await universe_service.search_wormholes(q, target_class, source_class)
 
     @get("/systems/unidentified", return_dto=SystemSearchResponseDTO)
     async def list_unidentified_systems(

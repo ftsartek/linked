@@ -1,9 +1,14 @@
 <script lang="ts">
 	import SystemSearch from '../search/SystemSearch.svelte';
+	import WormholeSearch from '../search/WormholeSearch.svelte';
 	import UnidentifiedSystemList from './UnidentifiedSystemList.svelte';
 	import type { ContextMenuState } from '$lib/helpers/mapContextMenu';
 	import { MASS_STATUS_OPTIONS, LIFETIME_STATUS_OPTIONS } from '$lib/helpers/mapContextMenu';
 	import type { LifetimeStatus } from '$lib/helpers/mapTypes';
+	import type { components } from '$lib/client/schema';
+
+	type WormholeSearchResult =
+		components['schemas']['SearchWormholesWormholeSearchResultResponseBody'];
 
 	interface Props {
 		menu: ContextMenuState;
@@ -13,12 +18,21 @@
 		onReplaceSystem: () => void;
 		onRemoveNode: () => void;
 		onToggleLock: () => void;
+		onAddConnection: () => void;
 		onUpdateMassStatus: () => void;
 		onUpdateLifetimeStatus: () => void;
 		onReverseConnection: () => void;
 		onRemoveEdge: () => void;
+		onSetWormholeType: () => void;
 		onMassStatusSelect: (value: number) => void;
 		onLifetimeStatusSelect: (value: LifetimeStatus) => void;
+		onWormholeTypeSelect: (wormhole: WormholeSearchResult) => void;
+		onConnectionWormholeSelect: (wormhole: WormholeSearchResult) => void;
+		onConnectionSystemSelect: (system: {
+			id: number;
+			name: string;
+			class_name?: string | null;
+		}) => void;
 		onSystemSelect: (system: { id: number; name: string; class_name?: string | null }) => void;
 		onCancel: () => void;
 	}
@@ -31,13 +45,17 @@
 		onReplaceSystem,
 		onRemoveNode,
 		onToggleLock,
+		onAddConnection,
 		onUpdateMassStatus,
 		onUpdateLifetimeStatus,
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		onReverseConnection,
 		onRemoveEdge,
+		onSetWormholeType,
 		onMassStatusSelect,
 		onLifetimeStatusSelect,
+		onWormholeTypeSelect,
+		onConnectionWormholeSelect,
+		onConnectionSystemSelect,
 		onSystemSelect,
 		onCancel
 	}: Props = $props();
@@ -64,6 +82,12 @@
 		</div>
 	{:else if menu.mode === 'node-menu'}
 		<div class="py-1">
+			<button
+				class="w-full px-4 py-2 text-left text-sm text-white hover:bg-primary-950/60"
+				onclick={onAddConnection}
+			>
+				Add Connection
+			</button>
 			<button
 				class="w-full px-4 py-2 text-left text-sm text-white hover:bg-primary-950/60"
 				onclick={onReplaceSystem}
@@ -99,14 +123,18 @@
 			>
 				Update Lifetime Status
 			</button>
-			<!-- TODO: Reverse Connection option hidden for now
 			<button
 				class="w-full px-4 py-2 text-left text-sm text-white hover:bg-primary-950/60"
-				onclick={_onReverseConnection}
+				onclick={onReverseConnection}
 			>
-				Reverse Connection
+				Flip Connection
 			</button>
-			-->
+			<button
+				class="w-full px-4 py-2 text-left text-sm text-white hover:bg-primary-950/60"
+				onclick={onSetWormholeType}
+			>
+				Set Wormhole Type
+			</button>
 			<button
 				class="w-full px-4 py-2 text-left text-sm text-white hover:bg-primary-950/60"
 				onclick={onRemoveEdge}
@@ -143,6 +171,26 @@
 	{:else if menu.mode === 'unidentified'}
 		<div class="p-2">
 			<UnidentifiedSystemList onselect={onSystemSelect} oncancel={onCancel} />
+		</div>
+	{:else if menu.mode === 'wormhole-type'}
+		<div class="p-2">
+			<WormholeSearch
+				placeholder="Search wormhole type..."
+				source_class={menu.sourceSystemClass}
+				onselect={onWormholeTypeSelect}
+			/>
+		</div>
+	{:else if menu.mode === 'add-connection-type'}
+		<div class="p-2">
+			<WormholeSearch
+				placeholder="Select wormhole type..."
+				source_class={menu.sourceSystemClass}
+				onselect={onConnectionWormholeSelect}
+			/>
+		</div>
+	{:else if menu.mode === 'add-connection-system'}
+		<div class="p-2">
+			<SystemSearch autofocus onselect={onConnectionSystemSelect} oncancel={onCancel} />
 		</div>
 	{/if}
 </div>

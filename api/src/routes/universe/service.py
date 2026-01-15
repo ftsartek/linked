@@ -7,6 +7,7 @@ from sqlspec import AsyncDriverAdapterBase
 from database.models.refresh_token import SELECT_BY_CHARACTER_STMT, RefreshToken
 from esi_client import ESIClient
 from routes.universe.dependencies import (
+    ClassMapping,
     EntitySearchResult,
     LocalEntitySearchResult,
     SystemSearchResult,
@@ -60,20 +61,37 @@ class UniverseService:
 
     async def search_wormholes(
         self,
-        query: str,
+        query: str | None,
         target_class: int | None = None,
-        source: int | None = None,
+        source_class: int | None = None,
     ) -> list[WormholeSearchResult]:
-        """Search wormholes by code using trigram similarity with optional filters."""
-        pattern = f"{query}%"
-        return await self.db_session.select(
+        """Search wormholes by code using trigram similarity with optional filters.
+
+        Args:
+            query: Wormhole code to search for (None or empty returns all matching filters)
+            target_class: Filter by target system class
+            source_class: Filter by source system class (includes K162 which can appear anywhere)
+        """
+        # Handle None/empty query - pass empty string for pattern matching bypass
+        pattern = f"{query}%" if query else ""
+        query_value = query or ""
+        items = await self.db_session.select(
             SEARCH_WORMHOLES,
             pattern,
-            query,
+            query_value,
             target_class,
-            source,
-            schema_type=WormholeSearchResult,
+            source_class,
         )
+
+        return [
+            WormholeSearchResult(
+                id=item["id"],
+                code=item["code"],
+                target=ClassMapping(item["target_class"]),
+                sources=[ClassMapping(source) for source in item["sources"]] if item.get("sources") else [],
+            )
+            for item in items
+        ]
 
     async def list_unidentified_systems(self) -> list[SystemSearchResult]:
         """List all unidentified placeholder systems."""

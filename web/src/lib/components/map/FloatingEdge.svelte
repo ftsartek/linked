@@ -18,8 +18,9 @@
 </script>
 
 <script lang="ts">
-	import { getContext, untrack } from 'svelte';
+	import { getContext } from 'svelte';
 	import {
+		EdgeLabel,
 		getBezierPath,
 		getSmoothStepPath,
 		getStraightPath,
@@ -30,15 +31,20 @@
 		type InternalNode
 	} from '@xyflow/svelte';
 	import { getDistributedEdgeParams } from '$lib/helpers/floatingEdge';
+	import {
+		getBezierLabelPosition,
+		getStraightLabelPosition,
+		getStepLabelPosition
+	} from '$lib/helpers/edgeLabelPosition';
 	import type { components } from '$lib/client/schema';
 
-	let { id, source, target, markerEnd, markerStart, data }: EdgeProps = $props();
+	let { id, source, target, markerEnd, markerStart, data, selected }: EdgeProps = $props();
 
 	// Get internal nodes to access position and dimensions
 	// useInternalNode returns { current: InternalNode | undefined }
-	// Edge source/target are static identifiers - intentionally capture initial values
-	const sourceNodeRef = untrack(() => useInternalNode(source));
-	const targetNodeRef = untrack(() => useInternalNode(target));
+	// These need to be reactive to source/target changes (e.g., when connection is flipped)
+	const sourceNodeRef = $derived(useInternalNode(source));
+	const targetNodeRef = $derived(useInternalNode(target));
 
 	// Get all edges and nodes for distribution calculation
 	// useEdges/useNodes return { current: T[] } objects
@@ -52,6 +58,7 @@
 	const lifetimeStrokeColor = $derived(lifetimeColors[lifetimeStatus] ?? lifetimeColors.stable);
 	const massStatus: MassStatus = $derived((data?.mass_remaining as MassStatus) ?? 0);
 	const massDashArray = $derived(massDashPatterns[massStatus] ?? 'none');
+	const wormholeCode: string = $derived((data?.wormhole_id as string) ?? 'K162');
 
 	const floatingParams = $derived.by(() => {
 		const sourceNode = sourceNodeRef.current;
@@ -92,17 +99,21 @@
 		return getDistributedEdgeParams(sourceNode, targetNode, edges.current, getNodeFn, id, 4, 12);
 	});
 
-	const pathData = $derived.by(() => {
+	const edgeData = $derived.by(() => {
 		if (!floatingParams) {
-			return [''];
+			return { path: '', labelX: 0, labelY: 0 };
 		}
 
 		const { sx, sy, tx, ty, sourcePos, targetPos } = floatingParams;
 
+		// Get the path string and center point
+		let path: string;
+		let centerX: number;
+		let centerY: number;
 		switch (edgeType) {
 			case 'default':
 			case 'simplebezier':
-				return getBezierPath({
+				[path, centerX, centerY] = getBezierPath({
 					sourceX: sx,
 					sourceY: sy,
 					targetX: tx,
@@ -110,15 +121,17 @@
 					sourcePosition: sourcePos,
 					targetPosition: targetPos
 				});
+				break;
 			case 'straight':
-				return getStraightPath({
+				[path, centerX, centerY] = getStraightPath({
 					sourceX: sx,
 					sourceY: sy,
 					targetX: tx,
 					targetY: ty
 				});
+				break;
 			case 'step':
-				return getSmoothStepPath({
+				[path, centerX, centerY] = getSmoothStepPath({
 					sourceX: sx,
 					sourceY: sy,
 					targetX: tx,
@@ -127,9 +140,10 @@
 					targetPosition: targetPos,
 					borderRadius: 0
 				});
+				break;
 			case 'smoothstep':
 			default:
-				return getSmoothStepPath({
+				[path, centerX, centerY] = getSmoothStepPath({
 					sourceX: sx,
 					sourceY: sy,
 					targetX: tx,
@@ -138,20 +152,42 @@
 					targetPosition: targetPos
 				});
 		}
+
+		// Calculate label position based on edge type
+		let labelPos: { x: number; y: number };
+		if (edgeType === 'default' || edgeType === 'simplebezier') {
+			labelPos = getBezierLabelPosition(path, sx, sy, tx, ty, centerX, centerY);
+		} else if (edgeType === 'straight') {
+			labelPos = getStraightLabelPosition(sx, sy, tx, ty);
+		} else {
+			labelPos = getStepLabelPosition(sx, sy, sourcePos);
+		}
+
+		return { path, labelX: labelPos.x, labelY: labelPos.y };
 	});
 </script>
 
 {#if floatingParams}
-	<!-- Outer line (constant surface-950/80) -->
+	<!-- Outer line (changes color when selected) -->
 	<path
-		d={pathData[0]}
-		style="stroke: rgba(60, 60, 60, 0.8); stroke-width: 8px; fill: none;"
+		d={edgeData.path}
+		style="stroke: {selected
+			? 'rgba(120, 120, 120, 0.8)'
+			: 'rgba(60, 60, 60, 0.8)'}; stroke-width: 8px; fill: none;"
 		marker-end={markerEnd}
 		marker-start={markerStart}
 	/>
 	<!-- Inner line (lifetime color with dash pattern based on mass status) -->
 	<path
-		d={pathData[0]}
+		d={edgeData.path}
 		style="stroke: {lifetimeStrokeColor}; stroke-width: 4px; fill: none; stroke-dasharray: {massDashArray};"
 	/>
+	<!-- Wormhole type label near source -->
+	<EdgeLabel x={edgeData.labelX} y={edgeData.labelY} class="nodrag nopan" transparent>
+		<div
+			class="rounded border-2 border-surface-700 bg-surface-900 px-1.5 py-0.5 text-xs font-semibold text-surface-300"
+		>
+			{wormholeCode}
+		</div>
+	</EdgeLabel>
 {/if}

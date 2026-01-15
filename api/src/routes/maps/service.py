@@ -746,7 +746,7 @@ class MapService:
             map_id: The map the signature must belong to
             signature_id: The signature to update
             updates: Dict of field names to values. Only provided fields are updated.
-                     Supports: code, group_type, subgroup, type, link_id, wormhole_id
+                     Supports: code, group_type, subgroup, type, link_id
 
         Returns None if signature doesn't exist or doesn't belong to map.
         """

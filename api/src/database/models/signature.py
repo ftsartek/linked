@@ -55,7 +55,7 @@ class Signature(msgspec.Struct):
     subgroup: SignatureSubgroup | None = None
     type: str | None = None
     link_id: UUID | None = None
-    wormhole_id: int | None = None
+    wormhole_id: int | None = None  # Direct wormhole type (only when link_id is NULL)
     id: UUID | None = None
     date_created: datetime | None = None
     date_updated: datetime | None = None

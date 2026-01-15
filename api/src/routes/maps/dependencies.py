@@ -201,8 +201,7 @@ class EnrichedSignatureInfo(msgspec.Struct):
     subgroup: str | None
     type: str | None
     link_id: UUID | None
-    wormhole_id: int | None
-    wormhole_code: str | None  # Enriched from wormhole table
+    wormhole_code: str | None  # Enriched from link's wormhole
 
 
 class NodeConnectionInfo(msgspec.Struct):
@@ -513,6 +512,9 @@ class UpdateSignatureRequest(msgspec.Struct):
     """Request body for updating a signature.
 
     Used with partial=True DTO config - only provided fields will be in the payload.
+
+    Note: wormhole_id can only be set when link_id is NULL. When link_id is set,
+    the wormhole type comes from the associated link.
     """
 
     code: str | None = None
@@ -538,7 +540,6 @@ class BulkSignatureItem:
     subgroup: str | None = None
     type: str | None = None
     link_id: UUID | None = None
-    wormhole_id: int | None = None
 
 
 @dataclass

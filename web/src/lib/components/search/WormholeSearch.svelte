@@ -2,43 +2,48 @@
 	import { Combobox, Portal } from '@skeletonlabs/skeleton-svelte';
 	import { apiClient } from '$lib/client/client';
 	import type { components } from '$lib/client/schema';
+	import { classColour } from '$lib/helpers/renderClass';
 
-	type WormholeSearchResult = components['schemas']['WormholeSearchResult'];
+	type WormholeSearchResult =
+		components['schemas']['SearchWormholesWormholeSearchResultResponseBody'];
 
 	interface Props {
 		onselect?: (wormhole: WormholeSearchResult) => void;
 		placeholder?: string;
 		target_class?: number | null;
-		source?: number | null;
+		source_class?: number | null;
 	}
 
-	let { onselect, placeholder = 'Search wormholes...', target_class, source }: Props = $props();
+	let {
+		onselect,
+		placeholder = 'Search wormholes...',
+		target_class,
+		source_class
+	}: Props = $props();
 
 	let items = $state<WormholeSearchResult[]>([]);
 	let loading = $state(false);
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-	async function searchWormholes(query: string) {
-		if (query.length < 1) {
-			items = [];
-			return;
-		}
+	let currentQuery = $state('');
 
+	async function searchWormholes(query: string) {
 		loading = true;
 		const { data } = await apiClient.GET('/universe/wormholes', {
 			params: {
 				query: {
-					q: query,
-					target_class: target_class ?? null,
-					source: source ?? null
+					q: query || undefined,
+					target: target_class ?? undefined,
+					source_class: source_class ?? undefined
 				}
 			}
 		});
-		items = data?.wormholes ?? [];
+		items = data ?? [];
 		loading = false;
 	}
 
 	function handleInputChange(details: { inputValue: string }) {
+		currentQuery = details.inputValue;
 		if (debounceTimer) {
 			clearTimeout(debounceTimer);
 		}
@@ -59,7 +64,8 @@
 
 	function handleOpenChange(details: { open: boolean }) {
 		if (details.open) {
-			items = [];
+			// Search immediately when opened (with current query, which may be empty)
+			searchWormholes(currentQuery);
 		}
 	}
 </script>
@@ -103,7 +109,7 @@
 			>
 				{#if items.length === 0}
 					<div class="px-3 py-2 text-sm text-surface-400">
-						{loading ? 'Searching...' : 'Type to search wormholes'}
+						{loading ? 'Searching...' : 'No wormholes found'}
 					</div>
 				{:else}
 					{#each items as item (item.id)}
@@ -112,6 +118,9 @@
 							class="cursor-pointer px-3 py-2 text-white hover:bg-primary-950/60 data-highlighted:bg-primary-950/50"
 						>
 							<span>{item.code}</span>
+							{#if item.target}
+								<span class={classColour(item.target.class_name)}>{item.target.class_name}</span>
+							{/if}
 						</Combobox.Item>
 					{/each}
 				{/if}

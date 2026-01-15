@@ -4,7 +4,6 @@ from routes.universe.dependencies import (
     SystemSearchResponse,
     SystemSearchResult,
     UniverseSearchResponse,
-    WormholeSearchResponse,
     WormholeSearchResult,
 )
 from routes.universe.service import (
@@ -20,7 +19,6 @@ __all__ = [
     "UniverseService",
     "SystemSearchResponse",
     "SystemSearchResult",
-    "WormholeSearchResponse",
     "WormholeSearchResult",
     "provide_universe_service",
     "provide_universe_service_with_auth",
