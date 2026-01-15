@@ -916,7 +916,6 @@ class MapController(Controller):
                 "subgroup": s.subgroup,
                 "type": s.type,
                 "link_id": s.link_id,
-                "wormhole_id": s.wormhole_id,
             }
             for s in data.signatures
         ]

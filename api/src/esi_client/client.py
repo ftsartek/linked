@@ -199,13 +199,13 @@ class ESIClient:
         return msgspec.json.decode(response.content, type=list[ESINameResult])
 
 
-async def provide_esi_client(settings: Settings) -> ESIClient:
+async def provide_esi_client(app_settings: Settings) -> ESIClient:
     """Provide ESIClient for dependency injection.
 
     Args:
-        settings: Application settings
+        app_settings: Application settings
 
     Returns:
         Configured ESIClient instance
     """
-    return ESIClient(settings.esi.user_agent, settings.esi.timeout)
+    return ESIClient(app_settings.esi.user_agent, app_settings.esi.timeout)

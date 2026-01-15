@@ -171,3 +171,64 @@ export async function createEdge(
 	}
 	return { success: true };
 }
+
+export async function setEdgeWormholeType(
+	mapId: string,
+	edgeId: string,
+	wormholeId: number
+): Promise<ActionResult> {
+	const { error } = await apiClient.PATCH('/maps/{map_id}/links/{link_id}', {
+		params: { path: { map_id: mapId, link_id: edgeId } },
+		body: { wormhole_id: wormholeId }
+	});
+
+	if (error) {
+		showError('detail' in error ? error.detail : 'Failed to set wormhole type');
+		return { success: false };
+	}
+	return { success: true };
+}
+
+/**
+ * Create a new node and connect it to an existing node with a wormhole type.
+ */
+export async function createNodeWithConnection(
+	mapId: string,
+	sourceNodeId: string,
+	systemId: number,
+	posX: number,
+	posY: number,
+	wormholeId?: number
+): Promise<ActionResult> {
+	// 1. Create target node
+	const { data: nodeData, error: nodeError } = await apiClient.POST('/maps/{map_id}/nodes', {
+		params: { path: { map_id: mapId } },
+		body: { system_id: systemId, pos_x: posX, pos_y: posY }
+	});
+
+	if (nodeError || !nodeData) {
+		showError(
+			'detail' in (nodeError ?? {})
+				? (nodeError as { detail: string }).detail
+				: 'Failed to create node'
+		);
+		return { success: false };
+	}
+
+	// 2. Create edge with wormhole type
+	const { error: linkError } = await apiClient.POST('/maps/{map_id}/links', {
+		params: { path: { map_id: mapId } },
+		body: {
+			source_node_id: sourceNodeId,
+			target_node_id: nodeData.node_id,
+			wormhole_id: wormholeId
+		}
+	});
+
+	if (linkError) {
+		showError('detail' in linkError ? linkError.detail : 'Failed to create connection');
+		return { success: false };
+	}
+
+	return { success: true };
+}

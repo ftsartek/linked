@@ -450,10 +450,12 @@ SELECT is_public FROM map WHERE id = $1;
 GET_MAP_SIGNATURES = """
 SELECT
     s.id, s.node_id, s.code, s.group_type, s.subgroup, s.type,
-    s.link_id, s.wormhole_id,
-    w.code AS wormhole_code
+    s.link_id,
+    COALESCE(lw.code, sw.code) AS wormhole_code
 FROM signature s
-LEFT JOIN wormhole w ON s.wormhole_id = w.id
+LEFT JOIN link l ON s.link_id = l.id
+LEFT JOIN wormhole lw ON l.wormhole_id = lw.id
+LEFT JOIN wormhole sw ON s.wormhole_id = sw.id
 WHERE s.map_id = $1 AND s.date_deleted IS NULL
 ORDER BY s.node_id, s.code;
 """
@@ -461,10 +463,12 @@ ORDER BY s.node_id, s.code;
 GET_NODE_SIGNATURES = """
 SELECT
     s.id, s.node_id, s.code, s.group_type, s.subgroup, s.type,
-    s.link_id, s.wormhole_id,
-    w.code AS wormhole_code
+    s.link_id,
+    COALESCE(lw.code, sw.code) AS wormhole_code
 FROM signature s
-LEFT JOIN wormhole w ON s.wormhole_id = w.id
+LEFT JOIN link l ON s.link_id = l.id
+LEFT JOIN wormhole lw ON l.wormhole_id = lw.id
+LEFT JOIN wormhole sw ON s.wormhole_id = sw.id
 WHERE s.node_id = $1 AND s.map_id = $2 AND s.date_deleted IS NULL
 ORDER BY s.code;
 """
@@ -472,10 +476,12 @@ ORDER BY s.code;
 GET_SIGNATURE_ENRICHED = """
 SELECT
     s.id, s.node_id, s.code, s.group_type, s.subgroup, s.type,
-    s.link_id, s.wormhole_id,
-    w.code AS wormhole_code
+    s.link_id,
+    COALESCE(lw.code, sw.code) AS wormhole_code
 FROM signature s
-LEFT JOIN wormhole w ON s.wormhole_id = w.id
+LEFT JOIN link l ON s.link_id = l.id
+LEFT JOIN wormhole lw ON l.wormhole_id = lw.id
+LEFT JOIN wormhole sw ON s.wormhole_id = sw.id
 WHERE s.id = $1 AND s.date_deleted IS NULL;
 """
 
@@ -524,10 +530,11 @@ RETURNING id, code, (xmax = 0) AS is_insert;
 GET_SIGNATURES_ENRICHED_BATCH = """
 SELECT
     s.id, s.node_id, s.code, s.group_type, s.subgroup, s.type,
-    s.link_id, s.wormhole_id,
+    s.link_id,
     w.code AS wormhole_code
 FROM signature s
-LEFT JOIN wormhole w ON s.wormhole_id = w.id
+LEFT JOIN link l ON s.link_id = l.id
+LEFT JOIN wormhole w ON l.wormhole_id = w.id
 WHERE s.id = ANY($1) AND s.date_deleted IS NULL;
 """
 

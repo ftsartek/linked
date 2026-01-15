@@ -901,7 +901,6 @@ export interface components {
 			subgroup?: string | null;
 			type?: string | null;
 			link_id?: string | null;
-			wormhole_id?: number | null;
 		};
 		/** BulkSignatureResponse */
 		BulkSignatureResponse: {
@@ -992,7 +991,6 @@ export interface components {
 			subgroup?: string | null;
 			type?: string | null;
 			link_id?: string | null;
-			wormhole_id?: number | null;
 		};
 		/** CreateSignatureResponse */
 		CreateSignatureResponse: {
@@ -1086,7 +1084,6 @@ export interface components {
 			subgroup?: string | null;
 			type?: string | null;
 			link_id?: string | null;
-			wormhole_id?: number | null;
 			wormhole_code?: string | null;
 		};
 		/** EntitySearchResult */
@@ -1098,6 +1095,17 @@ export interface components {
 		HealthResponse: {
 			/** @enum {string} */
 			status: 'healthy' | 'unhealthy';
+		};
+		/** ListUnidentifiedSystemsSystemSearchResponseResponseBody */
+		ListUnidentifiedSystemsSystemSearchResponseResponseBody: {
+			systems: components['schemas']['ListUnidentifiedSystemsSystemSearchResponse_0SystemSearchResultResponseBody'][];
+		};
+		/** ListUnidentifiedSystemsSystemSearchResponse_0SystemSearchResultResponseBody */
+		ListUnidentifiedSystemsSystemSearchResponse_0SystemSearchResultResponseBody: {
+			id: number;
+			name: string;
+			system_class?: number | null;
+			class_name?: string | null;
 		};
 		/** LocalEntitySearchResult */
 		LocalEntitySearchResult: {
@@ -1223,6 +1231,34 @@ export interface components {
 		 * @enum {string}
 		 */
 		RankDir: 'TB' | 'BT' | 'LR' | 'RL';
+		/** SearchSystemsSystemSearchResponseResponseBody */
+		SearchSystemsSystemSearchResponseResponseBody: {
+			systems: components['schemas']['SearchSystemsSystemSearchResponse_0SystemSearchResultResponseBody'][];
+		};
+		/** SearchSystemsSystemSearchResponse_0SystemSearchResultResponseBody */
+		SearchSystemsSystemSearchResponse_0SystemSearchResultResponseBody: {
+			id: number;
+			name: string;
+			system_class?: number | null;
+			class_name?: string | null;
+		};
+		/** SearchWormholesWormholeSearchResultClassMappingResponseBody */
+		SearchWormholesWormholeSearchResultClassMappingResponseBody: {
+			id: number;
+			class_name: string;
+		};
+		/** SearchWormholesWormholeSearchResultResponseBody */
+		SearchWormholesWormholeSearchResultResponseBody: {
+			id: number;
+			code: string;
+			target: components['schemas']['SearchWormholesWormholeSearchResultClassMappingResponseBody'];
+			sources: components['schemas']['SearchWormholesWormholeSearchResult_0ClassMappingResponseBody'][];
+		};
+		/** SearchWormholesWormholeSearchResult_0ClassMappingResponseBody */
+		SearchWormholesWormholeSearchResult_0ClassMappingResponseBody: {
+			id: number;
+			class_name: string;
+		};
 		/** SessionPreferences */
 		SessionPreferences: {
 			selected_map_id?: string | null;
@@ -1313,6 +1349,15 @@ export interface components {
 			/** Format: uuid */
 			signature_id: string;
 		};
+		/** UpdateSignatureUpdateSignatureRequestRequestBody */
+		UpdateSignatureUpdateSignatureRequestRequestBody: {
+			code?: string | null;
+			group_type?: string | null;
+			subgroup?: string | null;
+			type?: string | null;
+			link_id?: string | null;
+			wormhole_id?: number | null;
+		};
 		/** UserInfo */
 		UserInfo: {
 			/** Format: uuid */
@@ -1326,15 +1371,6 @@ export interface components {
 			y: number;
 			zoom: number;
 		};
-		/** WormholeSearchResponse */
-		WormholeSearchResponse: {
-			wormholes: components['schemas']['WormholeSearchResult'][];
-		};
-		/** WormholeSearchResult */
-		WormholeSearchResult: {
-			id: number;
-			code: string;
-		};
 		/** CharacterInfo */
 		auth_service_CharacterInfo: {
 			id: number;
@@ -1343,35 +1379,6 @@ export interface components {
 			alliance_id?: number | null;
 			/** Format: date-time */
 			date_created: string;
-		};
-		/** routes.maps.controller.MapController.update_signatureUpdateSignatureRequestRequestBody */
-		'routes.maps.controller.MapController.update_signatureUpdateSignatureRequestRequestBody': {
-			code?: string | null;
-			group_type?: string | null;
-			subgroup?: string | null;
-			type?: string | null;
-			link_id?: string | null;
-			wormhole_id?: number | null;
-		};
-		/** routes.universe.controller.UniverseController.list_unidentified_systemsSystemSearchResponseResponseBody */
-		'routes.universe.controller.UniverseController.list_unidentified_systemsSystemSearchResponseResponseBody': {
-			systems: components['schemas']['routes.universe.controller.UniverseController.list_unidentified_systemsSystemSearchResponse_0SystemSearchResultResponseBody'][];
-		};
-		/** routes.universe.controller.UniverseController.list_unidentified_systemsSystemSearchResponse_0SystemSearchResultResponseBody */
-		'routes.universe.controller.UniverseController.list_unidentified_systemsSystemSearchResponse_0SystemSearchResultResponseBody': {
-			id: number;
-			name: string;
-			class_name?: string | null;
-		};
-		/** routes.universe.controller.UniverseController.search_systemsSystemSearchResponseResponseBody */
-		'routes.universe.controller.UniverseController.search_systemsSystemSearchResponseResponseBody': {
-			systems: components['schemas']['routes.universe.controller.UniverseController.search_systemsSystemSearchResponse_0SystemSearchResultResponseBody'][];
-		};
-		/** routes.universe.controller.UniverseController.search_systemsSystemSearchResponse_0SystemSearchResultResponseBody */
-		'routes.universe.controller.UniverseController.search_systemsSystemSearchResponse_0SystemSearchResultResponseBody': {
-			id: number;
-			name: string;
-			class_name?: string | null;
 		};
 		/** CharacterInfo */
 		users_service_CharacterInfo: {
@@ -2230,7 +2237,7 @@ export interface operations {
 		};
 		requestBody: {
 			content: {
-				'application/json': components['schemas']['routes.maps.controller.MapController.update_signatureUpdateSignatureRequestRequestBody'];
+				'application/json': components['schemas']['UpdateSignatureUpdateSignatureRequestRequestBody'];
 			};
 		};
 		responses: {
@@ -3045,7 +3052,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': components['schemas']['routes.universe.controller.UniverseController.list_unidentified_systemsSystemSearchResponseResponseBody'];
+					'application/json': components['schemas']['ListUnidentifiedSystemsSystemSearchResponseResponseBody'];
 				};
 			};
 		};
@@ -3148,7 +3155,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': components['schemas']['routes.universe.controller.UniverseController.search_systemsSystemSearchResponseResponseBody'];
+					'application/json': components['schemas']['SearchSystemsSystemSearchResponseResponseBody'];
 				};
 			};
 			/** @description Bad request syntax or unsupported method */
@@ -3173,10 +3180,10 @@ export interface operations {
 	};
 	UniverseWormholesSearchWormholes: {
 		parameters: {
-			query: {
-				q: string;
-				target_class?: number | null;
-				source?: number | null;
+			query?: {
+				q?: string;
+				target?: number | null;
+				source_class?: number | null;
 			};
 			header?: never;
 			path?: never;
@@ -3190,7 +3197,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': components['schemas']['WormholeSearchResponse'];
+					'application/json': components['schemas']['SearchWormholesWormholeSearchResultResponseBody'][];
 				};
 			};
 			/** @description Bad request syntax or unsupported method */

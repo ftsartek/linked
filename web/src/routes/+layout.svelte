@@ -17,7 +17,7 @@
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
-<main class="min-h-screen bg-[url('/bg.jpg')] bg-cover bg-fixed bg-center">
+<main class="min-h-screen bg-[url('/eve.jpg')] bg-cover bg-fixed bg-center">
 	<Toast.Group {toaster}>
 		{#snippet children(toast)}
 			<Toast {toast}>

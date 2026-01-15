@@ -32,7 +32,7 @@ app = create_app(
         "rate_limit": get_rl_store(),
     },
     dependencies={
-        "settings": Provide(provide_settings),
+        "app_settings": Provide(provide_settings, use_cache=True),
         "valkey_client": Provide(provide_valkey_client),
         "sso_service": Provide(provide_sso_service),
         "esi_client": Provide(provide_esi_client),
