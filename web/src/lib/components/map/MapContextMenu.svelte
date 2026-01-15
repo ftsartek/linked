@@ -177,6 +177,8 @@
 			<WormholeSearch
 				placeholder="Search wormhole type..."
 				source_class={menu.sourceSystemClass}
+				target_class={menu.targetSystemClass}
+				autoSearch={true}
 				onselect={onWormholeTypeSelect}
 			/>
 		</div>
@@ -185,6 +187,7 @@
 			<WormholeSearch
 				placeholder="Select wormhole type..."
 				source_class={menu.sourceSystemClass}
+				autoSearch={true}
 				onselect={onConnectionWormholeSelect}
 			/>
 		</div>

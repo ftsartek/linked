@@ -12,13 +12,15 @@
 		placeholder?: string;
 		target_class?: number | null;
 		source_class?: number | null;
+		autoSearch?: boolean;
 	}
 
 	let {
 		onselect,
 		placeholder = 'Search wormholes...',
 		target_class,
-		source_class
+		source_class,
+		autoSearch = false
 	}: Props = $props();
 
 	let items = $state<WormholeSearchResult[]>([]);
@@ -26,6 +28,15 @@
 	let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 	let currentQuery = $state('');
+	let comboboxOpen = $state(false);
+
+	// Auto-search on mount if enabled
+	$effect(() => {
+		if (autoSearch) {
+			searchWormholes(currentQuery);
+			comboboxOpen = true;
+		}
+	});
 
 	async function searchWormholes(query: string) {
 		loading = true;
@@ -63,6 +74,7 @@
 	}
 
 	function handleOpenChange(details: { open: boolean }) {
+		comboboxOpen = details.open;
 		if (details.open) {
 			// Search immediately when opened (with current query, which may be empty)
 			searchWormholes(currentQuery);
@@ -72,6 +84,7 @@
 
 <Combobox
 	{placeholder}
+	open={comboboxOpen}
 	onInputValueChange={handleInputChange}
 	onValueChange={handleValueChange}
 	onOpenChange={handleOpenChange}

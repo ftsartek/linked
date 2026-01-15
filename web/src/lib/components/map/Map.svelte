@@ -354,11 +354,14 @@
 		const edge = edges.find((e) => e.id === edgeId);
 		if (!edge) return;
 		const sourceNode = nodes.find((n) => n.id === edge.source);
+		const targetNode = nodes.find((n) => n.id === edge.target);
 		const sourceNodeData = sourceNode?.data as EnrichedNodeInfo | undefined;
+		const targetNodeData = targetNode?.data as EnrichedNodeInfo | undefined;
 		contextMenu = {
 			...contextMenu,
 			mode: 'wormhole-type',
-			sourceSystemClass: getSystemClassId(sourceNodeData?.class_name) ?? undefined
+			sourceSystemClass: getSystemClassId(sourceNodeData?.class_name) ?? undefined,
+			targetSystemClass: getSystemClassId(targetNodeData?.class_name) ?? undefined
 		};
 	}
 
