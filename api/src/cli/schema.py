@@ -5,8 +5,6 @@ from pathlib import Path
 import asyncclick as click
 import msgspec
 
-from api.app import create_app
-
 
 @click.command()
 @click.option(
@@ -19,7 +17,7 @@ from api.app import create_app
 )
 def schema(output: Path) -> None:
     """Export OpenAPI schema to a file."""
-    app = create_app()
+    from api.main import app
 
     schema_dict = app.openapi_schema.to_schema()
     content = msgspec.json.format(
