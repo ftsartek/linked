@@ -23,6 +23,11 @@ def get_rl_store() -> ValkeyStore:
     return get_root_store().with_namespace("rate_limit")
 
 
+def get_routes_store() -> ValkeyStore:
+    """Create the routes store (namespaced under root)."""
+    return get_root_store().with_namespace("routes")
+
+
 async def provide_valkey_client() -> Valkey:
     """Provide a raw Valkey client for event queues.
 

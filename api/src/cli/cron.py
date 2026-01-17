@@ -10,6 +10,7 @@ from sqlspec.adapters.asyncpg.driver import AsyncpgDriver
 
 from config.settings import Settings
 from database import provide_session
+from esi_client.client import ESIClient
 from routes.maps.publisher import EventPublisher
 from services.cleanup import (
     DEFAULT_RETENTION_HOURS,
@@ -26,6 +27,8 @@ from services.lifecycle import (
     expire_old_signatures,
     update_link_lifetimes,
 )
+from services.route_cache import TRADE_HUBS, RouteCacheService
+from utils.enums import RouteType
 
 
 async def _create_event_publisher(settings: Settings) -> EventPublisher:
@@ -254,3 +257,135 @@ async def cleanup(
                 "maps": do_maps,
             }
             await _run_individual_cleanups(session, retention_hours, dry_run, verbose, flags)
+
+
+# Query to get all active maps with k-space systems
+GET_ACTIVE_MAPS_WITH_KSPACE = """
+SELECT DISTINCT m.id, m.name
+FROM map m
+JOIN node n ON n.map_id = m.id
+JOIN system s ON n.system_id = s.id
+WHERE m.date_deleted IS NULL
+  AND n.date_deleted IS NULL
+  AND n.system_id > 0
+  AND (s.system_class IS NULL OR s.system_class IN (7, 8, 9));
+"""
+
+# Query to get k-space systems for a map
+GET_MAP_KSPACE_SYSTEMS = """
+SELECT DISTINCT s.id
+FROM node n
+JOIN system s ON n.system_id = s.id
+WHERE n.map_id = $1
+  AND n.date_deleted IS NULL
+  AND n.system_id > 0
+  AND (s.system_class IS NULL OR s.system_class IN (7, 8, 9));
+"""
+
+
+async def _process_map_routes(
+    session: AsyncpgDriver,
+    esi_client: ESIClient,
+    map_row: dict,
+    route_type_enum: RouteType,
+    include_hubs: bool,
+    dry_run: bool,
+    verbose: bool,
+) -> int:
+    """Process route pre-fetching for a single map."""
+    map_id = map_row["id"]
+    map_name = map_row["name"]
+
+    # Get k-space systems for this map
+    systems = await session.select(GET_MAP_KSPACE_SYSTEMS, [map_id])
+    system_ids = [row["id"] for row in systems]
+
+    if not system_ids:
+        return 0
+
+    if verbose:
+        click.echo(f"[prefetch-routes] Map '{map_name}': {len(system_ids)} k-space systems")
+
+    if dry_run:
+        destinations = set(system_ids)
+        if include_hubs:
+            destinations.update(TRADE_HUBS)
+        potential_routes = len(system_ids) * len(destinations) - len(system_ids)
+        click.echo(f"[prefetch-routes]   Would fetch up to {potential_routes} routes")
+        return 0
+
+    route_cache = RouteCacheService(session, esi_client)
+    fetched = await route_cache.prefetch_routes_for_systems(
+        system_ids=system_ids,
+        route_type=route_type_enum,
+        include_trade_hubs=include_hubs,
+    )
+
+    if fetched > 0 or verbose:
+        click.echo(f"[prefetch-routes]   Fetched {fetched} new routes")
+
+    return fetched
+
+
+@cron.command()
+@click.option("--verbose", "-v", is_flag=True, help="Show detailed output")
+@click.option("--dry-run", is_flag=True, help="Show what would be done without fetching")
+@click.option(
+    "--route-type",
+    type=click.Choice(["shortest", "secure"]),
+    default="shortest",
+    show_default=True,
+    help="Route type to pre-fetch",
+)
+@click.option("--include-hubs/--no-hubs", default=True, show_default=True, help="Include routes to trade hubs")
+@click.pass_obj
+async def prefetch_routes(
+    settings: Settings,
+    verbose: bool,
+    dry_run: bool,
+    route_type: str,
+    include_hubs: bool,
+) -> None:
+    """Pre-fetch ESI routes for k-space systems on active maps.
+
+    This command pre-caches ESI route calculations between k-space systems
+    on active maps, including routes to major trade hubs (Jita, Amarr,
+    Dodixie, Rens, Hek).
+
+    Routes are stored permanently in the database since k-space stargates
+    don't change.
+
+    This command can be run periodically (e.g., hourly) to ensure routes
+    are cached before users need them.
+    """
+    route_type_enum = RouteType(route_type)
+
+    if dry_run:
+        click.echo("[prefetch-routes] DRY RUN - no routes will be fetched")
+
+    if verbose:
+        click.echo(f"[prefetch-routes] Route type: {route_type}")
+        click.echo(f"[prefetch-routes] Include trade hubs: {include_hubs}")
+
+    esi_client = ESIClient(settings.esi.user_agent, settings.esi.timeout)
+
+    async with provide_session() as session:
+        maps = await session.select(GET_ACTIVE_MAPS_WITH_KSPACE)
+
+        if not maps:
+            if verbose:
+                click.echo("[prefetch-routes] No active maps with k-space systems found")
+            return
+
+        if verbose:
+            click.echo(f"[prefetch-routes] Found {len(maps)} active maps with k-space systems")
+
+        total_fetched = 0
+        for map_row in maps:
+            fetched = await _process_map_routes(
+                session, esi_client, map_row, route_type_enum, include_hubs, dry_run, verbose
+            )
+            total_fetched += fetched
+
+        if not dry_run:
+            click.echo(f"[prefetch-routes] Total routes fetched: {total_fetched}")

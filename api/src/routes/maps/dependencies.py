@@ -182,15 +182,6 @@ class EnrichedLinkInfo(msgspec.Struct):
     date_mass_updated: datetime
 
 
-class CharacterContext(msgspec.Struct):
-    """Character context for access checks."""
-
-    user_id: UUID
-    corporation_id: int | None
-    alliance_id: int | None
-    character_ids: list[int] = []
-
-
 class EnrichedSignatureInfo(msgspec.Struct):
     """Enriched signature information for API responses."""
 
@@ -280,19 +271,6 @@ class SubscriptionResponse(msgspec.Struct):
     map_id: UUID
     subscribed: bool
     subscription_count: int
-
-
-class UserCharacter(msgspec.Struct):
-    """User character info for context lookups."""
-
-    corporation_id: int | None
-    alliance_id: int | None
-
-
-class UserCharacterId(msgspec.Struct):
-    """User character ID for access checks."""
-
-    id: int
 
 
 # Delete response structs for 202 Accepted responses

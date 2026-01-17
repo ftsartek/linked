@@ -3,7 +3,6 @@ from routes.maps.dependencies import (
     AddAllianceAccessRequest,
     AddCharacterAccessRequest,
     AddCorporationAccessRequest,
-    CharacterContext,
     CreateMapRequest,
     EnrichedLinkInfo,
     EnrichedNodeInfo,
@@ -16,6 +15,7 @@ from routes.maps.service import (
     MapService,
     provide_map_service,
 )
+from services.route_base import CharacterContext
 
 __all__ = [
     "AddAllianceAccessRequest",
