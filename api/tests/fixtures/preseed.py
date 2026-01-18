@@ -12,11 +12,23 @@ from tests.factories.static_data import (
     CORP_SHARED_MAP_ID,
     CORP_SHARED_MAP_NAME,
     FIXTURE_OWNER_USER_ID,
+    HED_GP_SYSTEM_ID,
     J123456_SYSTEM_ID,
+    J345678_SYSTEM_ID,
     JITA_SYSTEM_ID,
+    K162_WORMHOLE_ID,
     PUBLIC_MAP_DESCRIPTION,
     PUBLIC_MAP_ID,
     PUBLIC_MAP_NAME,
+    ROUTE_LINK_J123456_J345678_ID,
+    ROUTE_LINK_J345678_HED_GP_ID,
+    ROUTE_LINK_JITA_J123456_ID,
+    ROUTE_NODE_HED_GP_ID,
+    ROUTE_NODE_J123456_ID,
+    ROUTE_NODE_J345678_ID,
+    ROUTE_NODE_JITA_ID,
+    ROUTE_TEST_MAP_ID,
+    ROUTE_TEST_MAP_NAME,
     TEST2_ALLIANCE_ID,
     TEST2_CHARACTER_ID,
     TEST2_CHARACTER_NAME,
@@ -55,6 +67,11 @@ async def preseed_test_data(session: AsyncpgDriver) -> None:
         """
         INSERT INTO region (id, name) VALUES
         (10000002, 'The Forge'),
+        (10000043, 'Domain'),
+        (10000032, 'Sinq Laison'),
+        (10000030, 'Heimatar'),
+        (10000042, 'Metropolis'),
+        (10000014, 'Catch'),
         (11000001, 'A-R00001'),
         (11000002, 'B-R00002')
         ON CONFLICT (id) DO NOTHING
@@ -66,6 +83,11 @@ async def preseed_test_data(session: AsyncpgDriver) -> None:
         """
         INSERT INTO constellation (id, region_id, name) VALUES
         (20000020, 10000002, 'Kimotoro'),
+        (20000322, 10000043, 'Throne Worlds'),
+        (20000469, 10000032, 'Coriault'),
+        (20000440, 10000030, 'Heimatar'),
+        (20000615, 10000042, 'Tiat'),
+        (20000169, 10000014, 'JWZ2-V'),
         (21000001, 11000001, 'A-C00001'),
         (21000002, 11000002, 'B-C00001')
         ON CONFLICT (id) DO NOTHING
@@ -86,23 +108,30 @@ async def preseed_test_data(session: AsyncpgDriver) -> None:
 
     # 5. Insert systems
     # Includes:
-    # - Jita (30000142) - Famous trade hub in The Forge
-    # - Perimeter (30000144) - Adjacent to Jita
-    # - J123456 (31000001) - Test C3 wormhole with Black Hole effect
-    # - J234567 (31000002) - Test C5 wormhole with Magnetar effect
-    # - J345678 (31000003) - Test C3 wormhole without effect
+    # - High-sec trade hubs: Jita, Amarr, Dodixie, Rens, Hek
+    # - Adjacent high-sec: Perimeter
+    # - Null-sec systems: HED-GP, PR-8CA (for route testing)
+    # - J-space systems: J123456, J234567, J345678
     # - Unidentified placeholders for each class (negative IDs)
     await session.execute(
         """
-        INSERT INTO system (id, constellation_id, name, security_status, system_class, wh_effect_id) VALUES
-        (30000142, 20000020, 'Jita', 0.9, NULL, NULL),
-        (30000144, 20000020, 'Perimeter', 0.9, NULL, NULL),
-        (31000001, 21000001, 'J123456', NULL, 3, 1),
-        (31000002, 21000002, 'J234567', NULL, 5, 2),
-        (31000003, 21000001, 'J345678', NULL, 3, NULL),
-        (-1, NULL, 'Unidentified', NULL, 0, NULL),
-        (-4, NULL, 'Unidentified', NULL, 3, NULL),
-        (-7, NULL, 'Unidentified', NULL, 5, NULL)
+        INSERT INTO system
+            (id, constellation_id, name, security_status, security_class, system_class, wh_effect_id)
+        VALUES
+        (30000142, 20000020, 'Jita', 0.9, '1.0', NULL, NULL),
+        (30000144, 20000020, 'Perimeter', 0.9, '1.0', NULL, NULL),
+        (30002187, 20000322, 'Amarr', 1.0, '1.0', NULL, NULL),
+        (30002659, 20000469, 'Dodixie', 0.9, '1.0', NULL, NULL),
+        (30002510, 20000440, 'Rens', 0.9, '1.0', NULL, NULL),
+        (30002053, 20000615, 'Hek', 0.5, '0.5', NULL, NULL),
+        (30001161, 20000169, 'HED-GP', -0.4, '0.0', NULL, NULL),
+        (30001198, 20000169, 'PR-8CA', -0.2, '0.0', NULL, NULL),
+        (31000001, 21000001, 'J123456', NULL, NULL, 3, 1),
+        (31000002, 21000002, 'J234567', NULL, NULL, 5, 2),
+        (31000003, 21000001, 'J345678', NULL, NULL, 3, NULL),
+        (-1, NULL, 'Unidentified', NULL, NULL, 0, NULL),
+        (-4, NULL, 'Unidentified', NULL, NULL, 3, NULL),
+        (-7, NULL, 'Unidentified', NULL, NULL, 5, NULL)
         ON CONFLICT (id) DO NOTHING
         """
     )
@@ -199,6 +228,43 @@ async def preseed_test_data(session: AsyncpgDriver) -> None:
         INSERT INTO node (id, map_id, system_id, pos_x, pos_y) VALUES
         ('{CORP_MAP_NODE_ID}', '{CORP_SHARED_MAP_ID}', {JITA_SYSTEM_ID}, 100.0, 100.0),
         ('{ALLIANCE_MAP_NODE_ID}', '{ALLIANCE_SHARED_MAP_ID}', {J123456_SYSTEM_ID}, 100.0, 100.0)
+        ON CONFLICT (id) DO NOTHING
+        """
+    )
+
+    # 14. Create route test map with a small wormhole chain for route testing
+    # Chain structure: Jita <-> J123456 <-> J345678 <-> HED-GP
+    await session.execute(
+        f"""
+        INSERT INTO map (id, owner_id, name, description, is_public, public_read_only) VALUES
+        ('{ROUTE_TEST_MAP_ID}', '{FIXTURE_OWNER_USER_ID}', '{ROUTE_TEST_MAP_NAME}',
+         'A map for testing route calculations', true, false)
+        ON CONFLICT (id) DO NOTHING
+        """
+    )
+
+    # 15. Insert nodes for route test map
+    await session.execute(
+        f"""
+        INSERT INTO node (id, map_id, system_id, pos_x, pos_y) VALUES
+        ('{ROUTE_NODE_JITA_ID}', '{ROUTE_TEST_MAP_ID}', {JITA_SYSTEM_ID}, 0.0, 0.0),
+        ('{ROUTE_NODE_J123456_ID}', '{ROUTE_TEST_MAP_ID}', {J123456_SYSTEM_ID}, 100.0, 0.0),
+        ('{ROUTE_NODE_J345678_ID}', '{ROUTE_TEST_MAP_ID}', {J345678_SYSTEM_ID}, 200.0, 0.0),
+        ('{ROUTE_NODE_HED_GP_ID}', '{ROUTE_TEST_MAP_ID}', {HED_GP_SYSTEM_ID}, 300.0, 0.0)
+        ON CONFLICT (id) DO NOTHING
+        """
+    )
+
+    # 16. Insert links for route test map (wormhole connections)
+    await session.execute(
+        f"""
+        INSERT INTO link (id, map_id, source_node_id, target_node_id, wormhole_id) VALUES
+        ('{ROUTE_LINK_JITA_J123456_ID}', '{ROUTE_TEST_MAP_ID}',
+         '{ROUTE_NODE_JITA_ID}', '{ROUTE_NODE_J123456_ID}', {K162_WORMHOLE_ID}),
+        ('{ROUTE_LINK_J123456_J345678_ID}', '{ROUTE_TEST_MAP_ID}',
+         '{ROUTE_NODE_J123456_ID}', '{ROUTE_NODE_J345678_ID}', {K162_WORMHOLE_ID}),
+        ('{ROUTE_LINK_J345678_HED_GP_ID}', '{ROUTE_TEST_MAP_ID}',
+         '{ROUTE_NODE_J345678_ID}', '{ROUTE_NODE_HED_GP_ID}', {K162_WORMHOLE_ID})
         ON CONFLICT (id) DO NOTHING
         """
     )

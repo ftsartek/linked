@@ -21,8 +21,8 @@ if TYPE_CHECKING:
     pass
 
 
-# Set ENV_FILE before any settings are loaded
-os.environ["ENV_FILE"] = str(Path(__file__).parent.parent / ".test.env")
+# Set CONFIG_FILE before any settings are loaded
+os.environ["CONFIG_FILE"] = str(Path(__file__).parent / "config.test.yaml")
 
 # Register fixture modules for pytest discovery
 pytest_plugins = [

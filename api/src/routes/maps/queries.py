@@ -107,52 +107,6 @@ WHERE l.map_id = $1 AND l.date_deleted IS NULL
 ORDER BY l.id;
 """
 
-CHECK_ACCESS = """
-SELECT EXISTS(
-    SELECT 1 FROM map WHERE id = $1 AND (owner_id = $2 OR is_public = true)
-    UNION
-    SELECT 1 FROM map_character WHERE map_id = $1
-        AND character_id IN (SELECT id FROM character WHERE user_id = $2)
-    UNION
-    SELECT 1 FROM map_corporation WHERE map_id = $1 AND corporation_id = $3
-    UNION
-    SELECT 1 FROM map_alliance WHERE map_id = $1 AND alliance_id = $4
-    UNION
-    SELECT 1 FROM map_subscription ms
-        JOIN map m ON ms.map_id = m.id
-        WHERE ms.map_id = $1 AND ms.user_id = $2 AND m.is_public = true
-);
-"""
-
-CHECK_EDIT_ACCESS = """
-SELECT CASE
-    WHEN m.owner_id = $2 THEN true
-    WHEN mch.map_id IS NOT NULL THEN NOT mch.read_only
-    WHEN mc.map_id IS NOT NULL THEN NOT mc.read_only
-    WHEN ma.map_id IS NOT NULL THEN NOT ma.read_only
-    WHEN ms.map_id IS NOT NULL AND m.is_public = true THEN NOT m.public_read_only
-    ELSE false
-END
-FROM map m
-LEFT JOIN map_character mch ON mch.map_id = m.id
-    AND mch.character_id IN (SELECT id FROM character WHERE user_id = $2)
-LEFT JOIN map_corporation mc ON mc.map_id = m.id AND mc.corporation_id = $3
-LEFT JOIN map_alliance ma ON ma.map_id = m.id AND ma.alliance_id = $4
-LEFT JOIN map_subscription ms ON ms.map_id = m.id AND ms.user_id = $2
-WHERE m.id = $1;
-"""
-
-GET_USER_CHARACTER = """
-SELECT corporation_id, alliance_id
-FROM character
-WHERE user_id = $1
-LIMIT 1;
-"""
-
-GET_USER_CHARACTER_IDS = """
-SELECT id FROM character WHERE user_id = $1;
-"""
-
 LIST_MAP_CHARACTERS = """
 SELECT mc.character_id, c.name AS character_name, mc.read_only
 FROM map_character mc

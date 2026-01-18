@@ -47,3 +47,10 @@ class RankDir(StrEnum):
     BT = "BT"  # bottom to top
     LR = "LR"  # left to right (horizontal)
     RL = "RL"  # right to left
+
+
+class RouteType(StrEnum):
+    """Route calculation type for ESI and map routing."""
+
+    SHORTEST = "shortest"  # Minimum jumps, no security preference
+    SECURE = "secure"  # Prefer high-sec, avoid low/null

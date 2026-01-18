@@ -18,7 +18,14 @@ from litestar.stores.registry import StoreRegistry
 from litestar.types import ControllerRouterHandler, Middleware
 
 from config import get_settings
-from routes import AuthController, HealthController, MapController, UniverseController, UserController
+from routes import (
+    AuthController,
+    HealthController,
+    MapController,
+    RoutingController,
+    UniverseController,
+    UserController,
+)
 
 from .handlers import exception_handlers
 from .middleware import compression_config
@@ -27,6 +34,7 @@ DEFAULT_ROUTE_HANDLERS: list[ControllerRouterHandler] = [
     AuthController,
     HealthController,
     MapController,
+    RoutingController,
     UniverseController,
     UserController,
 ]

@@ -2,10 +2,6 @@
 
 Linked is a Wormhole Mapping application for EVE Online. It allows shared map access with real-time updates, and integration with the EVE Online ESI API.
 
-### Development
-
-This is currently under heavy development. There are NO production environments yet, and so for the time being we do not need to create migrations, etc.
-
 ## API
 
 The API component - under `api/` - handles:
@@ -29,7 +25,7 @@ The web component - under `web/` - handles:
 
 The web component relies on the following dependencies:
 - Typescript
-- Svelte 5 (https://svelte.dev/) - UI Framework
+- Svelte 5 (https://svelte.dev/) - UI Framework with SvelteKit 2
 - Skeleton UI 4 (https://www.skeleton.dev/) - Component & Style Framework
 - Tailwind CSS 4 (https://tailwindcss.com/) - Style Framework
 - SvelteFlow (https://svelteflow.dev/) - Map visualisation
@@ -79,3 +75,8 @@ The `web/` section of the project is formatted with `npm run format`, checked wi
 ### API
 
 The `api/` section of the project is formatted with `uv run ruff format`, checked with `uv run ruff check --fix`, and type checked with `uv run ty check`
+
+
+## Database
+
+Database migrations should be created and managed using SQLSpec's migration process, which puts the migration templates in api/migrations.

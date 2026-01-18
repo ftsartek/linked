@@ -25,7 +25,6 @@ from database.models.map_corporation import INSERT_STMT as MAP_CORPORATION_INSER
 from routes.maps.dependencies import (
     AllianceAccessInfo,
     CharacterAccessInfo,
-    CharacterContext,
     CorporationAccessInfo,
     CreateConnectionFromSignatureResponse,
     DeleteLinkResponse,
@@ -41,13 +40,9 @@ from routes.maps.dependencies import (
     NodeConnectionInfo,
     PublicMapInfo,
     SubscriptionResponse,
-    UserCharacter,
-    UserCharacterId,
 )
 from routes.maps.events import ACCESS_REVOCATION_TYPES, EventType, MapEvent
 from routes.maps.queries import (
-    CHECK_ACCESS,
-    CHECK_EDIT_ACCESS,
     CHECK_MAP_PUBLIC,
     COUNT_PUBLIC_MAPS,
     COUNT_SEARCH_PUBLIC_MAPS,
@@ -73,8 +68,6 @@ from routes.maps.queries import (
     GET_SIGNATURE_ENRICHED,
     GET_SIGNATURE_NODE,
     GET_SUBSCRIPTION_COUNT,
-    GET_USER_CHARACTER,
-    GET_USER_CHARACTER_IDS,
     INSERT_LINK,
     INSERT_NODE,
     INSERT_SIGNATURE,
@@ -103,6 +96,7 @@ from routes.maps.queries import (
     UPDATE_SIGNATURE_LINK,
     UPSERT_SIGNATURE,
 )
+from services.route_base import CharacterContext, RouteBaseService
 
 # Reason codes for sync errors
 SYNC_ERROR_INVALID_EVENT_ID = "invalid_event_id"
@@ -117,13 +111,10 @@ class NodeLockedError(Exception):
     pass
 
 
-class MapService:
+class MapService(RouteBaseService):
     """Map management business logic."""
 
     _k162_id: int | None = None  # Class-level cache for K162 wormhole ID
-
-    def __init__(self, db_session: AsyncDriverAdapterBase) -> None:
-        self.db_session = db_session
 
     async def create_map(
         self,
@@ -212,54 +203,6 @@ class MapService:
             GET_MAP_LINKS,
             map_id,
             schema_type=EnrichedLinkInfo,
-        )
-
-    async def can_access_map(
-        self,
-        map_id: UUID,
-        user_id: UUID,
-        corporation_id: int | None,
-        alliance_id: int | None,
-    ) -> bool:
-        """Check if user has access to the map."""
-        return await self.db_session.select_value(
-            CHECK_ACCESS,
-            map_id,
-            user_id,
-            corporation_id,
-            alliance_id,
-        )
-
-    async def has_edit_access(
-        self,
-        map_id: UUID,
-        user_id: UUID,
-        corporation_id: int | None,
-        alliance_id: int | None,
-    ) -> bool:
-        """Check if user has edit access to the map (priority: owner > user > corp > alliance)."""
-        result = await self.db_session.select_value(
-            CHECK_EDIT_ACCESS,
-            map_id,
-            user_id,
-            corporation_id,
-            alliance_id,
-        )
-        return result or False
-
-    async def get_character_context(self, user_id: UUID) -> CharacterContext:
-        """Get the user's character context for access checks."""
-        row = await self.db_session.select_one_or_none(GET_USER_CHARACTER, user_id, schema_type=UserCharacter)
-        # Get all character IDs for the user
-        char_rows = await self.db_session.select(GET_USER_CHARACTER_IDS, user_id, schema_type=UserCharacterId)
-        character_ids = [r.id for r in char_rows]
-        if row is None:
-            return CharacterContext(user_id=user_id, corporation_id=None, alliance_id=None, character_ids=character_ids)
-        return CharacterContext(
-            user_id=user_id,
-            corporation_id=row.corporation_id,
-            alliance_id=row.alliance_id,
-            character_ids=character_ids,
         )
 
     async def update_map(

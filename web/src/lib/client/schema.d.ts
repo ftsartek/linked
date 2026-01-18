@@ -655,6 +655,23 @@ export interface paths {
 		patch: operations['MapsMapIdNodesNodeIdSystemUpdateNodeSystem'];
 		trace?: never;
 	};
+	'/routes/{map_id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** CalculateRoute */
+		get: operations['RoutesMapIdCalculateRoute'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/universe/images/{entity_type}/{entity_id}': {
 		parameters: {
 			query?: never;
@@ -991,6 +1008,7 @@ export interface components {
 			subgroup?: string | null;
 			type?: string | null;
 			link_id?: string | null;
+			wormhole_id?: number | null;
 		};
 		/** CreateSignatureResponse */
 		CreateSignatureResponse: {
@@ -1231,6 +1249,24 @@ export interface components {
 		 * @enum {string}
 		 */
 		RankDir: 'TB' | 'BT' | 'LR' | 'RL';
+		/** RouteResponse */
+		RouteResponse: {
+			waypoints: components['schemas']['RouteWaypointInfo'][];
+			total_jumps: number;
+			wormhole_jumps: number;
+			kspace_jumps: number;
+			destination_on_chain: boolean;
+			route_type: string;
+		};
+		/** RouteWaypointInfo */
+		RouteWaypointInfo: {
+			system_id: number;
+			system_name?: string | null;
+			class_name?: string | null;
+			node_id?: string | null;
+			/** @default false */
+			is_wormhole_jump: boolean;
+		};
 		/** SearchSystemsSystemSearchResponseResponseBody */
 		SearchSystemsSystemSearchResponseResponseBody: {
 			systems: components['schemas']['SearchSystemsSystemSearchResponse_0SystemSearchResultResponseBody'][];
@@ -2994,6 +3030,53 @@ export interface operations {
 			};
 		};
 	};
+	RoutesMapIdCalculateRoute: {
+		parameters: {
+			query: {
+				/** @description Origin node ID on the map */
+				origin: string;
+				/** @description Destination system ID */
+				destination: number;
+				/** @description Route type: shortest, secure */
+				route_type?: string;
+			};
+			header?: never;
+			path: {
+				map_id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['RouteResponse'];
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
 	UniverseImagesEntityTypeEntityIdGetEntityImage: {
 		parameters: {
 			query?: {
@@ -3181,7 +3264,7 @@ export interface operations {
 	UniverseWormholesSearchWormholes: {
 		parameters: {
 			query?: {
-				q?: string;
+				q?: string | null;
 				target?: number | null;
 				source_class?: number | null;
 			};

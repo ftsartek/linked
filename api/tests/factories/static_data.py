@@ -7,8 +7,19 @@ that match the preseed data in fixtures/preseed.py.
 from __future__ import annotations
 
 # Known test system IDs (matching preseed data)
+# High-sec trade hubs
 JITA_SYSTEM_ID = 30000142
 PERIMETER_SYSTEM_ID = 30000144
+AMARR_SYSTEM_ID = 30002187
+DODIXIE_SYSTEM_ID = 30002659
+RENS_SYSTEM_ID = 30002510
+HEK_SYSTEM_ID = 30002053
+
+# Null-sec systems for route testing
+HED_GP_SYSTEM_ID = 30001161  # HED-GP - famous null-sec entry point
+PR_8CA_SYSTEM_ID = 30001198  # PR-8CA - nearby null-sec system
+
+# J-space systems
 J123456_SYSTEM_ID = 31000001  # C3 with Black Hole
 J234567_SYSTEM_ID = 31000002  # C5 with Magnetar
 J345678_SYSTEM_ID = 31000003  # C3 without effect
@@ -51,3 +62,16 @@ PUBLIC_MAP_DESCRIPTION = "A public map for all explorers"
 # Pre-created nodes on shared maps for permission testing
 CORP_MAP_NODE_ID = "00000000-0000-0000-0000-000000000201"
 ALLIANCE_MAP_NODE_ID = "00000000-0000-0000-0000-000000000202"
+
+# Route testing map and nodes (pre-created for route tests)
+ROUTE_TEST_MAP_ID = "00000000-0000-0000-0000-000000000104"
+ROUTE_TEST_MAP_NAME = "Route Test Map"
+# Nodes on the route test map - forms a small wormhole chain
+ROUTE_NODE_JITA_ID = "00000000-0000-0000-0000-000000000301"  # K-space entry
+ROUTE_NODE_J123456_ID = "00000000-0000-0000-0000-000000000302"  # C3 wormhole
+ROUTE_NODE_J345678_ID = "00000000-0000-0000-0000-000000000303"  # Another C3
+ROUTE_NODE_HED_GP_ID = "00000000-0000-0000-0000-000000000304"  # Null-sec exit
+# Links on the route test map
+ROUTE_LINK_JITA_J123456_ID = "00000000-0000-0000-0000-000000000401"
+ROUTE_LINK_J123456_J345678_ID = "00000000-0000-0000-0000-000000000402"
+ROUTE_LINK_J345678_HED_GP_ID = "00000000-0000-0000-0000-000000000403"

@@ -198,6 +198,37 @@ class ESIClient:
 
         return msgspec.json.decode(response.content, type=list[ESINameResult])
 
+    async def get_route(
+        self,
+        origin: int,
+        destination: int,
+        flag: str = "shortest",
+    ) -> list[int]:
+        """Get a route between two solar systems.
+
+        Args:
+            origin: Origin solar system ID
+            destination: Destination solar system ID
+            flag: Route preference - 'shortest', 'secure', or 'insecure'
+
+        Returns:
+            List of solar system IDs representing the route (includes origin and destination)
+        """
+        if self._client is None:
+            msg = "Client not initialized. Use 'async with' context manager."
+            raise RuntimeError(msg)
+
+        path = f"/route/{origin}/{destination}/"
+        params = {"flag": flag}
+
+        response = await self._client.get(path, params=params)
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise _wrap_http_error(e, path) from e
+
+        return msgspec.json.decode(response.content, type=list[int])
+
 
 async def provide_esi_client(app_settings: Settings) -> ESIClient:
     """Provide ESIClient for dependency injection.
