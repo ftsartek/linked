@@ -26,10 +26,11 @@ KSPACE_CLASSES = {7, 8, 9}  # HS, LS, NS
 # System class 25 is Pochven (no stargates, treated as w-space for routing)
 
 # Weight multipliers for safest route calculation
-WEIGHT_WORMHOLE_JUMP = 5
-WEIGHT_LOWSEC = 3
-WEIGHT_NULLSEC = 4
+# These are heavily skewed to avoid dangerous space unless absolutely necessary
 WEIGHT_HIGHSEC = 1
+WEIGHT_LOWSEC = 100
+WEIGHT_NULLSEC = 200
+WEIGHT_WORMHOLE_JUMP = 100
 
 # Query to get nodes with system class info
 GET_MAP_NODES_FOR_ROUTING = """
@@ -722,16 +723,29 @@ class RouteCalculatorService:
             if total_cost < best_total_cost:
                 best_total_cost = total_cost
 
-                # Build combined route
-                waypoints = list(chain_route.waypoints)
-                # Add destination (off-chain)
-                waypoints.append(
-                    RouteWaypoint(
-                        system_id=destination_system_id,
-                        node_id=None,
-                        is_wormhole_jump=False,
+                # Get the full k-space route for waypoint expansion
+                try:
+                    kspace_route = await self._get_kspace_route(
+                        exit_system_id,
+                        destination_system_id,
+                        route_type,
                     )
-                )
+                except Exception:
+                    # Fallback: just add the destination if route fetch fails
+                    kspace_route = [exit_system_id, destination_system_id]
+
+                # Build combined route with expanded k-space waypoints
+                waypoints = list(chain_route.waypoints)
+
+                # Add intermediate k-space systems (skip first, it's already the exit node)
+                for sys_id in kspace_route[1:]:
+                    waypoints.append(
+                        RouteWaypoint(
+                            system_id=sys_id,
+                            node_id=None,
+                            is_wormhole_jump=False,
+                        )
+                    )
 
                 best_route = RouteResult(
                     waypoints=waypoints,

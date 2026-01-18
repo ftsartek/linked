@@ -16,7 +16,7 @@ from utils.enums import RouteType
 
 # Query to get system info by ID
 GET_SYSTEM_INFO = """
-SELECT name, system_class FROM system WHERE id = $1;
+SELECT name, system_class, security_status FROM system WHERE id = $1;
 """
 
 
@@ -58,6 +58,7 @@ class RoutingService(RouteBaseService):
             )
             system_name = system_info["name"] if system_info else None
             system_class = system_info["system_class"] if system_info else None
+            security_status = system_info["security_status"] if system_info else None
             class_name = SYSTEM_CLASS_MAPPING.get(system_class) if system_class is not None else None
 
             waypoints.append(
@@ -65,6 +66,7 @@ class RoutingService(RouteBaseService):
                     system_id=wp.system_id,
                     system_name=system_name,
                     class_name=class_name,
+                    security_status=security_status,
                     node_id=wp.node_id,
                     is_wormhole_jump=wp.is_wormhole_jump,
                 )

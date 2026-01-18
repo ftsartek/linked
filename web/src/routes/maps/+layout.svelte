@@ -6,6 +6,7 @@
 	import { apiClient } from '$lib/client/client';
 	import { user } from '$lib/stores/user';
 	import SignatureCard from '$lib/components/system/SignatureCard.svelte';
+	import RouteCard from '$lib/components/system/RouteCard.svelte';
 	import type { components } from '$lib/client/schema';
 	import type { Snippet } from 'svelte';
 
@@ -294,7 +295,9 @@
 			<SignatureCard />
 		</div>
 
-		<!-- Reserved for future use (row 2, XL screens only) -->
-		<div class="hidden xl:col-span-1 xl:row-span-1 xl:block"></div>
+		<!-- Route Card: row 2, XL screens only -->
+		<div class="hidden xl:col-span-1 xl:row-span-1 xl:block">
+			<RouteCard />
+		</div>
 	</div>
 </div>
