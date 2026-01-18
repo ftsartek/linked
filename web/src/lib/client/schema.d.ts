@@ -1263,6 +1263,7 @@ export interface components {
 			system_id: number;
 			system_name?: string | null;
 			class_name?: string | null;
+			security_status?: number | null;
 			node_id?: string | null;
 			/** @default false */
 			is_wormhole_jump: boolean;

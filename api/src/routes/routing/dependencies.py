@@ -13,6 +13,7 @@ class RouteWaypointInfo(msgspec.Struct):
     system_id: int
     system_name: str | None = None  # Populated for display
     class_name: str | None = None  # System class (C1-C6, HS, LS, NS, etc.)
+    security_status: float | None = None  # Security status for k-space systems
     node_id: UUID | None = None  # None if system is off-chain
     is_wormhole_jump: bool = False  # True if arrived via wormhole
 
