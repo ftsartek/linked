@@ -242,6 +242,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/maps/{map_id}/notes': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** CreateNote */
+		post: operations['MapsMapIdNotesCreateNote'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/maps/{map_id}/signatures': {
 		parameters: {
 			query?: never;
@@ -313,6 +330,24 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/maps/{map_id}/notes/{note_id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** DeleteNote */
+		delete: operations['MapsMapIdNotesNoteIdDeleteNote'];
+		options?: never;
+		head?: never;
+		/** UpdateNote */
+		patch: operations['MapsMapIdNotesNoteIdUpdateNote'];
+		trace?: never;
+	};
 	'/maps/{map_id}/signatures/{signature_id}': {
 		parameters: {
 			query?: never;
@@ -374,6 +409,23 @@ export interface paths {
 		};
 		/** GetNodeSignatures */
 		get: operations['MapsMapIdNodesNodeIdSignaturesGetNodeSignatures'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/maps/{map_id}/systems/{system_id}/notes': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GetSystemNotes */
+		get: operations['MapsMapIdSystemsSystemIdNotesGetSystemNotes'];
 		put?: never;
 		post?: never;
 		delete?: never;
@@ -1016,6 +1068,18 @@ export interface components {
 			/** Format: uuid */
 			node_id: string;
 		};
+		/** CreateNoteRequest */
+		CreateNoteRequest: {
+			solar_system_id: number;
+			content: string;
+			title?: string | null;
+			date_expires?: string | null;
+		};
+		/** CreateNoteResponse */
+		CreateNoteResponse: {
+			/** Format: uuid */
+			note_id: string;
+		};
 		/** CreateSignatureRequest */
 		CreateSignatureRequest: {
 			/** Format: uuid */
@@ -1050,6 +1114,11 @@ export interface components {
 			node_id: string;
 			deleted_link_ids: string[];
 			deleted_signature_ids: string[];
+		};
+		/** DeleteNoteResponse */
+		DeleteNoteResponse: {
+			/** Format: uuid */
+			note_id: string;
 		};
 		/** DeleteSignatureResponse */
 		DeleteSignatureResponse: {
@@ -1107,6 +1176,25 @@ export interface components {
 				[key: string]: number;
 			} | null;
 			statics?: components['schemas']['StaticInfo'][] | null;
+		};
+		/** EnrichedNoteInfo */
+		EnrichedNoteInfo: {
+			/** Format: uuid */
+			id: string;
+			solar_system_id: number;
+			/** Format: uuid */
+			map_id: string;
+			title?: string | null;
+			content: string;
+			created_by: number;
+			created_by_name: string;
+			updated_by?: number | null;
+			updated_by_name?: string | null;
+			date_expires?: string | null;
+			/** Format: date-time */
+			date_created: string;
+			/** Format: date-time */
+			date_updated: string;
 		};
 		/** EnrichedSignatureInfo */
 		EnrichedSignatureInfo: {
@@ -1359,6 +1447,11 @@ export interface components {
 			subscribed: boolean;
 			subscription_count: number;
 		};
+		/** SystemNotesResponse */
+		SystemNotesResponse: {
+			solar_system_id: number;
+			notes: components['schemas']['EnrichedNoteInfo'][];
+		};
 		/** UniverseSearchResponse */
 		UniverseSearchResponse: {
 			characters: components['schemas']['EntitySearchResult'][];
@@ -1410,6 +1503,17 @@ export interface components {
 		/** UpdateNodeSystemRequest */
 		UpdateNodeSystemRequest: {
 			system_id: number;
+		};
+		/** UpdateNoteResponse */
+		UpdateNoteResponse: {
+			/** Format: uuid */
+			note_id: string;
+		};
+		/** UpdateNoteUpdateNoteRequestRequestBody */
+		UpdateNoteUpdateNoteRequestRequestBody: {
+			title?: string | null;
+			content?: string | null;
+			date_expires?: string | null;
 		};
 		/** UpdateSessionPreferencesRequest */
 		UpdateSessionPreferencesRequest: {
@@ -1960,6 +2064,50 @@ export interface operations {
 			};
 		};
 	};
+	MapsMapIdNotesCreateNote: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				map_id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['CreateNoteRequest'];
+			};
+		};
+		responses: {
+			/** @description Document created, URL follows */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['CreateNoteResponse'];
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
 	MapsMapIdSignaturesCreateSignature: {
 		parameters: {
 			query?: never;
@@ -2255,6 +2403,92 @@ export interface operations {
 			};
 		};
 	};
+	MapsMapIdNotesNoteIdDeleteNote: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				map_id: string;
+				note_id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request accepted, processing continues off-line */
+			202: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DeleteNoteResponse'];
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	MapsMapIdNotesNoteIdUpdateNote: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				map_id: string;
+				note_id: string;
+			};
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['UpdateNoteUpdateNoteRequestRequestBody'];
+			};
+		};
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['UpdateNoteResponse'];
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
 	MapsMapIdSignaturesSignatureIdDeleteSignature: {
 		parameters: {
 			query?: never;
@@ -2441,6 +2675,47 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['NodeSignaturesResponse'];
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	MapsMapIdSystemsSystemIdNotesGetSystemNotes: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				map_id: string;
+				system_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['SystemNotesResponse'];
 				};
 			};
 			/** @description Bad request syntax or unsupported method */

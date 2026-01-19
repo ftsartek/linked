@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -30,10 +31,12 @@ from routes.maps.dependencies import (
     DeleteLinkResponse,
     DeleteMapResponse,
     DeleteNodeResponse,
+    DeleteNoteResponse,
     DeleteSignatureResponse,
     EnrichedLinkInfo,
     EnrichedNodeInfo,
     EnrichedNodeSourceData,
+    EnrichedNoteInfo,
     EnrichedSignatureInfo,
     MapAccessResponse,
     MapInfo,
@@ -48,6 +51,7 @@ from routes.maps.queries import (
     COUNT_SEARCH_PUBLIC_MAPS,
     DELETE_LINK,
     DELETE_NODE,
+    DELETE_NOTE,
     DELETE_SIGNATURE,
     DELETE_SIGNATURES_NOT_IN_CODES,
     DELETE_SUBSCRIPTION,
@@ -65,11 +69,14 @@ from routes.maps.queries import (
     GET_NODE_ENRICHED,
     GET_NODE_LOCKED,
     GET_NODE_SIGNATURES,
+    GET_NOTE_ENRICHED,
     GET_SIGNATURE_ENRICHED,
     GET_SIGNATURE_NODE,
     GET_SUBSCRIPTION_COUNT,
+    GET_SYSTEM_NOTES,
     INSERT_LINK,
     INSERT_NODE,
+    INSERT_NOTE,
     INSERT_SIGNATURE,
     INSERT_SUBSCRIPTION,
     LIST_ALLIANCE_MAPS,
@@ -93,6 +100,7 @@ from routes.maps.queries import (
     UPDATE_NODE_LOCKED,
     UPDATE_NODE_POSITION,
     UPDATE_NODE_SYSTEM,
+    UPDATE_NOTE,
     UPDATE_SIGNATURE_LINK,
     UPSERT_SIGNATURE,
 )
@@ -921,6 +929,95 @@ class MapService(RouteBaseService):
             link_id=new_link_id,
             signature_id=signature_id,
         )
+
+    # Note management
+
+    async def get_system_notes(self, map_id: UUID, solar_system_id: int) -> list[EnrichedNoteInfo]:
+        """Get all notes for a specific solar system on a map."""
+        return await self.db_session.select(
+            GET_SYSTEM_NOTES,
+            solar_system_id,
+            map_id,
+            schema_type=EnrichedNoteInfo,
+        )
+
+    async def create_note(
+        self,
+        solar_system_id: int,
+        map_id: UUID,
+        content: str,
+        created_by: int,
+        title: str | None = None,
+        date_expires: datetime | None = None,
+    ) -> EnrichedNoteInfo:
+        """Create a new note on a solar system within a map."""
+        note_id = await self.db_session.select_value(
+            INSERT_NOTE,
+            solar_system_id,
+            map_id,
+            title,
+            content,
+            created_by,
+            date_expires,
+        )
+        return await self.db_session.select_one(
+            GET_NOTE_ENRICHED,
+            note_id,
+            schema_type=EnrichedNoteInfo,
+        )
+
+    async def update_note(
+        self,
+        map_id: UUID,
+        note_id: UUID,
+        updated_by: int,
+        updates: dict,
+    ) -> EnrichedNoteInfo | None:
+        """Update a note with partial updates.
+
+        Args:
+            map_id: The map the note must belong to
+            note_id: The note to update
+            updated_by: Character ID of the user making the update
+            updates: Dict of field names to values. Only provided fields are updated.
+                     Supports: title, content, date_expires
+
+        Returns None if note doesn't exist or doesn't belong to map.
+        """
+        # Extract values from updates dict, using None for missing keys
+        title = updates.get("title")
+        content = updates.get("content")
+        date_expires = updates.get("date_expires")
+
+        result = await self.db_session.execute(
+            UPDATE_NOTE,
+            note_id,
+            title,
+            content,
+            date_expires,
+            updated_by,
+            map_id,
+        )
+        if result.num_rows == 0:
+            return None
+
+        return await self.db_session.select_one(
+            GET_NOTE_ENRICHED,
+            note_id,
+            schema_type=EnrichedNoteInfo,
+        )
+
+    async def delete_note(
+        self,
+        map_id: UUID,
+        note_id: UUID,
+    ) -> DeleteNoteResponse | None:
+        """Soft-delete a note. Returns None if note doesn't exist or doesn't belong to map."""
+        result = await self.db_session.execute(DELETE_NOTE, note_id, map_id)
+        if result.num_rows == 0:
+            return None
+
+        return DeleteNoteResponse(note_id=note_id)
 
     # SSE event subscription
 

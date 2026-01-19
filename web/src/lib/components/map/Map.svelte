@@ -25,6 +25,7 @@
 		selectNode,
 		clearSelection,
 		triggerSignatureRefresh,
+		triggerNoteRefresh,
 		type EnrichedNodeInfo
 	} from '$lib/stores/mapSelection';
 	import {
@@ -193,8 +194,13 @@
 		nodes: Node[];
 		edges: Edge[];
 	}): Promise<boolean> {
+		// Filter out locked nodes - they cannot be deleted via hotkey
+		const unlocked = deletedNodes.filter((node) => !node.data.locked);
+		// If all selected nodes are locked, prevent deletion entirely
+		if (deletedNodes.length > 0 && unlocked.length === 0) return false;
+
 		// Attempt all deletions and only allow local removal if all succeed
-		for (const node of deletedNodes) {
+		for (const node of unlocked) {
 			const result = await removeNode(map_id, node.id);
 			if (!result.success) return false;
 		}
@@ -548,6 +554,9 @@
 					},
 					onSignatureChange: () => {
 						triggerSignatureRefresh();
+					},
+					onNoteChange: () => {
+						triggerNoteRefresh();
 					}
 				}
 			});

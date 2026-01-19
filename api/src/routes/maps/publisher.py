@@ -16,9 +16,11 @@ if TYPE_CHECKING:
         DeleteLinkResponse,
         DeleteMapResponse,
         DeleteNodeResponse,
+        DeleteNoteResponse,
         DeleteSignatureResponse,
         EnrichedLinkInfo,
         EnrichedNodeInfo,
+        EnrichedNoteInfo,
         EnrichedSignatureInfo,
         MapInfo,
     )
@@ -377,6 +379,56 @@ class EventPublisher:
             created_ids=created_ids,
             updated_ids=updated_ids,
             deleted_ids=deleted_ids,
+            user_id=user_id,
+        )
+        await self._publish(map_id, event)
+
+    # Note events
+
+    async def note_created(
+        self,
+        map_id: UUID,
+        note: EnrichedNoteInfo,
+        user_id: UUID | None = None,
+    ) -> None:
+        """Publish a note_created event."""
+        event_id = await self.get_next_event_id(map_id)
+        event = MapEvent.note_created(
+            event_id=event_id,
+            map_id=map_id,
+            note_data=self._struct_to_dict(note),
+            user_id=user_id,
+        )
+        await self._publish(map_id, event)
+
+    async def note_updated(
+        self,
+        map_id: UUID,
+        note: EnrichedNoteInfo,
+        user_id: UUID | None = None,
+    ) -> None:
+        """Publish a note_updated event."""
+        event_id = await self.get_next_event_id(map_id)
+        event = MapEvent.note_updated(
+            event_id=event_id,
+            map_id=map_id,
+            note_data=self._struct_to_dict(note),
+            user_id=user_id,
+        )
+        await self._publish(map_id, event)
+
+    async def note_deleted(
+        self,
+        map_id: UUID,
+        response: DeleteNoteResponse,
+        user_id: UUID | None = None,
+    ) -> None:
+        """Publish a note_deleted event."""
+        event_id = await self.get_next_event_id(map_id)
+        event = MapEvent.note_deleted(
+            event_id=event_id,
+            map_id=map_id,
+            note_id=response.note_id,
             user_id=user_id,
         )
         await self._publish(map_id, event)

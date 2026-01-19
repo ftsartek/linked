@@ -18,12 +18,15 @@ from services.cleanup import (
     cleanup_links,
     cleanup_maps,
     cleanup_nodes,
+    cleanup_notes,
     cleanup_signatures,
 )
 from services.lifecycle import (
     DEFAULT_SIGNATURE_EXPIRY_DAYS,
     LifecycleResult,
+    NoteLifecycleResult,
     SignatureLifecycleResult,
+    expire_notes,
     expire_old_signatures,
     update_link_lifetimes,
 )
@@ -55,6 +58,7 @@ def cron() -> None:
 def _print_lifecycle_results(
     link_result: LifecycleResult,
     sig_result: SignatureLifecycleResult,
+    note_result: NoteLifecycleResult,
     signature_expiry_days: int,
     dry_run: bool,
     verbose: bool,
@@ -65,6 +69,7 @@ def _print_lifecycle_results(
 
     _print_link_lifecycle_results(link_result, dry_run, verbose)
     _print_signature_lifecycle_results(link_result, sig_result, signature_expiry_days, dry_run, verbose)
+    _print_note_lifecycle_results(note_result, dry_run, verbose)
 
     # No changes summary
     total_changes = (
@@ -72,6 +77,7 @@ def _print_lifecycle_results(
         + link_result.deleted_count
         + link_result.cascade_deleted_signature_count
         + sig_result.expired_count
+        + note_result.expired_count
     )
     if total_changes == 0 and verbose:
         click.echo("[lifecycle] No changes needed")
@@ -124,6 +130,20 @@ def _print_signature_lifecycle_results(
                 click.echo(f"  {sig_id}")
 
 
+def _print_note_lifecycle_results(
+    note_result: NoteLifecycleResult,
+    dry_run: bool,
+    verbose: bool,
+) -> None:
+    """Print note lifecycle results."""
+    if note_result.expired_count > 0:
+        action = "Would soft-delete" if dry_run else "Soft-deleted"
+        click.echo(f"[lifecycle] {action} {note_result.expired_count} expired notes")
+        if verbose:
+            for note_id in note_result.expired_ids:
+                click.echo(f"  {note_id}")
+
+
 @cron.command()
 @click.option("--verbose", "-v", is_flag=True, help="Show detailed per-link output")
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
@@ -135,12 +155,13 @@ def _print_signature_lifecycle_results(
 )
 @click.pass_obj
 async def lifecycle(settings: Settings, verbose: bool, dry_run: bool, signature_expiry_days: int) -> None:
-    """Update link lifetime statuses, soft-delete expired links and signatures.
+    """Update link lifetime statuses, soft-delete expired links, signatures, and notes.
 
     This command should be run every 2 minutes via cron.
 
     Links are soft-deleted when they reach end-of-life based on wormhole lifetime.
     Signatures are soft-deleted after --signature-expiry-days (default 7 days).
+    Notes are soft-deleted when they pass their expiry date.
     When a link is soft-deleted, its associated signatures are also cascade-deleted.
     """
     # Only create event publisher if we're actually making changes
@@ -158,7 +179,14 @@ async def lifecycle(settings: Settings, verbose: bool, dry_run: bool, signature_
             event_publisher=event_publisher,
         )
 
-    _print_lifecycle_results(link_result, sig_result, signature_expiry_days, dry_run, verbose)
+        # Process note expiration
+        note_result = await expire_notes(
+            session,
+            dry_run=dry_run,
+            event_publisher=event_publisher,
+        )
+
+    _print_lifecycle_results(link_result, sig_result, note_result, signature_expiry_days, dry_run, verbose)
 
 
 async def _run_individual_cleanups(
@@ -169,32 +197,24 @@ async def _run_individual_cleanups(
     flags: dict[str, bool],
 ) -> None:
     """Run individual cleanup operations based on flags."""
+    # Define cleanup operations in FK order
+    cleanup_ops = [
+        ("notes", cleanup_notes),
+        ("signatures", cleanup_signatures),
+        ("links", cleanup_links),
+        ("nodes", cleanup_nodes),
+        ("maps", cleanup_maps),
+    ]
+
     action = "Would delete" if dry_run else "Deleted"
     total = 0
 
-    if flags["signatures"]:
-        count = await cleanup_signatures(session, retention_hours, dry_run)
-        total += count
-        if count > 0 or verbose:
-            click.echo(f"[cleanup] {action} {count} signatures")
-
-    if flags["links"]:
-        count = await cleanup_links(session, retention_hours, dry_run)
-        total += count
-        if count > 0 or verbose:
-            click.echo(f"[cleanup] {action} {count} links")
-
-    if flags["nodes"]:
-        count = await cleanup_nodes(session, retention_hours, dry_run)
-        total += count
-        if count > 0 or verbose:
-            click.echo(f"[cleanup] {action} {count} nodes")
-
-    if flags["maps"]:
-        count = await cleanup_maps(session, retention_hours, dry_run)
-        total += count
-        if count > 0 or verbose:
-            click.echo(f"[cleanup] {action} {count} maps")
+    for name, cleanup_fn in cleanup_ops:
+        if flags[name]:
+            count = await cleanup_fn(session, retention_hours, dry_run)
+            total += count
+            if count > 0 or verbose:
+                click.echo(f"[cleanup] {action} {count} {name}")
 
     if total == 0 and verbose:
         click.echo("[cleanup] No records to clean up")
@@ -214,6 +234,7 @@ async def _run_individual_cleanups(
 @click.option("--links", "do_links", is_flag=True, help="Cleanup soft-deleted links")
 @click.option("--nodes", "do_nodes", is_flag=True, help="Cleanup soft-deleted nodes")
 @click.option("--signatures", "do_signatures", is_flag=True, help="Cleanup soft-deleted signatures")
+@click.option("--notes", "do_notes", is_flag=True, help="Cleanup soft-deleted notes")
 async def cleanup(
     verbose: bool,
     dry_run: bool,
@@ -223,14 +244,15 @@ async def cleanup(
     do_links: bool,
     do_nodes: bool,
     do_signatures: bool,
+    do_notes: bool,
 ) -> None:
     """Hard-delete soft-deleted records older than retention period.
 
     This command should be run hourly (e.g., at minute 40).
-    Deletes in FK order: signatures -> links -> nodes -> maps.
+    Deletes in FK order: notes -> signatures -> links -> nodes -> maps.
     """
     # If no specific flags set, default to --all
-    if not any([do_all, do_maps, do_links, do_nodes, do_signatures]):
+    if not any([do_all, do_maps, do_links, do_nodes, do_signatures, do_notes]):
         do_all = True
 
     if dry_run:
@@ -245,12 +267,14 @@ async def cleanup(
             if result.total > 0 or verbose:
                 action = "Would delete" if dry_run else "Deleted"
                 click.echo(
-                    f"[cleanup] {action}: {result.signatures_deleted} signatures, "
+                    f"[cleanup] {action}: {result.notes_deleted} notes, "
+                    f"{result.signatures_deleted} signatures, "
                     f"{result.links_deleted} links, {result.nodes_deleted} nodes, "
                     f"{result.maps_deleted} maps"
                 )
         else:
             flags = {
+                "notes": do_notes,
                 "signatures": do_signatures,
                 "links": do_links,
                 "nodes": do_nodes,

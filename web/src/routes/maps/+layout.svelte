@@ -7,6 +7,8 @@
 	import { user } from '$lib/stores/user';
 	import SignatureCard from '$lib/components/system/SignatureCard.svelte';
 	import RouteCard from '$lib/components/system/RouteCard.svelte';
+	import NotesCard from '$lib/components/system/NotesCard.svelte';
+	import SystemDetailsCard from '$lib/components/system/SystemDetailsCard.svelte';
 	import type { components } from '$lib/client/schema';
 	import type { Snippet } from 'svelte';
 
@@ -140,9 +142,7 @@
 	}
 </script>
 
-<div
-	class="flex min-h-[calc(100vh-64px)] w-full flex-col p-2 xl:aspect-[4/3] xl:max-h-[calc(100vh-64px)] xl:min-h-0"
->
+<div class="flex min-h-[calc(100vh-64px)] w-full flex-col p-2">
 	<!-- Tab Bar (full width) -->
 	<div class="flex flex-wrap items-center gap-1 p-2">
 		{#if loading}
@@ -281,23 +281,125 @@
 		</Dialog.Provider>
 	</div>
 
-	<!-- Main content area -->
-	<div
-		class="grid min-h-0 flex-1 grid-cols-1 gap-4 p-2 pt-0 md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-2"
-	>
-		<!-- Map Area: full width on small/medium, 3/4 width on XL -->
-		<main class="min-h-64 md:col-span-2 xl:col-span-3 xl:row-span-2">
+	<!-- 
+		Responsive Layout using CSS Grid with named areas
+		
+		5 Layouts based on screen size + aspect ratio:
+		1. Mobile (<640px): stacked vertically
+		2. Small/Tablet Portrait (640-1279px, portrait): map top, 2-col cards
+		3. Small/Tablet Landscape (640-1279px, landscape): map+sigs top, 3-col cards below
+		4. Large Desktop Portrait (>=1280px, portrait): map top, 2x2 card grid
+		5. Large Desktop Landscape (>=1280px, landscape): map left, sidebar right, extras below
+	-->
+	<div class="responsive-layout gap-2 p-2 pt-0">
+		<!-- Map Area -->
+		<main class="min-h-0 [grid-area:map]">
 			{@render children()}
 		</main>
 
-		<!-- Signature Card: full width on small, half width on medium, 1/4 width sidebar on XL -->
-		<div class="md:col-span-1 xl:row-span-1">
+		<!-- Signatures Card -->
+		<div class="min-h-0 [grid-area:sigs]">
 			<SignatureCard />
 		</div>
 
-		<!-- Route Card: row 2, XL screens only -->
-		<div class="hidden xl:col-span-1 xl:row-span-1 xl:block">
+		<!-- Notes Card -->
+		<div class="min-h-0 [grid-area:notes]">
+			<NotesCard />
+		</div>
+
+		<!-- System Details Card -->
+		<div class="min-h-0 [grid-area:sys]">
+			<SystemDetailsCard />
+		</div>
+
+		<!-- Routes Card -->
+		<div class="min-h-0 [grid-area:routes]">
 			<RouteCard />
 		</div>
 	</div>
 </div>
+
+<style>
+	.responsive-layout {
+		display: grid;
+		width: 100%;
+	}
+
+	/* Card height for portrait modes - fixed height with internal scroll */
+	:global(.card-fixed-height) {
+		height: 280px;
+	}
+
+	/* 1. Mobile (<640px): stacked vertically */
+	/* Map fills most of viewport, cards stack below with scroll */
+	@media (max-width: 639px) {
+		.responsive-layout {
+			grid-template-areas:
+				'map'
+				'sigs'
+				'notes'
+				'sys'
+				'routes';
+			grid-template-columns: 1fr;
+			grid-template-rows: 60vh repeat(4, auto);
+		}
+	}
+
+	/* 2. Small/Tablet Portrait (640-1279px, portrait aspect) */
+	/* Map on top, cards in 2 rows: left 2/3, right 1/3, fixed card height */
+	@media (min-width: 640px) and (max-width: 1279px) and (max-aspect-ratio: 4/3) {
+		.responsive-layout {
+			grid-template-areas:
+				'map map map'
+				'sigs sigs sys'
+				'notes notes routes';
+			grid-template-columns: 1fr 1fr 1fr;
+			grid-template-rows: 55vh 320px 320px;
+		}
+	}
+
+	/* 3. Small/Tablet Landscape (640-1279px, landscape aspect) */
+	/* Map + Sigs/Notes on top, Sys + Routes side-by-side bottom-left under map */
+	@media (min-width: 640px) and (max-width: 1279px) and (min-aspect-ratio: 4/3) {
+		.responsive-layout {
+			grid-template-areas:
+				'map map map sigs'
+				'map map map notes'
+				'sys routes . .';
+			grid-template-columns: 1fr 1fr 1fr 1fr;
+			grid-template-rows:
+				calc((100vh - 120px) / 2)
+				calc((100vh - 120px) / 2)
+				auto;
+		}
+	}
+
+	/* 4. Large Desktop Portrait (>=1280px, portrait aspect) */
+	/* Map on top, cards in 2x2 grid with fixed height */
+	@media (min-width: 1280px) and (max-aspect-ratio: 4/3) {
+		.responsive-layout {
+			grid-template-areas:
+				'map map'
+				'sigs notes'
+				'sys routes';
+			grid-template-columns: 1fr 1fr;
+			grid-template-rows: 55vh 320px 320px;
+		}
+	}
+
+	/* 5. Large Desktop Landscape (>=1280px, landscape aspect) */
+	/* Map + Sigs/Notes on right, Sys + Routes side-by-side bottom-left under map */
+	@media (min-width: 1280px) and (min-aspect-ratio: 4/3) {
+		.responsive-layout {
+			grid-template-areas:
+				'map map map sigs'
+				'map map map notes'
+				'sys routes . .';
+			grid-template-columns: 1fr 1fr 1fr 1fr;
+			grid-template-rows:
+				calc((100vh - 120px) / 2)
+				calc((100vh - 120px) / 2)
+				auto;
+		}
+	}
+</style>

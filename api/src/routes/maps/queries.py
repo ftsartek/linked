@@ -580,3 +580,58 @@ SET locked = $2, date_updated = NOW()
 WHERE id = $1 AND map_id = $3 AND date_deleted IS NULL
 RETURNING id;
 """
+
+# Note queries
+
+GET_SYSTEM_NOTES = """
+SELECT
+    n.id, n.solar_system_id, n.map_id, n.title, n.content,
+    n.created_by, cc.name AS created_by_name,
+    n.updated_by, uc.name AS updated_by_name,
+    n.date_expires, n.date_created, n.date_updated
+FROM note n
+JOIN character cc ON n.created_by = cc.id
+LEFT JOIN character uc ON n.updated_by = uc.id
+WHERE n.solar_system_id = $1 AND n.map_id = $2 AND n.date_deleted IS NULL
+ORDER BY n.date_created DESC;
+"""
+
+GET_NOTE_ENRICHED = """
+SELECT
+    n.id, n.solar_system_id, n.map_id, n.title, n.content,
+    n.created_by, cc.name AS created_by_name,
+    n.updated_by, uc.name AS updated_by_name,
+    n.date_expires, n.date_created, n.date_updated
+FROM note n
+JOIN character cc ON n.created_by = cc.id
+LEFT JOIN character uc ON n.updated_by = uc.id
+WHERE n.id = $1 AND n.date_deleted IS NULL;
+"""
+
+INSERT_NOTE = """
+INSERT INTO note (solar_system_id, map_id, title, content, created_by, date_expires)
+VALUES ($1, $2, $3, $4, $5, $6)
+RETURNING id;
+"""
+
+UPDATE_NOTE = """
+UPDATE note
+SET title = $2,
+    content = COALESCE($3, content),
+    date_expires = $4,
+    updated_by = $5,
+    date_updated = NOW()
+WHERE id = $1 AND map_id = $6 AND date_deleted IS NULL
+RETURNING id;
+"""
+
+DELETE_NOTE = """
+UPDATE note
+SET date_deleted = NOW(), date_updated = NOW()
+WHERE id = $1 AND map_id = $2 AND date_deleted IS NULL
+RETURNING id;
+"""
+
+GET_NOTE_MAP_ID = """
+SELECT map_id FROM note WHERE id = $1;
+"""

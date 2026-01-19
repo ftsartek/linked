@@ -22,6 +22,7 @@ from routes.maps.dependencies import (
     ERR_MAP_OWNER_ONLY,
     ERR_NODE_LOCKED,
     ERR_NODE_NOT_FOUND,
+    ERR_NOTE_NOT_FOUND,
     ERR_SIGNATURE_NOT_FOUND,
     AddAllianceAccessRequest,
     AddCharacterAccessRequest,
@@ -35,11 +36,14 @@ from routes.maps.dependencies import (
     CreateMapRequest,
     CreateNodeRequest,
     CreateNodeResponse,
+    CreateNoteRequest,
+    CreateNoteResponse,
     CreateSignatureRequest,
     CreateSignatureResponse,
     DeleteLinkResponse,
     DeleteMapResponse,
     DeleteNodeResponse,
+    DeleteNoteResponse,
     DeleteSignatureResponse,
     EnrichedLinkInfo,
     EnrichedNodeInfo,
@@ -54,6 +58,7 @@ from routes.maps.dependencies import (
     PublicMapListResponse,
     SetLinkTypeRequest,
     SubscriptionResponse,
+    SystemNotesResponse,
     UpdateLinkRequest,
     UpdateLinkResponse,
     UpdateMapRequest,
@@ -61,6 +66,9 @@ from routes.maps.dependencies import (
     UpdateNodePositionRequest,
     UpdateNodeResponse,
     UpdateNodeSystemRequest,
+    UpdateNoteDTO,
+    UpdateNoteRequest,
+    UpdateNoteResponse,
     UpdateSignatureDTO,
     UpdateSignatureRequest,
     UpdateSignatureResponse,
@@ -1062,4 +1070,136 @@ class MapController(Controller):
         )
         await event_publisher.signature_updated(map_id, enriched_sig, user_id=request.user.id)
 
+        return result
+
+    # Note management
+
+    @get("/{map_id:uuid}/systems/{system_id:int}/notes")
+    async def get_system_notes(
+        self,
+        request: Request,
+        map_service: MapService,
+        map_id: UUID,
+        system_id: int,
+    ) -> SystemNotesResponse:
+        """Get all notes for a specific solar system on a map."""
+        ctx = await map_service.get_character_context(request.user.id)
+
+        has_access = await map_service.can_access_map(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+        if not has_access:
+            raise NotAuthorizedException(ERR_MAP_NO_ACCESS)
+
+        notes = await map_service.get_system_notes(map_id, system_id)
+        return SystemNotesResponse(solar_system_id=system_id, notes=notes)
+
+    @post("/{map_id:uuid}/notes")
+    async def create_note(
+        self,
+        request: Request,
+        map_service: MapService,
+        event_publisher: EventPublisher,
+        map_id: UUID,
+        data: CreateNoteRequest,
+    ) -> CreateNoteResponse:
+        """Create a new note on a solar system. Full data delivered via SSE."""
+        ctx = await map_service.get_character_context(request.user.id)
+
+        has_edit_access = await map_service.has_edit_access(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+        if not has_edit_access:
+            raise NotAuthorizedException(ERR_MAP_NO_EDIT_ACCESS)
+
+        # Get primary character ID for created_by
+        primary_character_id = ctx.primary_character_id
+        if primary_character_id is None:
+            raise ClientException("No primary character set")
+
+        result = await map_service.create_note(
+            solar_system_id=data.solar_system_id,
+            map_id=map_id,
+            content=data.content,
+            created_by=primary_character_id,
+            title=data.title,
+            date_expires=data.date_expires,
+        )
+        await event_publisher.note_created(map_id, result, user_id=request.user.id)
+        return CreateNoteResponse(note_id=result.id)
+
+    @patch("/{map_id:uuid}/notes/{note_id:uuid}", dto=UpdateNoteDTO)
+    async def update_note(
+        self,
+        request: Request,
+        map_service: MapService,
+        event_publisher: EventPublisher,
+        map_id: UUID,
+        note_id: UUID,
+        data: DTOData[UpdateNoteRequest],
+    ) -> UpdateNoteResponse:
+        """Update a note. Full data delivered via SSE."""
+        ctx = await map_service.get_character_context(request.user.id)
+
+        has_edit_access = await map_service.has_edit_access(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+        if not has_edit_access:
+            raise NotAuthorizedException(ERR_MAP_NO_EDIT_ACCESS)
+
+        # Get primary character ID for updated_by
+        primary_character_id = ctx.primary_character_id
+        if primary_character_id is None:
+            raise ClientException("No primary character set")
+
+        # Get only the fields that were provided in the request
+        updates = data.as_builtins()
+
+        result = await map_service.update_note(
+            map_id=map_id,
+            note_id=note_id,
+            updated_by=primary_character_id,
+            updates=updates,
+        )
+        if result is None:
+            raise NotFoundException(ERR_NOTE_NOT_FOUND)
+
+        await event_publisher.note_updated(map_id, result, user_id=request.user.id)
+        return UpdateNoteResponse(note_id=result.id)
+
+    @delete("/{map_id:uuid}/notes/{note_id:uuid}", status_code=HTTP_202_ACCEPTED)
+    async def delete_note(
+        self,
+        request: Request,
+        map_service: MapService,
+        event_publisher: EventPublisher,
+        map_id: UUID,
+        note_id: UUID,
+    ) -> DeleteNoteResponse:
+        """Soft-delete a note from a node."""
+        ctx = await map_service.get_character_context(request.user.id)
+
+        has_edit_access = await map_service.has_edit_access(
+            map_id=map_id,
+            user_id=ctx.user_id,
+            corporation_id=ctx.corporation_id,
+            alliance_id=ctx.alliance_id,
+        )
+        if not has_edit_access:
+            raise NotAuthorizedException(ERR_MAP_NO_EDIT_ACCESS)
+
+        result = await map_service.delete_note(map_id, note_id)
+        if result is None:
+            raise NotFoundException(ERR_NOTE_NOT_FOUND)
+
+        await event_publisher.note_deleted(map_id, result, user_id=request.user.id)
         return result

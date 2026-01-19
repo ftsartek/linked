@@ -59,11 +59,23 @@ SELECT COUNT(*) FROM map
 WHERE date_deleted IS NOT NULL AND date_deleted < $1;
 """
 
+HARD_DELETE_OLD_NOTES = """
+DELETE FROM note
+WHERE date_deleted IS NOT NULL AND date_deleted < $1
+RETURNING id;
+"""
+
+COUNT_OLD_NOTES = """
+SELECT COUNT(*) FROM note
+WHERE date_deleted IS NOT NULL AND date_deleted < $1;
+"""
+
 
 @dataclass
 class CleanupResult:
     """Result of a cleanup operation."""
 
+    notes_deleted: int = 0
     signatures_deleted: int = 0
     links_deleted: int = 0
     nodes_deleted: int = 0
@@ -72,7 +84,38 @@ class CleanupResult:
     @property
     def total(self) -> int:
         """Total number of records deleted."""
-        return self.signatures_deleted + self.links_deleted + self.nodes_deleted + self.maps_deleted
+        return (
+            self.notes_deleted + self.signatures_deleted + self.links_deleted + self.nodes_deleted + self.maps_deleted
+        )
+
+
+async def cleanup_notes(
+    session: AsyncpgDriver,
+    retention_hours: int = DEFAULT_RETENTION_HOURS,
+    dry_run: bool = False,
+    current_time: datetime | None = None,
+) -> int:
+    """Hard-delete soft-deleted notes older than retention period.
+
+    Args:
+        session: Database session
+        retention_hours: Hours to retain soft-deleted records
+        dry_run: If True, count but don't delete
+        current_time: Current time for calculations (defaults to now UTC)
+
+    Returns:
+        Number of notes deleted (or would be deleted in dry-run)
+    """
+    if current_time is None:
+        current_time = datetime.now(UTC)
+    cutoff = current_time - timedelta(hours=retention_hours)
+
+    if dry_run:
+        count = await session.select_value(COUNT_OLD_NOTES, [cutoff])
+        return int(count) if count else 0
+
+    result = await session.select(HARD_DELETE_OLD_NOTES, [cutoff])
+    return len(result)
 
 
 async def cleanup_signatures(
@@ -199,7 +242,7 @@ async def cleanup_all(
 ) -> CleanupResult:
     """Hard-delete all soft-deleted records in FK-safe order.
 
-    Deletes in order: signatures -> links -> nodes -> maps
+    Deletes in order: notes -> signatures -> links -> nodes -> maps
 
     Args:
         session: Database session
@@ -214,6 +257,7 @@ async def cleanup_all(
         current_time = datetime.now(UTC)
 
     return CleanupResult(
+        notes_deleted=await cleanup_notes(session, retention_hours, dry_run, current_time),
         signatures_deleted=await cleanup_signatures(session, retention_hours, dry_run, current_time),
         links_deleted=await cleanup_links(session, retention_hours, dry_run, current_time),
         nodes_deleted=await cleanup_nodes(session, retention_hours, dry_run, current_time),

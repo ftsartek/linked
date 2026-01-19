@@ -45,6 +45,8 @@ from database.models.map_subscription import (
 )
 from database.models.node import INSERT_STMT as NODE_INSERT
 from database.models.node import Node
+from database.models.note import INSERT_STMT as NOTE_INSERT
+from database.models.note import Note
 from database.models.refresh_token import (
     DELETE_BY_CHARACTER_STMT as REFRESH_TOKEN_DELETE_BY_CHARACTER,
 )
@@ -116,6 +118,8 @@ __all__ = [
     "MAP_SUBSCRIPTION_DELETE",
     "Node",
     "NODE_INSERT",
+    "Note",
+    "NOTE_INSERT",
     "Link",
     "LINK_INSERT",
     "Signature",
