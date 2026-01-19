@@ -1,6 +1,8 @@
 from routes.universe.controller import UniverseController
 from routes.universe.dependencies import (
     EntitySearchResult,
+    NeighbourSystem,
+    SystemDetails,
     SystemSearchResponse,
     SystemSearchResult,
     UniverseSearchResponse,
@@ -14,6 +16,8 @@ from routes.universe.service import (
 
 __all__ = [
     "EntitySearchResult",
+    "NeighbourSystem",
+    "SystemDetails",
     "UniverseController",
     "UniverseSearchResponse",
     "UniverseService",

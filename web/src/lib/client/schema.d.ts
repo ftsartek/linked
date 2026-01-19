@@ -689,6 +689,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/universe/systems/{system_id}/details': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GetSystemDetails */
+		get: operations['UniverseSystemsSystemIdDetailsGetSystemDetails'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/universe/systems/unidentified': {
 		parameters: {
 			query?: never;
@@ -1108,6 +1125,23 @@ export interface components {
 		EntitySearchResult: {
 			id: number;
 			name: string;
+		};
+		/** GetSystemDetailsSystemDetailsResponseBody */
+		GetSystemDetailsSystemDetailsResponseBody: {
+			id: number;
+			name: string;
+			radius?: number | null;
+			planet_count: number;
+			moon_count: number;
+			station_count: number;
+			neighbours: components['schemas']['GetSystemDetailsSystemDetails_0NeighbourSystemResponseBody'][];
+		};
+		/** GetSystemDetailsSystemDetails_0NeighbourSystemResponseBody */
+		GetSystemDetailsSystemDetails_0NeighbourSystemResponseBody: {
+			id: number;
+			name: string;
+			security_status?: number | null;
+			system_class?: number | null;
 		};
 		/** HealthResponse */
 		HealthResponse: {
@@ -3099,6 +3133,46 @@ export interface operations {
 				};
 				content: {
 					'application/json': string;
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	UniverseSystemsSystemIdDetailsGetSystemDetails: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				system_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['GetSystemDetailsSystemDetailsResponseBody'];
 				};
 			};
 			/** @description Bad request syntax or unsupported method */

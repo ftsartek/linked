@@ -9,6 +9,8 @@ from litestar.status_codes import HTTP_200_OK
 from api.auth.guards import require_auth
 from routes.universe.dependencies import (
     LocalSearchResponse,
+    SystemDetails,
+    SystemDetailsDTO,
     SystemSearchResponse,
     SystemSearchResponseDTO,
     UniverseSearchResponse,
@@ -77,6 +79,21 @@ class UniverseController(Controller):
         """List all unidentified placeholder systems."""
         systems = await universe_service.list_unidentified_systems()
         return SystemSearchResponse(systems=systems)
+
+    @get("/systems/{system_id:int}/details", return_dto=SystemDetailsDTO)
+    async def get_system_details(
+        self,
+        universe_service: UniverseService,
+        system_id: int,
+    ) -> SystemDetails:
+        """Get detailed information about a system.
+
+        Returns planet count, moon count, radius, and neighbouring systems.
+        """
+        details = await universe_service.get_system_details(system_id)
+        if details is None:
+            raise NotFoundException(f"System {system_id} not found")
+        return details
 
     @get("/search")
     async def search_entities(
