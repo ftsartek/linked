@@ -15,14 +15,22 @@ from config.settings import Settings
 from esi_client import ESIClient
 from esi_client.models import DogmaAttribute
 
-# SDE download URL
-SDE_URL = "https://developers.eveonline.com/static-data/eve-online-static-data-latest-yaml.zip"
+# SDE download URL (JSON Lines format - much faster to parse than YAML)
+SDE_URL = "https://developers.eveonline.com/static-data/eve-online-static-data-latest-jsonl.zip"
 
 # Files to extract from SDE zip (path in zip -> local filename)
+# Using .jsonl (JSON Lines) format for faster parsing
 SDE_FILES = {
-    "sde/fsd/universe/eve/mapRegions.yaml": "mapRegions.yaml",
-    "sde/fsd/universe/eve/mapConstellations.yaml": "mapConstellations.yaml",
-    "sde/fsd/universe/eve/mapSolarSystems.yaml": "mapSolarSystems.yaml",
+    "sde/fsd/universe/eve/mapRegions.jsonl": "mapRegions.jsonl",
+    "sde/fsd/universe/eve/mapConstellations.jsonl": "mapConstellations.jsonl",
+    "sde/fsd/universe/eve/mapSolarSystems.jsonl": "mapSolarSystems.jsonl",
+    "sde/fsd/universe/eve/mapStars.jsonl": "mapStars.jsonl",
+    "sde/fsd/universe/eve/mapPlanets.jsonl": "mapPlanets.jsonl",
+    "sde/fsd/universe/eve/mapMoons.jsonl": "mapMoons.jsonl",
+    "sde/fsd/universe/eve/mapAsteroidBelts.jsonl": "mapAsteroidBelts.jsonl",
+    "sde/fsd/universe/eve/mapStargates.jsonl": "mapStargates.jsonl",
+    "sde/fsd/universe/eve/npcStations.jsonl": "npcStations.jsonl",
+    "sde/fsd/types.jsonl": "types.jsonl",
 }
 
 # Conservative rate limit: max 20 concurrent requests
@@ -91,9 +99,8 @@ async def regions(settings: Settings, user_agent: str | None) -> None:
     region_list.sort(key=lambda r: r.region_id)
     data = [struct_to_dict(r) for r in region_list]
 
-    output_path = settings.data.base_dir / "regions.yaml"
-    with output_path.open("w") as f:
-        yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
+    output_path = settings.data.base_dir / "regions.json"
+    output_path.write_bytes(msgspec.json.encode(data))
 
     click.echo(f"Wrote {len(data)} regions to {output_path}")
 
@@ -111,9 +118,8 @@ async def constellations(settings: Settings, user_agent: str | None) -> None:
     constellation_list.sort(key=lambda c: c.constellation_id)
     data = [struct_to_dict(c) for c in constellation_list]
 
-    output_path = settings.data.base_dir / "constellations.yaml"
-    with output_path.open("w") as f:
-        yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
+    output_path = settings.data.base_dir / "constellations.json"
+    output_path.write_bytes(msgspec.json.encode(data))
 
     click.echo(f"Wrote {len(data)} constellations to {output_path}")
 
@@ -131,9 +137,8 @@ async def systems(settings: Settings, user_agent: str | None) -> None:
     system_list.sort(key=lambda s: s.system_id)
     data = [struct_to_dict(s) for s in system_list]
 
-    output_path = settings.data.base_dir / "systems.yaml"
-    with output_path.open("w") as f:
-        yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
+    output_path = settings.data.base_dir / "systems.json"
+    output_path.write_bytes(msgspec.json.encode(data))
 
     click.echo(f"Wrote {len(data)} systems to {output_path}")
 
@@ -207,12 +212,12 @@ def parse_wormhole_dogma(dogma_attributes: list[DogmaAttribute] | None) -> dict[
 
 
 def load_existing_spawns(settings: Settings) -> dict[str, list[int] | None]:
-    """Load existing wormhole spawn sources from wormhole_spawns.yaml and wormhole_info.yaml.
+    """Load existing wormhole spawn sources from wormhole_spawns.yaml and wormhole_info.json.
 
     Returns a mapping of wormhole code -> source class IDs.
     """
-    spawns_path = settings.data.curated_dir / "wormhole_spawns.yaml"  # Curated data
-    info_path = settings.data.base_dir / "wormhole_info.yaml"  # Generated data
+    spawns_path = settings.data.curated_dir / "wormhole_spawns.yaml"  # Curated data (stays YAML)
+    info_path = settings.data.base_dir / "wormhole_info.json"  # Generated data
 
     if not spawns_path.exists() or not info_path.exists():
         return {}
@@ -220,14 +225,13 @@ def load_existing_spawns(settings: Settings) -> dict[str, list[int] | None]:
     with spawns_path.open() as f:
         spawns_data = yaml.safe_load(f) or {}
 
-    with info_path.open() as f:
-        info_data = yaml.safe_load(f) or {}
+    info_data = msgspec.json.decode(info_path.read_bytes()) or {}
 
     # Build code -> sources mapping by joining spawns (type_id keyed) with info (has code)
     code_to_sources: dict[str, list[int] | None] = {}
     for type_id_key, spawn_info in spawns_data.items():
-        type_id = int(type_id_key) if isinstance(type_id_key, str) else type_id_key
-        info = info_data.get(type_id) or info_data.get(str(type_id))
+        type_id = str(type_id_key)  # JSON keys are strings
+        info = info_data.get(type_id)
         if info and "code" in info:
             code = info["code"]
             code_to_sources[code] = spawn_info.get("sources")
@@ -338,10 +342,9 @@ async def wormholes(settings: Settings, user_agent: str | None) -> None:
     if missing_codes := existing_codes - esi_codes:
         click.echo(f"  Existing codes not found in ESI: {sorted(missing_codes)}")
 
-    # Write wormhole_info.yaml (wormhole_spawns.yaml is curated, not generated)
-    info_path = settings.data.base_dir / "wormhole_info.yaml"
-    with info_path.open("w") as f:
-        yaml.safe_dump(wormhole_info, f, sort_keys=True, allow_unicode=True)
+    # Write wormhole_info.json (wormhole_spawns.yaml is curated, not generated)
+    info_path = settings.data.base_dir / "wormhole_info.json"
+    info_path.write_bytes(msgspec.json.encode(wormhole_info))
     click.echo(f"Wrote {len(wormhole_info)} wormhole entries to {info_path}")
 
 
@@ -377,6 +380,27 @@ async def download_sde(settings: Settings) -> None:
             output_path.write_bytes(content)
 
     click.echo(f"SDE data extracted to {sde_dir}")
+
+    # Generate lightweight type_names.json from types.jsonl
+    types_path = sde_dir / "types.jsonl"
+    if types_path.exists():
+        click.echo("Generating type_names.json from types.jsonl...")
+        type_names: dict[int, str] = {}
+        decoder = msgspec.json.Decoder()
+        with types_path.open("rb") as f:
+            for line in f:
+                if line.strip():
+                    entry = decoder.decode(line)
+                    # SDE JSONL uses _key
+                    type_id = entry.get("_key")
+                    name = entry.get("name", {}).get("en", "")
+                    if type_id is not None:
+                        type_names[int(type_id)] = name
+
+        type_names_path = sde_dir / "type_names.json"
+        type_names_path.write_bytes(msgspec.json.encode(type_names))
+
+        click.echo(f"  Wrote {len(type_names)} type names to {type_names_path}")
 
 
 @collect.command("all")
@@ -416,9 +440,8 @@ async def import_all(settings: Settings, user_agent: str | None) -> None:
         ("systems", system_list),
     ]:
         data = [struct_to_dict(item) for item in items]
-        output_path = settings.data.base_dir / f"{name}.yaml"
-        with output_path.open("w") as f:
-            yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
+        output_path = settings.data.base_dir / f"{name}.json"
+        output_path.write_bytes(msgspec.json.encode(data))
         click.echo(f"Wrote {len(data)} {name} to {output_path}")
 
     # Process wormhole types using shared helpers
@@ -426,8 +449,7 @@ async def import_all(settings: Settings, user_agent: str | None) -> None:
     code_to_types = _group_wormhole_types(wh_type_list_filtered)
     wormhole_info = _merge_wormhole_duplicates(code_to_types)
 
-    # Write wormhole_info.yaml (wormhole_spawns.yaml is curated, not generated)
-    info_path = settings.data.base_dir / "wormhole_info.yaml"
-    with info_path.open("w") as f:
-        yaml.safe_dump(wormhole_info, f, sort_keys=True, allow_unicode=True)
+    # Write wormhole_info.json (wormhole_spawns.yaml is curated, not generated)
+    info_path = settings.data.base_dir / "wormhole_info.json"
+    info_path.write_bytes(msgspec.json.encode(wormhole_info))
     click.echo(f"Wrote {len(wormhole_info)} wormhole entries to {info_path}")
