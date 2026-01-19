@@ -7,6 +7,7 @@
 	import { user } from '$lib/stores/user';
 	import SignatureCard from '$lib/components/system/SignatureCard.svelte';
 	import RouteCard from '$lib/components/system/RouteCard.svelte';
+	import NotesCard from '$lib/components/system/NotesCard.svelte';
 	import type { components } from '$lib/client/schema';
 	import type { Snippet } from 'svelte';
 
@@ -140,9 +141,7 @@
 	}
 </script>
 
-<div
-	class="flex min-h-[calc(100vh-64px)] w-full flex-col p-2 xl:aspect-[4/3] xl:max-h-[calc(100vh-64px)] xl:min-h-0"
->
+<div class="flex min-h-[calc(100vh-64px)] w-full flex-col p-2">
 	<!-- Tab Bar (full width) -->
 	<div class="flex flex-wrap items-center gap-1 p-2">
 		{#if loading}
@@ -281,23 +280,26 @@
 		</Dialog.Provider>
 	</div>
 
-	<!-- Main content area -->
-	<div
-		class="grid min-h-0 flex-1 grid-cols-1 gap-4 p-2 pt-0 md:grid-cols-2 xl:grid-cols-4 xl:grid-rows-2"
-	>
-		<!-- Map Area: full width on small/medium, 3/4 width on XL -->
-		<main class="min-h-64 md:col-span-2 xl:col-span-3 xl:row-span-2">
+	<!-- Main content area: 8 cols x 4 rows, 90vh height -->
+	<div class="grid h-[90vh] grid-cols-8 grid-rows-4 gap-2 p-2 pt-0">
+		<!-- Map Area: 6 wide, 4 high (full height) -->
+		<main class="col-span-6 row-span-4 min-h-0">
 			{@render children()}
 		</main>
 
-		<!-- Signature Card: full width on small, half width on medium, 1/4 width sidebar on XL -->
-		<div class="md:col-span-1 xl:row-span-1">
+		<!-- Signature Card: 2 wide, 2 high (top right) -->
+		<div class="col-span-2 row-span-2">
 			<SignatureCard />
 		</div>
 
-		<!-- Route Card: row 2, XL screens only -->
-		<div class="hidden xl:col-span-1 xl:row-span-1 xl:block">
-			<RouteCard />
+		<!-- Notes Card: 2 wide, 2 high (bottom right) -->
+		<div class="col-span-2 row-span-2">
+			<NotesCard />
 		</div>
+	</div>
+
+	<!-- Routes Card: below main grid, scroll down to see (2 rows high = 45vh) -->
+	<div class="h-[45vh] w-1/4 p-2 pt-0">
+		<RouteCard />
 	</div>
 </div>

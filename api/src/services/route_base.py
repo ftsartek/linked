@@ -9,10 +9,10 @@ from sqlspec import AsyncDriverAdapterBase
 
 # SQL Queries for access control
 GET_USER_CHARACTER = """
-SELECT corporation_id, alliance_id
-FROM character
-WHERE user_id = $1
-LIMIT 1;
+SELECT c.corporation_id, c.alliance_id, u.primary_character_id
+FROM "user" u
+LEFT JOIN character c ON c.id = u.primary_character_id
+WHERE u.id = $1;
 """
 
 GET_USER_CHARACTER_IDS = """
@@ -60,6 +60,7 @@ class _UserCharacter(msgspec.Struct):
 
     corporation_id: int | None
     alliance_id: int | None
+    primary_character_id: int | None
 
 
 class _UserCharacterId(msgspec.Struct):
@@ -74,6 +75,7 @@ class CharacterContext(msgspec.Struct):
     user_id: UUID
     corporation_id: int | None
     alliance_id: int | None
+    primary_character_id: int | None = None
     character_ids: list[int] = []
 
 
@@ -98,12 +100,14 @@ class RouteBaseService:
                 user_id=user_id,
                 corporation_id=None,
                 alliance_id=None,
+                primary_character_id=None,
                 character_ids=character_ids,
             )
         return CharacterContext(
             user_id=user_id,
             corporation_id=row.corporation_id,
             alliance_id=row.alliance_id,
+            primary_character_id=row.primary_character_id,
             character_ids=character_ids,
         )
 

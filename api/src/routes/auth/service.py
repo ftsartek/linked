@@ -112,6 +112,14 @@ class AuthService:
             alliance_id,
         )
 
+    async def set_primary_character(self, user_id: UUID, character_id: int) -> None:
+        """Set the primary character for a user."""
+        await self.db_session.execute(
+            'UPDATE "user" SET primary_character_id = $2, date_updated = NOW() WHERE id = $1',
+            user_id,
+            character_id,
+        )
+
     async def store_refresh_token(
         self,
         character_id: int,
@@ -336,6 +344,8 @@ class AuthService:
                     corporation_id,
                     alliance_id,
                 )
+                # Set first character as primary
+                await self.set_primary_character(user_id, char_info.character_id)
 
         # Store encrypted refresh token
         await self.store_refresh_token(

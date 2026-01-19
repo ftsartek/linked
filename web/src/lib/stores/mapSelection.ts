@@ -8,13 +8,15 @@ export interface MapSelectionState {
 	mapId: string | null;
 	isReadOnly: boolean;
 	signatureRefreshTrigger: number;
+	noteRefreshTrigger: number;
 }
 
 const initialState: MapSelectionState = {
 	selectedNode: null,
 	mapId: null,
 	isReadOnly: true,
-	signatureRefreshTrigger: 0
+	signatureRefreshTrigger: 0,
+	noteRefreshTrigger: 0
 };
 
 export const mapSelection = writable<MapSelectionState>(initialState);
@@ -35,5 +37,12 @@ export function triggerSignatureRefresh() {
 	mapSelection.update((state) => ({
 		...state,
 		signatureRefreshTrigger: state.signatureRefreshTrigger + 1
+	}));
+}
+
+export function triggerNoteRefresh() {
+	mapSelection.update((state) => ({
+		...state,
+		noteRefreshTrigger: state.noteRefreshTrigger + 1
 	}));
 }

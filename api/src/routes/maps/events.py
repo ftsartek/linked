@@ -26,6 +26,10 @@ class EventType(StrEnum):
     SIGNATURE_UPDATED = "signature_updated"
     SIGNATURE_DELETED = "signature_deleted"
     SIGNATURES_BULK_UPDATED = "signatures_bulk_updated"
+    # Note events
+    NOTE_CREATED = "note_created"
+    NOTE_UPDATED = "note_updated"
+    NOTE_DELETED = "note_deleted"
     # Access control events
     ACCESS_CHARACTER_GRANTED = "access_character_granted"
     ACCESS_CHARACTER_REVOKED = "access_character_revoked"
@@ -430,6 +434,62 @@ class MapEvent(msgspec.Struct):
                 "created_ids": [str(s) for s in created_ids],
                 "updated_ids": [str(s) for s in updated_ids],
                 "deleted_ids": [str(s) for s in deleted_ids],
+            },
+            user_id=user_id,
+        )
+
+    @classmethod
+    def note_created(
+        cls,
+        event_id: str,
+        map_id: UUID,
+        note_data: dict[str, Any],
+        user_id: UUID | None = None,
+    ) -> MapEvent:
+        """Create a note_created event with full note details."""
+        return cls(
+            event_id=event_id,
+            event_type=EventType.NOTE_CREATED,
+            map_id=map_id,
+            timestamp=datetime.now(UTC),
+            data=note_data,
+            user_id=user_id,
+        )
+
+    @classmethod
+    def note_updated(
+        cls,
+        event_id: str,
+        map_id: UUID,
+        note_data: dict[str, Any],
+        user_id: UUID | None = None,
+    ) -> MapEvent:
+        """Create a note_updated event with full updated note details."""
+        return cls(
+            event_id=event_id,
+            event_type=EventType.NOTE_UPDATED,
+            map_id=map_id,
+            timestamp=datetime.now(UTC),
+            data=note_data,
+            user_id=user_id,
+        )
+
+    @classmethod
+    def note_deleted(
+        cls,
+        event_id: str,
+        map_id: UUID,
+        note_id: UUID,
+        user_id: UUID | None = None,
+    ) -> MapEvent:
+        """Create a note_deleted event."""
+        return cls(
+            event_id=event_id,
+            event_type=EventType.NOTE_DELETED,
+            map_id=map_id,
+            timestamp=datetime.now(UTC),
+            data={
+                "note_id": str(note_id),
             },
             user_id=user_id,
         )

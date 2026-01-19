@@ -24,6 +24,7 @@ ERR_NODE_LOCKED = "Node is locked"
 ERR_LINK_NOT_FOUND = "Link not found"
 ERR_LINK_NODE_MISMATCH = "Link not found or node not connected to link"
 ERR_SIGNATURE_NOT_FOUND = "Signature not found"
+ERR_NOTE_NOT_FOUND = "Note not found"
 
 
 class StaticInfo(msgspec.Struct):
@@ -195,6 +196,23 @@ class EnrichedSignatureInfo(msgspec.Struct):
     wormhole_code: str | None  # Enriched from link's wormhole
 
 
+class EnrichedNoteInfo(msgspec.Struct):
+    """Enriched note information for API responses."""
+
+    id: UUID
+    solar_system_id: int
+    map_id: UUID
+    title: str | None
+    content: str
+    created_by: int
+    created_by_name: str
+    updated_by: int | None
+    updated_by_name: str | None
+    date_expires: datetime | None
+    date_created: datetime
+    date_updated: datetime
+
+
 class NodeConnectionInfo(msgspec.Struct):
     """Connection (link) information for a node, with system names."""
 
@@ -227,6 +245,13 @@ class NodeSignaturesResponse(msgspec.Struct):
 
     node_id: UUID
     signatures: list[EnrichedSignatureInfo]
+
+
+class SystemNotesResponse(msgspec.Struct):
+    """Notes for a specific solar system on a map."""
+
+    solar_system_id: int
+    notes: list[EnrichedNoteInfo]
 
 
 class MapListResponse(msgspec.Struct):
@@ -551,3 +576,51 @@ class CreateConnectionFromSignatureResponse(msgspec.Struct):
     node_id: UUID  # The newly created node
     link_id: UUID  # The newly created link
     signature_id: UUID  # The updated signature
+
+
+# Note DTOs
+
+
+class CreateNoteResponse(msgspec.Struct):
+    """Minimal response for note creation - full data via SSE."""
+
+    note_id: UUID
+
+
+class UpdateNoteResponse(msgspec.Struct):
+    """Minimal response for note update - full data via SSE."""
+
+    note_id: UUID
+
+
+class DeleteNoteResponse(msgspec.Struct):
+    """Response for note deletion."""
+
+    note_id: UUID
+
+
+@dataclass
+class CreateNoteRequest:
+    """Request body for creating a note."""
+
+    solar_system_id: int
+    content: str
+    title: str | None = None
+    date_expires: datetime | None = None
+
+
+class UpdateNoteRequest(msgspec.Struct):
+    """Request body for updating a note.
+
+    Used with partial=True DTO config - only provided fields will be in the payload.
+    """
+
+    title: str | None = None
+    content: str | None = None
+    date_expires: datetime | None = None
+
+
+class UpdateNoteDTO(MsgspecDTO[UpdateNoteRequest]):
+    """Partial DTO for note updates - only provided fields are included."""
+
+    config = DTOConfig(partial=True)

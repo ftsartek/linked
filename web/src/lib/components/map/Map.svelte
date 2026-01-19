@@ -25,6 +25,7 @@
 		selectNode,
 		clearSelection,
 		triggerSignatureRefresh,
+		triggerNoteRefresh,
 		type EnrichedNodeInfo
 	} from '$lib/stores/mapSelection';
 	import {
@@ -548,6 +549,9 @@
 					},
 					onSignatureChange: () => {
 						triggerSignatureRefresh();
+					},
+					onNoteChange: () => {
+						triggerNoteRefresh();
 					}
 				}
 			});

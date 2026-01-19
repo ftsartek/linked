@@ -15,6 +15,7 @@ export interface MapSSECallbacks {
 	onAccessRevoked: () => void;
 	onSyncError: (message: string) => void;
 	onSignatureChange: () => void;
+	onNoteChange: () => void;
 	onConnected: () => void;
 	onError: () => void;
 }
@@ -134,6 +135,19 @@ export function createMapSSE(config: MapSSEConfig): () => void {
 
 	eventSource.addEventListener('signatures_bulk_updated', () => {
 		callbacks.onSignatureChange();
+	});
+
+	// Note events - trigger refresh when notes change
+	eventSource.addEventListener('note_created', () => {
+		callbacks.onNoteChange();
+	});
+
+	eventSource.addEventListener('note_updated', () => {
+		callbacks.onNoteChange();
+	});
+
+	eventSource.addEventListener('note_deleted', () => {
+		callbacks.onNoteChange();
 	});
 
 	// Map events

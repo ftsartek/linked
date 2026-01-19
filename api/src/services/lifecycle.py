@@ -14,7 +14,7 @@ from uuid import UUID
 
 from sqlspec.adapters.asyncpg.driver import AsyncpgDriver
 
-from routes.maps.dependencies import DeleteSignatureResponse, EnrichedLinkInfo
+from routes.maps.dependencies import DeleteNoteResponse, DeleteSignatureResponse, EnrichedLinkInfo
 from utils.enums import LifetimeStatus
 from utils.wormhole_status import (
     DEFAULT_LIFETIME_HOURS,
@@ -92,6 +92,20 @@ RETURNING id, map_id;
 # Default signature expiry in days
 DEFAULT_SIGNATURE_EXPIRY_DAYS = 7
 
+# Note lifecycle queries
+GET_EXPIRED_NOTES = """
+SELECT id, map_id, node_id
+FROM note
+WHERE date_deleted IS NULL AND date_expires IS NOT NULL AND date_expires < $1;
+"""
+
+SOFT_DELETE_NOTE = """
+UPDATE note
+SET date_deleted = $2, date_updated = $2
+WHERE id = $1 AND date_deleted IS NULL
+RETURNING id;
+"""
+
 
 @dataclass
 class SignatureLifecycleResult:
@@ -101,6 +115,15 @@ class SignatureLifecycleResult:
     cascade_deleted_count: int = 0
     expired_ids: list[UUID] = field(default_factory=list)
     cascade_deleted_ids: list[UUID] = field(default_factory=list)
+    maps_affected: set[UUID] = field(default_factory=set)
+
+
+@dataclass
+class NoteLifecycleResult:
+    """Result of a note lifecycle operation."""
+
+    expired_count: int = 0
+    expired_ids: list[UUID] = field(default_factory=list)
     maps_affected: set[UUID] = field(default_factory=set)
 
 
@@ -409,6 +432,56 @@ async def expire_old_signatures(
                     )
 
             result.expired_ids.append(sig_id)
+            result.expired_count += 1
+            result.maps_affected.add(map_id)
+
+    return result
+
+
+async def expire_notes(
+    session: AsyncpgDriver,
+    current_time: datetime | None = None,
+    dry_run: bool = False,
+    event_publisher: EventPublisher | None = None,
+) -> NoteLifecycleResult:
+    """Soft-delete notes that have passed their expiry date.
+
+    Args:
+        session: Database session
+        current_time: Current time for calculations (defaults to now UTC)
+        dry_run: If True, calculate changes but don't apply them
+        event_publisher: Optional event publisher for SSE notifications
+
+    Returns:
+        NoteLifecycleResult with counts and IDs of expired notes
+    """
+    if current_time is None:
+        current_time = datetime.now(UTC)
+
+    result = NoteLifecycleResult()
+
+    # Get all expired notes (where date_expires < current_time)
+    expired_notes = await session.select(GET_EXPIRED_NOTES, [current_time])
+
+    # Group by map_id for event publishing
+    notes_by_map: dict[UUID, list[dict[str, Any]]] = defaultdict(list)
+    for note in expired_notes:
+        notes_by_map[note["map_id"]].append(note)
+
+    for map_id, notes in notes_by_map.items():
+        for note in notes:
+            note_id: UUID = note["id"]
+
+            if not dry_run:
+                await session.execute(SOFT_DELETE_NOTE, [note_id, current_time])
+                if event_publisher:
+                    await event_publisher.note_deleted(
+                        map_id,
+                        DeleteNoteResponse(note_id=note_id),
+                        user_id=None,
+                    )
+
+            result.expired_ids.append(note_id)
             result.expired_count += 1
             result.maps_affected.add(map_id)
 
