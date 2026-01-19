@@ -20,6 +20,7 @@ from litestar.types import ControllerRouterHandler, Middleware
 
 from config import get_settings
 from routes import (
+    AdminController,
     AuthController,
     HealthController,
     MapController,
@@ -32,6 +33,7 @@ from .handlers import exception_handlers
 from .middleware import compression_config
 
 DEFAULT_ROUTE_HANDLERS: list[ControllerRouterHandler] = [
+    AdminController,
     AuthController,
     HealthController,
     MapController,

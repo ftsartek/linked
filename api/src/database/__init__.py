@@ -32,7 +32,8 @@ def get_db_config() -> AsyncpgConfig:
 
 
 sql = SQLSpec()
-db = sql.add_config(get_db_config())
+db_config = get_db_config()
+db = sql.add_config(db_config)
 
 
 def provide_session() -> AbstractAsyncContextManager[AsyncpgDriver]:

@@ -17,8 +17,15 @@ from esi_client import ESIClient
 from services.encryption import EncryptionService
 from services.eve_sso import CharacterInfo as SSOCharacterInfo
 from services.eve_sso import EveSSOService, TokenResponse
+from services.instance_acl import InstanceACLService
 
 logger = logging.getLogger(__name__)
+
+
+class ACLDeniedError(Exception):
+    """Raised when access is denied by instance ACL."""
+
+    pass
 
 
 @dataclass
@@ -48,6 +55,8 @@ class UserInfo:
     id: UUID
     primary_character_id: int | None
     characters: list[CharacterInfo]
+    is_owner: bool = False
+    is_admin: bool = False
 
 
 @dataclass
@@ -68,11 +77,13 @@ class AuthService:
         sso_service: EveSSOService,
         encryption_service: EncryptionService,
         esi_client: ESIClient,
+        acl_service: InstanceACLService,
     ) -> None:
         self.db_session = db_session
         self.sso_service = sso_service
         self.encryption_service = encryption_service
         self.esi_client = esi_client
+        self.acl_service = acl_service
 
     async def get_character_by_id(self, character_id: int) -> CharacterUserInfo | None:
         """Fetch character by EVE character ID.
@@ -238,10 +249,14 @@ class AuthService:
         """Get current user with all linked characters."""
         characters = await self.get_user_characters(session_user.id)
         primary_character_id = await self.get_primary_character_id(session_user.id)
+        is_owner = await self.acl_service.is_owner(session_user.id)
+        is_admin = await self.acl_service.is_admin(session_user.id)
         return UserInfo(
             id=session_user.id,
             primary_character_id=primary_character_id,
             characters=characters,
+            is_owner=is_owner,
+            is_admin=is_admin,
         )
 
     async def process_callback(
@@ -303,6 +318,7 @@ class AuthService:
 
         Raises:
             ValueError: If linking but not logged in, or character belongs to another user
+            ACLDeniedError: If access is denied by instance ACL
         """
         existing_char = await self.get_character_by_id(char_info.character_id)
 
@@ -333,8 +349,26 @@ class AuthService:
             # Normal login mode
             if existing_char is not None:
                 # Character exists, log in as that user
+                # Check ACL for existing users
+                has_access = await self.acl_service.check_user_access(existing_char.user_id)
+                if not has_access:
+                    raise ACLDeniedError("Access denied by instance ACL")
+
                 user_id = existing_char.user_id
             else:
+                # New user signup - check if this is the first user (becomes owner)
+                is_first_user = not await self.acl_service.has_owner()
+
+                if not is_first_user:
+                    # Check ACL for new signups (before user exists)
+                    has_access = await self.acl_service.check_character_access(
+                        char_info.character_id,
+                        corporation_id,
+                        alliance_id,
+                    )
+                    if not has_access:
+                        raise ACLDeniedError("Signups are restricted by ACL")
+
                 # Create new user and character
                 user_id = await self.create_user()
                 await self.create_character(
@@ -346,6 +380,14 @@ class AuthService:
                 )
                 # Set first character as primary
                 await self.set_primary_character(user_id, char_info.character_id)
+
+                # If first user, make them the instance owner
+                if is_first_user:
+                    await self.acl_service.set_owner(user_id)
+                    logger.info(
+                        "First user %s set as instance owner",
+                        char_info.character_name,
+                    )
 
         # Store encrypted refresh token
         await self.store_refresh_token(
@@ -364,4 +406,5 @@ async def provide_auth_service(
     esi_client: ESIClient,
 ) -> AuthService:
     """Provide AuthService with injected dependencies."""
-    return AuthService(db_session, sso_service, encryption_service, esi_client)
+    acl_service = InstanceACLService(db_session)
+    return AuthService(db_session, sso_service, encryption_service, esi_client, acl_service)

@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from sqlspec import AsyncDriverAdapterBase
+
 from database.models.esi_route_cache import INSERT_STMT, SELECT_STMT, ESIRouteCache
 from utils.enums import RouteType
 
 if TYPE_CHECKING:
-    from sqlspec import AsyncDriverAdapterBase
-
     from esi_client.client import ESIClient
 
 # Major trade hub system IDs for pre-fetching

@@ -10,7 +10,7 @@ from litestar.exceptions import ClientException, NotFoundException
 from litestar.response import Redirect
 from litestar.status_codes import HTTP_204_NO_CONTENT
 
-from api.auth.guards import require_auth
+from api.auth.guards import require_acl_access, require_auth
 from routes.users.dependencies import ERR_CANNOT_DELETE_PRIMARY, ERR_CHARACTER_NOT_FOUND
 from routes.users.service import (
     CharacterInfo,
@@ -63,7 +63,7 @@ class UserController(Controller):
     """User account management endpoints."""
 
     path = "/users"
-    guards = [require_auth]
+    guards = [require_auth, require_acl_access]
     dependencies = {
         "user_service": Provide(provide_user_service),
     }

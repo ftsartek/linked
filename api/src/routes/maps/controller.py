@@ -12,7 +12,7 @@ from litestar.response import ServerSentEvent
 from litestar.status_codes import HTTP_202_ACCEPTED, HTTP_204_NO_CONTENT, HTTP_409_CONFLICT
 from valkey.asyncio import Valkey
 
-from api.auth.guards import require_auth
+from api.auth.guards import require_acl_access, require_auth
 from routes.maps.dependencies import (
     ERR_LINK_NODE_MISMATCH,
     ERR_LINK_NOT_FOUND,
@@ -90,7 +90,7 @@ class MapController(Controller):
     """Map management endpoints."""
 
     path = "/maps"
-    guards = [require_auth]
+    guards = [require_auth, require_acl_access]
     dependencies = {
         "map_service": Provide(provide_map_service),
         "event_publisher": Provide(provide_event_publisher),

@@ -12,13 +12,12 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 import msgspec
+from sqlspec import AsyncDriverAdapterBase
 
 from services.route_cache import RouteCacheService
 from utils.enums import RouteType
 
 if TYPE_CHECKING:
-    from sqlspec import AsyncDriverAdapterBase
-
     from esi_client.client import ESIClient
 
 # System class values for k-space

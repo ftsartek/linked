@@ -30,6 +30,8 @@ This'll spin up the API at `http://localhost:8000` and web at `http://localhost:
 
 ### Quality Control
 
+Commit messages should follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification. Include additional detail in the body of the commit message where suitable.
+
 Use [pre-commit](https://pre-commit.com/) to ensure your code is up to spec. Easiest way to install it is `uv tool install pre-commit` (or `pipx` if you prefer, but we assume you've got `uv` anyway). Simply install the hooks with `pre-commit install` and the code will be checked before each commit.
 
 # Production

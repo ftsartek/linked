@@ -9,7 +9,7 @@ from litestar.di import Provide
 from litestar.exceptions import ClientException, NotAuthorizedException, NotFoundException
 from litestar.params import Parameter
 
-from api.auth.guards import require_auth
+from api.auth.guards import require_acl_access, require_auth
 from routes.routing.dependencies import RouteResponse
 from routes.routing.service import RoutingService, provide_routing_service
 from utils.enums import RouteType
@@ -21,7 +21,7 @@ class RoutingController(Controller):
     """Route calculation endpoints."""
 
     path = "/routes"
-    guards = [require_auth]
+    guards = [require_auth, require_acl_access]
     dependencies = {
         "routing_service": Provide(provide_routing_service),
     }
