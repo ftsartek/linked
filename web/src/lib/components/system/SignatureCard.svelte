@@ -403,7 +403,7 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
-	class="flex h-full min-h-48 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl focus:ring-2 focus:ring-primary-800 focus:outline-none"
+	class="flex h-full min-h-80 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl focus:ring-2 focus:ring-primary-800 focus:outline-none"
 	tabindex="0"
 	onpaste={handlePaste}
 >
@@ -438,7 +438,7 @@
 			</div>
 		{:else if signatures.length === 0}
 			<div class="flex h-full items-center justify-center">
-				<p class="text-sm text-surface-400">No signatures found</p>
+				<p class="text-sm text-surface-400">No signatures associated</p>
 			</div>
 		{:else}
 			<div class="space-y-1">

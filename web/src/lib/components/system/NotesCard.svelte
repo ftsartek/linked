@@ -264,7 +264,7 @@
 	}
 </script>
 
-<div class="flex h-full min-h-48 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl">
+<div class="flex h-full min-h-80 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl">
 	<!-- Header -->
 	<div
 		class="flex w-full flex-row items-center justify-between border-b-2 border-primary-950/50 px-3 py-2"

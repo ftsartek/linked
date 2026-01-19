@@ -105,7 +105,7 @@
 	}
 </script>
 
-<div class="flex h-full min-h-48 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl">
+<div class="flex h-full min-h-80 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl">
 	<!-- Header -->
 	<div class="flex w-full flex-col border-b-2 border-primary-950/50">
 		<div class="flex flex-row items-center justify-between px-3 py-2">
