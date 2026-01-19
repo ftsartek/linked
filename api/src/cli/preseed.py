@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import asyncclick as click
+import msgspec
 import yaml
 
 from database import provide_session
@@ -34,6 +35,9 @@ UNIDENTIFIED_SYSTEMS = [
 def load_yaml(filename: str, directory: Path) -> dict | list:
     """Load a YAML file from the specified directory."""
     with open(directory / filename) as f:
+        # Use C-based loader if available (faster)
+        if hasattr(yaml, "CSafeLoader"):
+            return yaml.load(f, Loader=yaml.CSafeLoader)
         return yaml.safe_load(f)
 
 
@@ -53,13 +57,40 @@ def load_yaml_list(filename: str, directory: Path) -> list:
     return result
 
 
+def load_jsonl_dict(filename: str, directory: Path) -> dict:
+    """Load a JSON Lines file into a dict keyed by _key (or _id for backwards compatibility)."""
+    decoder = msgspec.json.Decoder()
+    result: dict = {}
+    with open(directory / filename, "rb") as f:
+        for line in f:
+            if line.strip():
+                entry = decoder.decode(line)
+                # SDE JSONL uses _key, but check _id for backwards compatibility
+                entry_id = entry.pop("_key", None) or entry.pop("_id", None)
+                if entry_id is not None:
+                    result[entry_id] = entry
+    return result
+
+
+def load_json_dict(filename: str, directory: Path) -> dict:
+    """Load a JSON file that contains a dict at root level."""
+    with open(directory / filename, "rb") as f:
+        return msgspec.json.decode(f.read())
+
+
+def load_json_list(filename: str, directory: Path) -> list:
+    """Load a JSON file that contains a list at root level."""
+    with open(directory / filename, "rb") as f:
+        return msgspec.json.decode(f.read())
+
+
 def load_sde_data(settings: Settings) -> tuple[dict, dict, dict]:
     """Load SDE map data files and return (regions, constellations, systems) dicts."""
     click.echo("Loading SDE data...")
     sde_dir = settings.data.sde_dir
-    sde_regions = load_yaml_dict("mapRegions.yaml", sde_dir)
-    sde_constellations = load_yaml_dict("mapConstellations.yaml", sde_dir)
-    sde_systems = load_yaml_dict("mapSolarSystems.yaml", sde_dir)
+    sde_regions = load_jsonl_dict("mapRegions.jsonl", sde_dir)
+    sde_constellations = load_jsonl_dict("mapConstellations.jsonl", sde_dir)
+    sde_systems = load_jsonl_dict("mapSolarSystems.jsonl", sde_dir)
     return sde_regions, sde_constellations, sde_systems
 
 
@@ -416,6 +447,279 @@ async def import_system_statics(session: AsyncpgDriver, statics_to_insert: list[
         )
 
 
+async def import_stars(session: AsyncpgDriver, sde_stars: dict, systems_data: list, type_names: dict[int, str]) -> None:
+    """Import stars from SDE mapStars.yaml."""
+    click.echo(f"Importing {len(sde_stars)} stars...")
+    known_system_ids = {s["system_id"] for s in systems_data}
+    rows = []
+    for star_id, data in sde_stars.items():
+        system_id = data.get("solarSystemID")
+        if system_id not in known_system_ids:
+            continue
+        stats = data.get("statistics", {})
+        type_id = data.get("typeID")
+        rows.append(
+            (
+                int(star_id),
+                system_id,
+                type_id,
+                type_names.get(type_id) if type_id else None,
+                data.get("radius"),
+                stats.get("age"),
+                stats.get("life"),
+                stats.get("luminosity"),
+                stats.get("spectralClass"),
+                stats.get("temperature"),
+            )
+        )
+    if rows:
+        await session.execute_many(
+            """INSERT INTO star
+                (id, system_id, type_id, type_name, radius, age, life, luminosity, spectral_class, temperature)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            ON CONFLICT (id) DO UPDATE SET
+                system_id = EXCLUDED.system_id, type_id = EXCLUDED.type_id, type_name = EXCLUDED.type_name,
+                radius = EXCLUDED.radius, age = EXCLUDED.age, life = EXCLUDED.life, luminosity = EXCLUDED.luminosity,
+                spectral_class = EXCLUDED.spectral_class, temperature = EXCLUDED.temperature""",
+            rows,
+        )
+
+
+async def import_planets(
+    session: AsyncpgDriver, sde_planets: dict, systems_data: list, type_names: dict[int, str]
+) -> None:
+    """Import planets from SDE."""
+    click.echo(f"Importing {len(sde_planets)} planets...")
+    known_system_ids = {s["system_id"] for s in systems_data}
+    rows = []
+    for planet_id, data in sde_planets.items():
+        system_id = data.get("solarSystemID")
+        if system_id not in known_system_ids:
+            continue
+        pos = data.get("position", {})
+        type_id = data.get("typeID")
+        rows.append(
+            (
+                int(planet_id),
+                system_id,
+                type_id,
+                type_names.get(type_id) if type_id else None,
+                data.get("celestialIndex"),
+                data.get("radius"),
+                data.get("orbitID"),
+                pos.get("x"),
+                pos.get("y"),
+                pos.get("z"),
+            )
+        )
+    if rows:
+        await session.execute_many(
+            """INSERT INTO planet
+                (id, system_id, type_id, type_name, celestial_index, radius, orbit_id, pos_x, pos_y, pos_z)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            ON CONFLICT (id) DO UPDATE SET
+                system_id = EXCLUDED.system_id, type_id = EXCLUDED.type_id, type_name = EXCLUDED.type_name,
+                celestial_index = EXCLUDED.celestial_index, radius = EXCLUDED.radius,
+                orbit_id = EXCLUDED.orbit_id, pos_x = EXCLUDED.pos_x, pos_y = EXCLUDED.pos_y, pos_z = EXCLUDED.pos_z""",
+            rows,
+        )
+
+
+async def import_moons(
+    session: AsyncpgDriver, sde_moons: dict, sde_planets: dict, systems_data: list, type_names: dict[int, str]
+) -> None:
+    """Import moons from SDE."""
+    click.echo(f"Importing {len(sde_moons)} moons...")
+    known_system_ids = {s["system_id"] for s in systems_data}
+    # Build orbit_id -> planet_id mapping
+    orbit_to_planet: dict[int, int] = {}
+    for planet_id, data in sde_planets.items():
+        orbit_to_planet[int(planet_id)] = int(planet_id)
+
+    rows = []
+    for moon_id, data in sde_moons.items():
+        system_id = data.get("solarSystemID")
+        if system_id not in known_system_ids:
+            continue
+        pos = data.get("position", {})
+        orbit_id = data.get("orbitID")
+        planet_id = orbit_to_planet.get(orbit_id) if orbit_id else None
+        type_id = data.get("typeID")
+        rows.append(
+            (
+                int(moon_id),
+                system_id,
+                planet_id,
+                type_id,
+                type_names.get(type_id) if type_id else None,
+                data.get("celestialIndex"),
+                data.get("orbitIndex"),
+                data.get("radius"),
+                pos.get("x"),
+                pos.get("y"),
+                pos.get("z"),
+            )
+        )
+    if rows:
+        await session.execute_many(
+            """INSERT INTO moon
+                (id, system_id, planet_id, type_id, type_name, celestial_index, orbit_index, radius,
+                 pos_x, pos_y, pos_z)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            ON CONFLICT (id) DO UPDATE SET
+                system_id = EXCLUDED.system_id, planet_id = EXCLUDED.planet_id,
+                type_id = EXCLUDED.type_id, type_name = EXCLUDED.type_name,
+                celestial_index = EXCLUDED.celestial_index, orbit_index = EXCLUDED.orbit_index,
+                radius = EXCLUDED.radius, pos_x = EXCLUDED.pos_x, pos_y = EXCLUDED.pos_y, pos_z = EXCLUDED.pos_z""",
+            rows,
+        )
+
+
+async def import_asteroid_belts(
+    session: AsyncpgDriver, sde_belts: dict, sde_planets: dict, systems_data: list, type_names: dict[int, str]
+) -> None:
+    """Import asteroid belts from SDE mapAsteroidBelts.yaml."""
+    click.echo(f"Importing {len(sde_belts)} asteroid belts...")
+    known_system_ids = {s["system_id"] for s in systems_data}
+    # Build orbit_id -> planet_id mapping
+    orbit_to_planet: dict[int, int] = {}
+    for planet_id, data in sde_planets.items():
+        orbit_to_planet[int(planet_id)] = int(planet_id)
+
+    rows = []
+    for belt_id, data in sde_belts.items():
+        system_id = data.get("solarSystemID")
+        if system_id not in known_system_ids:
+            continue
+        pos = data.get("position", {})
+        orbit_id = data.get("orbitID")
+        planet_id = orbit_to_planet.get(orbit_id) if orbit_id else None
+        type_id = data.get("typeID")
+        rows.append(
+            (
+                int(belt_id),
+                system_id,
+                planet_id,
+                type_id,
+                type_names.get(type_id) if type_id else None,
+                data.get("celestialIndex"),
+                data.get("orbitIndex"),
+                data.get("radius"),
+                pos.get("x"),
+                pos.get("y"),
+                pos.get("z"),
+            )
+        )
+    if rows:
+        await session.execute_many(
+            """INSERT INTO asteroid_belt
+                (id, system_id, planet_id, type_id, type_name, celestial_index, orbit_index, radius,
+                 pos_x, pos_y, pos_z)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            ON CONFLICT (id) DO UPDATE SET
+                system_id = EXCLUDED.system_id, planet_id = EXCLUDED.planet_id,
+                type_id = EXCLUDED.type_id, type_name = EXCLUDED.type_name,
+                celestial_index = EXCLUDED.celestial_index, orbit_index = EXCLUDED.orbit_index,
+                radius = EXCLUDED.radius, pos_x = EXCLUDED.pos_x, pos_y = EXCLUDED.pos_y, pos_z = EXCLUDED.pos_z""",
+            rows,
+        )
+
+
+async def import_stargates(
+    session: AsyncpgDriver, sde_stargates: dict, systems_data: list, type_names: dict[int, str]
+) -> None:
+    """Import stargates from SDE mapStargates.yaml."""
+    click.echo(f"Importing {len(sde_stargates)} stargates...")
+    known_system_ids = {s["system_id"] for s in systems_data}
+    rows = []
+    for gate_id, data in sde_stargates.items():
+        system_id = data.get("solarSystemID")
+        if system_id not in known_system_ids:
+            continue
+        dest = data.get("destination", {})
+        dest_system_id = dest.get("solarSystemID")
+        # Skip if destination system not in our known systems
+        if dest_system_id and dest_system_id not in known_system_ids:
+            continue
+        pos = data.get("position", {})
+        type_id = data.get("typeID")
+        rows.append(
+            (
+                int(gate_id),
+                system_id,
+                dest.get("stargateID"),
+                dest_system_id,
+                type_id,
+                type_names.get(type_id) if type_id else None,
+                pos.get("x"),
+                pos.get("y"),
+                pos.get("z"),
+            )
+        )
+    if rows:
+        await session.execute_many(
+            """INSERT INTO stargate
+                (id, system_id, destination_stargate_id, destination_system_id, type_id, type_name,
+                 pos_x, pos_y, pos_z)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT (id) DO UPDATE SET
+                system_id = EXCLUDED.system_id, destination_stargate_id = EXCLUDED.destination_stargate_id,
+                destination_system_id = EXCLUDED.destination_system_id,
+                type_id = EXCLUDED.type_id, type_name = EXCLUDED.type_name,
+                pos_x = EXCLUDED.pos_x, pos_y = EXCLUDED.pos_y, pos_z = EXCLUDED.pos_z""",
+            rows,
+        )
+
+
+async def import_npc_stations(
+    session: AsyncpgDriver, sde_stations: dict, systems_data: list, type_names: dict[int, str]
+) -> None:
+    """Import NPC stations from SDE npcStations.yaml."""
+    click.echo(f"Importing {len(sde_stations)} NPC stations...")
+    known_system_ids = {s["system_id"] for s in systems_data}
+    rows = []
+    for station_id, data in sde_stations.items():
+        system_id = data.get("solarSystemID")
+        if system_id not in known_system_ids:
+            continue
+        pos = data.get("position", {})
+        type_id = data.get("typeID")
+        rows.append(
+            (
+                int(station_id),
+                system_id,
+                type_id,
+                type_names.get(type_id) if type_id else None,
+                data.get("ownerID"),
+                data.get("celestialIndex"),
+                data.get("orbitID"),
+                data.get("orbitIndex"),
+                data.get("operationID"),
+                data.get("reprocessingEfficiency"),
+                data.get("reprocessingStationsTake"),
+                pos.get("x"),
+                pos.get("y"),
+                pos.get("z"),
+            )
+        )
+    if rows:
+        await session.execute_many(
+            """INSERT INTO npc_station
+                (id, system_id, type_id, type_name, owner_id, celestial_index, orbit_id, orbit_index,
+                 operation_id, reprocessing_efficiency, reprocessing_stations_take, pos_x, pos_y, pos_z)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            ON CONFLICT (id) DO UPDATE SET
+                system_id = EXCLUDED.system_id, type_id = EXCLUDED.type_id, type_name = EXCLUDED.type_name,
+                owner_id = EXCLUDED.owner_id, celestial_index = EXCLUDED.celestial_index,
+                orbit_id = EXCLUDED.orbit_id, orbit_index = EXCLUDED.orbit_index,
+                operation_id = EXCLUDED.operation_id,
+                reprocessing_efficiency = EXCLUDED.reprocessing_efficiency,
+                reprocessing_stations_take = EXCLUDED.reprocessing_stations_take,
+                pos_x = EXCLUDED.pos_x, pos_y = EXCLUDED.pos_y, pos_z = EXCLUDED.pos_z""",
+            rows,
+        )
+
+
 async def cleanup_orphaned_records(
     session: AsyncpgDriver,
     effects_data: dict,
@@ -444,24 +748,99 @@ async def cleanup_orphaned_records(
     await session.execute("DELETE FROM effect WHERE name != ALL($1::text[])", [effect_names])
 
 
+def load_type_names(settings: Settings) -> dict[int, str]:
+    """Load type names from pre-generated JSON file (fast) or fall back to types.jsonl."""
+    sde_dir = settings.data.sde_dir
+    json_path = sde_dir / "type_names.json"
+
+    if json_path.exists():
+        click.echo("  Loading type_names.json...")
+        with json_path.open("rb") as f:
+            # JSON keys are strings, convert to int
+            return {int(k): v for k, v in msgspec.json.decode(f.read()).items()}
+
+    # Fall back to types.jsonl
+    click.echo("  Loading types.jsonl (run 'collect sde' to generate type_names.json)...")
+    jsonl_path = sde_dir / "types.jsonl"
+    type_names: dict[int, str] = {}
+    decoder = msgspec.json.Decoder()
+    with jsonl_path.open("rb") as f:
+        for line in f:
+            if line.strip():
+                entry = decoder.decode(line)
+                type_id = entry.get("_id")
+                name = entry.get("name", {}).get("en", "")
+                if type_id is not None:
+                    type_names[int(type_id)] = name
+    return type_names
+
+
+def load_sde_celestial_data(
+    settings: Settings,
+) -> tuple[dict, dict, dict, dict, dict, dict, dict[int, str]]:
+    """Load SDE celestial data files.
+
+    Returns:
+        (stars, planets, moons, asteroid_belts, stargates, npc_stations, type_names)
+    """
+    sde_dir = settings.data.sde_dir
+
+    files_to_load = [
+        ("mapStars.jsonl", "stars"),
+        ("mapPlanets.jsonl", "planets"),
+        ("mapMoons.jsonl", "moons"),
+        ("mapAsteroidBelts.jsonl", "asteroid belts"),
+        ("mapStargates.jsonl", "stargates"),
+        ("npcStations.jsonl", "NPC stations"),
+    ]
+
+    loaded: dict[str, dict] = {}
+
+    with click.progressbar(
+        files_to_load,
+        label="Loading SDE celestial data",
+        item_show_func=lambda x: x[1] if x else "",
+    ) as progress:
+        for filename, label in progress:
+            loaded[filename] = load_jsonl_dict(filename, sde_dir)
+
+    sde_stars = loaded["mapStars.jsonl"]
+    sde_planets = loaded["mapPlanets.jsonl"]
+    sde_moons = loaded["mapMoons.jsonl"]
+    sde_belts = loaded["mapAsteroidBelts.jsonl"]
+    sde_stargates = loaded["mapStargates.jsonl"]
+    sde_stations = loaded["npcStations.jsonl"]
+
+    # Load type names separately (uses fast JSON if available)
+    type_names = load_type_names(settings)
+
+    return sde_stars, sde_planets, sde_moons, sde_belts, sde_stargates, sde_stations, type_names
+
+
 @click.command()
 @click.pass_obj
 async def preseed(settings: Settings) -> None:
     """Import static universe data into the database."""
-    click.echo("Loading YAML files...")
-    # Curated data (manually maintained)
+    click.echo("Loading data files...")
+    # Curated data (manually maintained - YAML for human readability)
     effects_data = load_yaml_dict("effects.yaml", settings.data.curated_dir)
     wormhole_spawns_data = load_yaml_dict("wormhole_spawns.yaml", settings.data.curated_dir)
     wormhole_systems_data = load_yaml_dict("wormhole_systems.yaml", settings.data.curated_dir)
-    # Generated data (from collect command)
-    regions_data = load_yaml_list("regions.yaml", settings.data.base_dir)
-    wormhole_info_data = load_yaml_dict("wormhole_info.yaml", settings.data.base_dir)
+
+    # Generated data (from collect command) - JSON for speed
+    regions_data = load_json_list("regions.json", settings.data.base_dir)
+    wormhole_info_data = load_json_dict("wormhole_info.json", settings.data.base_dir)
     wormholes_data = merge_wormhole_data(wormhole_info_data, wormhole_spawns_data)
-    constellations_data = load_yaml_list("constellations.yaml", settings.data.base_dir)
-    systems_data = load_yaml_list("systems.yaml", settings.data.base_dir)
+    constellations_data = load_json_list("constellations.json", settings.data.base_dir)
+    systems_data = load_json_list("systems.json", settings.data.base_dir)
 
     # Load SDE data for wormholeClassID and factionID
     sde_regions, sde_constellations, sde_systems = load_sde_data(settings)
+
+    # Load SDE celestial data
+    sde_stars, sde_planets, sde_moons, sde_belts, sde_stargates, sde_stations, type_names = load_sde_celestial_data(
+        settings
+    )
 
     # Build fallback lookup tables
     region_wh_class, region_faction, constellation_wh_class, constellation_faction = build_fallback_lookups(
@@ -495,6 +874,14 @@ async def preseed(settings: Settings) -> None:
             wormhole_code_to_id,
         )
         await import_system_statics(session, statics_to_insert)
+
+        # Import celestial objects (order matters for FKs)
+        await import_stars(session, sde_stars, systems_data, type_names)
+        await import_planets(session, sde_planets, systems_data, type_names)
+        await import_moons(session, sde_moons, sde_planets, systems_data, type_names)
+        await import_asteroid_belts(session, sde_belts, sde_planets, systems_data, type_names)
+        await import_stargates(session, sde_stargates, systems_data, type_names)
+        await import_npc_stations(session, sde_stations, systems_data, type_names)
 
         # Clean up orphaned records
         await cleanup_orphaned_records(

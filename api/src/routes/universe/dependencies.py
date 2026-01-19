@@ -90,3 +90,30 @@ class LocalSearchResponse(msgspec.Struct):
     """Response containing local entity search results."""
 
     results: list[LocalEntitySearchResult]
+
+
+class NeighbourSystem(msgspec.Struct):
+    """A neighbouring system connected via stargate."""
+
+    id: int
+    name: str
+    security_status: float | None
+    system_class: int | None
+
+
+class SystemDetails(msgspec.Struct):
+    """Detailed information about a solar system."""
+
+    id: int
+    name: str
+    radius: float | None
+    planet_count: int
+    moon_count: int
+    station_count: int
+    neighbours: list[NeighbourSystem]
+
+
+class SystemDetailsDTO(MsgspecDTO[SystemDetails]):
+    """DTO for system details response."""
+
+    config = DTOConfig()

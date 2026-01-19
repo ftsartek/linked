@@ -78,3 +78,28 @@ FROM system
 WHERE id < 0
 ORDER BY system_class;
 """
+
+# Get system details including planet/moon/station counts and neighbours
+GET_SYSTEM_DETAILS = """\
+SELECT
+    s.id,
+    s.name,
+    s.radius,
+    (SELECT COUNT(*) FROM planet WHERE system_id = s.id) AS planet_count,
+    (SELECT COUNT(*) FROM moon WHERE system_id = s.id) AS moon_count,
+    (SELECT COUNT(*) FROM npc_station WHERE system_id = s.id) AS station_count,
+    COALESCE(
+        (SELECT json_agg(json_build_object(
+            'id', dest.id,
+            'name', dest.name,
+            'security_status', dest.security_status,
+            'system_class', dest.system_class
+         ) ORDER BY dest.name)
+         FROM stargate sg
+         JOIN system dest ON sg.destination_system_id = dest.id
+         WHERE sg.system_id = s.id),
+        '[]'::json
+    ) AS neighbours
+FROM system s
+WHERE s.id = $1;
+"""

@@ -11,10 +11,13 @@ from routes.universe.dependencies import (
     ClassMapping,
     EntitySearchResult,
     LocalEntitySearchResult,
+    NeighbourSystem,
+    SystemDetails,
     SystemSearchResult,
     WormholeSearchResult,
 )
 from routes.universe.queries import (
+    GET_SYSTEM_DETAILS,
     LIST_UNIDENTIFIED_SYSTEMS,
     SEARCH_LOCAL_ENTITIES,
     SEARCH_SYSTEMS,
@@ -153,6 +156,34 @@ class UniverseService:
         return await self.db_session.select(
             LIST_UNIDENTIFIED_SYSTEMS,
             schema_type=SystemSearchResult,
+        )
+
+    async def get_system_details(self, system_id: int) -> SystemDetails | None:
+        """Get detailed information about a system including celestial counts and neighbours."""
+        row = await self.db_session.select_one_or_none(GET_SYSTEM_DETAILS, system_id)
+        if row is None:
+            return None
+
+        # Parse neighbours from JSON
+        neighbours_data = row["neighbours"] or []
+        neighbours = [
+            NeighbourSystem(
+                id=n["id"],
+                name=n["name"],
+                security_status=n.get("security_status"),
+                system_class=n.get("system_class"),
+            )
+            for n in neighbours_data
+        ]
+
+        return SystemDetails(
+            id=row["id"],
+            name=row["name"],
+            radius=row["radius"],
+            planet_count=row["planet_count"],
+            moon_count=row["moon_count"],
+            station_count=row["station_count"],
+            neighbours=neighbours,
         )
 
     async def search_local_entities(self, query: str) -> list[LocalEntitySearchResult]:
