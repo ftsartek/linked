@@ -20,6 +20,7 @@ from tests.factories.static_data import (
     J123456_SYSTEM_ID,
     J345678_SYSTEM_ID,
     JITA_SYSTEM_ID,
+    PR_8CA_SYSTEM_ID,
     ROUTE_NODE_HED_GP_ID,
     ROUTE_NODE_J123456_ID,
     ROUTE_NODE_JITA_ID,
@@ -490,3 +491,151 @@ async def test_route_kspace_bridge_waypoints_include_intermediate_systems(
         ]
         # Should have multiple k-space waypoints if kspace_jumps > 1
         assert len(kspace_waypoints) >= 1
+
+
+# =============================================================================
+# Route Calculation Tests - K-Space Re-entry (Chain Re-entry via K-Space Bridge)
+# =============================================================================
+
+
+@pytest.mark.order(545)
+async def test_route_kspace_reentry_secure_prefers_bridge(
+    test_client: AsyncClient,
+    test_state: IntegrationTestState,  # noqa: ARG001
+) -> None:
+    """Test that secure mode prefers k-space bridge over multiple WH jumps.
+
+    Route from J123456 to PR-8CA (near HED-GP):
+    - Pure WH path: J123456 -> J345678 -> HED-GP -> PR-8CA (2 WH + 1 null = 3 jumps)
+    - Bridge path: J123456 -> Jita (1 WH) -> k-space -> PR-8CA
+
+    In secure mode, WH jumps are weighted at 100x and nullsec at 200x.
+    - Pure WH cost: 2*100 + 1*200 = 400
+    - Bridge cost: 1*100 + ~45*1 = ~145 (highsec route)
+
+    The bridge path should be preferred in secure mode.
+    """
+    response = await test_client.get(
+        f"/routes/{ROUTE_TEST_MAP_ID}",
+        params={
+            "origin": ROUTE_NODE_J123456_ID,
+            "destination": PR_8CA_SYSTEM_ID,
+            "route_type": "secure",
+        },
+    )
+    assert response.status_code == 200, f"Route calculation failed: {response.text}"
+
+    data = response.json()
+
+    # Verify route endpoints
+    assert data["waypoints"][0]["system_id"] == J123456_SYSTEM_ID
+    assert data["waypoints"][-1]["system_id"] == PR_8CA_SYSTEM_ID
+    assert data["route_type"] == "secure"
+
+    # In secure mode, the algorithm should prefer the k-space bridge
+    # This means going through Jita (1 WH) then k-space, not through J345678 + HED-GP (2 WH)
+    # The bridge route has 1 WH jump + k-space hops
+    # The pure WH route has 2 WH jumps + 1 k-space hop
+
+    # If bridge is used, we should have exactly 1 WH jump (to Jita)
+    # and many k-space jumps (Jita -> PR-8CA through highsec)
+    # If pure WH is used, we would have 2 WH jumps
+
+    # The secure mode weights make bridge preferable:
+    # Bridge: 1 WH * 100 + ~45 kspace * 1 = ~145
+    # Pure WH: 2 WH * 100 + 1 nullsec * 200 = 400
+    assert data["wormhole_jumps"] == 1, (
+        f"Expected 1 WH jump (via Jita bridge) but got {data['wormhole_jumps']}. "
+        f"Total: {data['total_jumps']}, K-space: {data['kspace_jumps']}"
+    )
+    assert data["kspace_jumps"] > 1, "Expected k-space route through highsec"
+
+
+@pytest.mark.order(546)
+async def test_route_kspace_reentry_shortest_prefers_wormholes(
+    test_client: AsyncClient,
+    test_state: IntegrationTestState,  # noqa: ARG001
+) -> None:
+    """Test that shortest mode prefers wormhole path over k-space bridge.
+
+    Same route from J123456 to PR-8CA:
+    - Pure WH path: J123456 -> J345678 -> HED-GP -> (k-space) -> PR-8CA (2 WH + N k-space)
+    - Bridge path: J123456 -> Jita (1 WH) -> (k-space) -> PR-8CA (1 WH + M k-space)
+
+    In shortest mode, all jumps are weighted equally.
+    The pure WH path through HED-GP should be shorter in total jumps since
+    PR-8CA is in the same region as HED-GP (Catch), while the Jita route
+    would need to traverse most of New Eden.
+    """
+    response = await test_client.get(
+        f"/routes/{ROUTE_TEST_MAP_ID}",
+        params={
+            "origin": ROUTE_NODE_J123456_ID,
+            "destination": PR_8CA_SYSTEM_ID,
+            "route_type": "shortest",
+        },
+    )
+    assert response.status_code == 200, f"Route calculation failed: {response.text}"
+
+    data = response.json()
+
+    # Verify route endpoints
+    assert data["waypoints"][0]["system_id"] == J123456_SYSTEM_ID
+    assert data["waypoints"][-1]["system_id"] == PR_8CA_SYSTEM_ID
+    assert data["route_type"] == "shortest"
+
+    # In shortest mode, the pure WH route through HED-GP should be preferred
+    # because PR-8CA is close to HED-GP (same region), while Jita is far away
+    # We expect 2 WH jumps (J123456 -> J345678 -> HED-GP) plus k-space to PR-8CA
+    assert data["wormhole_jumps"] == 2, (
+        f"Expected 2 WH jumps (via HED-GP) but got {data['wormhole_jumps']}. "
+        f"Total: {data['total_jumps']}, K-space: {data['kspace_jumps']}"
+    )
+
+    # Verify the path goes through the wormhole chain (not via Jita bridge)
+    system_ids = [wp["system_id"] for wp in data["waypoints"]]
+    assert J345678_SYSTEM_ID in system_ids, "Expected route through J345678"
+    assert HED_GP_SYSTEM_ID in system_ids, "Expected route through HED-GP"
+    # Jita should NOT be in the path for shortest mode
+    assert JITA_SYSTEM_ID not in system_ids, "Did not expect Jita in shortest mode path"
+
+
+@pytest.mark.order(547)
+async def test_route_kspace_reentry_bridge_includes_intermediate_waypoints(
+    test_client: AsyncClient,
+    test_state: IntegrationTestState,  # noqa: ARG001
+) -> None:
+    """Test that k-space bridge routes include all intermediate k-space waypoints.
+
+    When the algorithm chooses the bridge path, all intermediate systems
+    between Jita and the destination should be included in waypoints.
+    """
+    response = await test_client.get(
+        f"/routes/{ROUTE_TEST_MAP_ID}",
+        params={
+            "origin": ROUTE_NODE_J123456_ID,
+            "destination": PR_8CA_SYSTEM_ID,
+            "route_type": "secure",
+        },
+    )
+    assert response.status_code == 200, f"Route calculation failed: {response.text}"
+
+    data = response.json()
+
+    # Bridge should be used in secure mode (verified in test_545)
+    # Verify that Jita appears in the waypoints (as the k-space exit)
+    system_ids = [wp["system_id"] for wp in data["waypoints"]]
+    assert JITA_SYSTEM_ID in system_ids, (
+        f"Expected Jita ({JITA_SYSTEM_ID}) in bridge route waypoints. Got systems: {system_ids}"
+    )
+
+    # The waypoints should include intermediate k-space systems
+    # Find the index of Jita and verify there are systems between it and destination
+    jita_idx = system_ids.index(JITA_SYSTEM_ID)
+    dest_idx = len(system_ids) - 1
+
+    # There should be intermediate systems between Jita and PR-8CA
+    intermediate_count = dest_idx - jita_idx - 1
+    assert intermediate_count > 0, (
+        f"Expected intermediate waypoints between Jita and PR-8CA. Jita at index {jita_idx}, destination at {dest_idx}"
+    )
