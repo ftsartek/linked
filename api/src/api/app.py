@@ -11,6 +11,7 @@ from collections.abc import Sequence
 from litestar import Litestar
 from litestar.config.cors import CORSConfig
 from litestar.config.csrf import CSRFConfig
+from litestar.config.response_cache import ResponseCacheConfig
 from litestar.di import Provide
 from litestar.plugins import PluginProtocol
 from litestar.stores.base import Store
@@ -48,6 +49,7 @@ def create_app(
     middleware: Sequence[Middleware] = [],
     cors: CORSConfig | None = None,
     csrf: CSRFConfig | None = None,
+    response_cache: ResponseCacheConfig | None = None,
     extra_route_handlers: list[ControllerRouterHandler] | None = None,
 ) -> Litestar:
     """Create a Litestar application instance.
@@ -59,6 +61,7 @@ def create_app(
         middleware: Middleware stack
         cors: CORS configuration
         csrf: CSRF configuration (None to disable)
+        response_cache: Response caching configuration
         extra_route_handlers: Additional route handlers to include
 
     Returns:
@@ -79,6 +82,7 @@ def create_app(
         middleware=middleware,
         cors_config=cors,
         csrf_config=csrf,
+        response_cache_config=response_cache,
         compression_config=compression_config,
         debug=settings.debug,
     )
