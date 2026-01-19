@@ -35,6 +35,7 @@ class IntegrationTestState:
     link_ids: list[UUID] = field(default_factory=list)
     signature_ids: list[UUID] = field(default_factory=list)
     deleted_signature_ids: list[UUID] = field(default_factory=list)
+    note_ids: list[UUID] = field(default_factory=list)
     k162_wormhole_id: int | None = None
     lifecycle_link_id: UUID | None = None
 
