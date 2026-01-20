@@ -4,12 +4,16 @@
 	import { user } from '$lib/stores/user';
 	import CharactersCard from '$lib/components/account/CharactersCard.svelte';
 	import PublicMapSubscriptionsCard from '$lib/components/account/PublicMapSubscriptionsCard.svelte';
+	import InstanceACLCard from '$lib/components/account/InstanceACLCard.svelte';
+	import InstanceAdminsCard from '$lib/components/account/InstanceAdminsCard.svelte';
 
 	$effect(() => {
 		if ($user === null) {
 			goto(resolve('/'));
 		}
 	});
+
+	let isAdminOrOwner = $derived($user?.is_admin || $user?.is_owner);
 </script>
 
 <div class="mx-auto max-w-6xl p-6">
@@ -21,4 +25,15 @@
 			<PublicMapSubscriptionsCard />
 		</div>
 	</div>
+
+	{#if isAdminOrOwner}
+		<div class="mt-6 grid grid-cols-5 items-stretch gap-6">
+			<div class="col-span-3">
+				<InstanceACLCard />
+			</div>
+			<div class="col-span-2">
+				<InstanceAdminsCard />
+			</div>
+		</div>
+	{/if}
 </div>
