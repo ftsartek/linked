@@ -8,6 +8,7 @@
 		Background,
 		Controls,
 		ControlButton,
+		MiniMap,
 		useSvelteFlow,
 		ConnectionLineType,
 		type Node,
@@ -663,6 +664,17 @@
 						<RefreshCw size={18} strokeWidth={3} />
 					</ControlButton>
 				</Controls>
+				<MiniMap
+					class="minimap-responsive"
+					style="border-radius: 6px; overflow: hidden;"
+					position="bottom-right"
+					pannable
+					zoomable
+					bgColor="rgba(0, 5, 15, 0.6)"
+					maskColor="rgba(22, 30, 35, 0.7)"
+					nodeColor="rgba(95, 102, 115, 0.8)"
+					nodeBorderRadius={4}
+				/>
 			</SvelteFlow>
 
 			{#if contextMenu}
