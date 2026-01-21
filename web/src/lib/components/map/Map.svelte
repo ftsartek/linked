@@ -10,7 +10,6 @@
 		ControlButton,
 		MiniMap,
 		useSvelteFlow,
-		ConnectionLineType,
 		type Node,
 		type Edge,
 		BackgroundVariant
@@ -64,6 +63,7 @@
 	// Components
 	import SystemNode from './Node.svelte';
 	import FloatingEdge from './FloatingEdge.svelte';
+	import ConnectionLine from './ConnectionLine.svelte';
 	import MapSettingsDialog from './MapSettingsDialog.svelte';
 	import MapSharingDialog from './MapSharingDialog.svelte';
 	import MapContextMenu from './MapContextMenu.svelte';
@@ -605,7 +605,7 @@
 				nodesDraggable={!isLocked}
 				nodesConnectable={!isLocked}
 				deleteKey={isLocked ? null : ['Backspace', 'Delete']}
-				connectionLineType={ConnectionLineType.Straight}
+				connectionLineComponent={ConnectionLine}
 				oninit={handleFlowInit}
 				onmoveend={handleMoveEnd}
 				onpanecontextmenu={handlePaneContextMenu}
