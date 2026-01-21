@@ -401,14 +401,14 @@ requires-dist = [
     { name = "litestar", extras = ["standard", "brotli", "valkey"], specifier = ">=2.19.0" },
     { name = "pyjwt", specifier = ">=2.10.0" },
     { name = "pyyaml", specifier = ">=6.0" },
-    { name = "sqlspec", extras = ["asyncpg", "msgspec", "litestar"], specifier = ">=0.34.0" },
+    { name = "sqlspec", extras = ["asyncpg", "msgspec", "litestar"], specifier = ">=0.38.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "basedpyright", specifier = ">=1.37.0" },
     { name = "respx", specifier = ">=0.22.0" },
-    { name = "ruff", specifier = ">=0.14.11" },
+    { name = "ruff", specifier = ">=0.14.13" },
     { name = "ty", specifier = ">=0.0.10" },
 ]
 test = [
