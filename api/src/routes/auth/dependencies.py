@@ -10,6 +10,11 @@ ERR_AUTH_INVALID_STATE = "Invalid state parameter"
 # Uses the "rate_limit" store registered in app.py
 auth_rate_limit_config = RateLimitConfig(
     rate_limit=("minute", 10),
-    exclude=["/auth/logout"],
+    exclude=["/auth/logout", "/auth/me"],
+    store="rate_limit",
+)
+
+auth_ext_rate_limit_config = RateLimitConfig(
+    rate_limit=("minute", 180),
     store="rate_limit",
 )
