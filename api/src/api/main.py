@@ -22,7 +22,7 @@ from .di import (
     provide_valkey_client,
     sqlspec_plugin,
 )
-from .middleware import auth_middleware, cors_config, csrf_config, session_config
+from .middleware import auth_middleware, cors_config, csrf_config, logging_config, session_config
 
 app = create_app(
     plugins=[sqlspec_plugin, get_channels_plugin()],
@@ -41,4 +41,5 @@ app = create_app(
         "sso_service": Provide(provide_sso_service),
         "esi_client": Provide(provide_esi_client),
     },
+    logging_config=logging_config,
 )

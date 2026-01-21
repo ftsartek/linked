@@ -13,6 +13,7 @@ from litestar.config.cors import CORSConfig
 from litestar.config.csrf import CSRFConfig
 from litestar.config.response_cache import ResponseCacheConfig
 from litestar.di import Provide
+from litestar.logging import LoggingConfig
 from litestar.plugins import PluginProtocol
 from litestar.stores.base import Store
 from litestar.stores.registry import StoreRegistry
@@ -53,6 +54,7 @@ def create_app(
     csrf: CSRFConfig | None = None,
     response_cache: ResponseCacheConfig | None = None,
     extra_route_handlers: list[ControllerRouterHandler] | None = None,
+    logging_config: LoggingConfig | None = None,
 ) -> Litestar:
     """Create a Litestar application instance.
 
@@ -86,5 +88,6 @@ def create_app(
         csrf_config=csrf,
         response_cache_config=response_cache,
         compression_config=compression_config,
+        logging_config=logging_config,
         debug=settings.debug,
     )
