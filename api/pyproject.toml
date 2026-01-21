@@ -11,7 +11,7 @@ dependencies = [
     "litestar[standard,brotli,valkey]>=2.19.0",
     "PyJWT>=2.10.0",
     "pyyaml>=6.0",
-    "sqlspec[asyncpg,msgspec,litestar]>=0.34.0",
+    "sqlspec[asyncpg,msgspec,litestar]>=0.38.0",
 ]
 
 [project.scripts]
@@ -107,7 +107,7 @@ exclude = ["test/*"]
 dev = [
     "basedpyright>=1.37.0",
     "respx>=0.22.0",
-    "ruff>=0.14.11",
+    "ruff>=0.14.13",
     "ty>=0.0.10",
 ]
 test = [
