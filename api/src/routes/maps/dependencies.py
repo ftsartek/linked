@@ -624,3 +624,11 @@ class UpdateNoteDTO(MsgspecDTO[UpdateNoteRequest]):
     """Partial DTO for note updates - only provided fields are included."""
 
     config = DTOConfig(partial=True)
+
+
+class SignatureUpsertResult(msgspec.Struct):
+    """Minimal response for signature upsert."""
+
+    id: UUID
+    code: str
+    is_insert: bool

@@ -10,12 +10,6 @@ from litestar.response import ServerSentEvent
 from litestar.response.sse import ServerSentEventMessage
 from sqlspec import AsyncDriverAdapterBase, sql
 
-if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
-
-    from litestar.channels import ChannelsPlugin
-    from valkey.asyncio import Valkey
-
 from database.models.map import INSERT_STMT as MAP_INSERT
 from database.models.map_alliance import DELETE_STMT as MAP_ALLIANCE_DELETE
 from database.models.map_alliance import INSERT_STMT as MAP_ALLIANCE_INSERT
@@ -23,7 +17,9 @@ from database.models.map_character import DELETE_STMT as MAP_CHARACTER_DELETE
 from database.models.map_character import INSERT_STMT as MAP_CHARACTER_INSERT
 from database.models.map_corporation import DELETE_STMT as MAP_CORPORATION_DELETE
 from database.models.map_corporation import INSERT_STMT as MAP_CORPORATION_INSERT
-from routes.maps.dependencies import (
+from services.route_base import CharacterContext, RouteBaseService
+
+from .dependencies import (
     AllianceAccessInfo,
     CharacterAccessInfo,
     CorporationAccessInfo,
@@ -42,10 +38,11 @@ from routes.maps.dependencies import (
     MapInfo,
     NodeConnectionInfo,
     PublicMapInfo,
+    SignatureUpsertResult,
     SubscriptionResponse,
 )
-from routes.maps.events import ACCESS_REVOCATION_TYPES, EventType, MapEvent
-from routes.maps.queries import (
+from .events import ACCESS_REVOCATION_TYPES, EventType, MapEvent
+from .queries import (
     CHECK_MAP_PUBLIC,
     COUNT_PUBLIC_MAPS,
     COUNT_SEARCH_PUBLIC_MAPS,
@@ -104,7 +101,12 @@ from routes.maps.queries import (
     UPDATE_SIGNATURE_LINK,
     UPSERT_SIGNATURE,
 )
-from services.route_base import CharacterContext, RouteBaseService
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
+    from litestar.channels import ChannelsPlugin
+    from valkey.asyncio import Valkey
 
 # Reason codes for sync errors
 SYNC_ERROR_INVALID_EVENT_ID = "invalid_event_id"
@@ -749,9 +751,6 @@ class MapService(RouteBaseService):
         )
         return [row["id"] for row in deleted_rows]
 
-    # TODO: Revert to SQLSpec execute() once upstream fixes RETURNING results
-    # being discarded for INSERT ... ON CONFLICT ... WHERE queries.
-    # See: mcve.py at project root for reproduction case.
     async def _upsert_signature(
         self,
         node_id: UUID,
@@ -760,30 +759,19 @@ class MapService(RouteBaseService):
         group_type: str,
         subgroup: str | None,
         sig_type: str | None,
-    ) -> dict:
-        """Execute a single signature upsert and return the result row.
+    ) -> SignatureUpsertResult:
+        """Execute a single signature upsert and return the result row."""
 
-        Uses raw connection to work around SQLSpec discarding RETURNING results
-        for INSERT ... ON CONFLICT ... WHERE statements.
-        """
-        import asyncpg.exceptions
-        from sqlspec.exceptions import IntegrityError, UniqueViolationError
-
-        try:
-            rows = await self.db_session.connection.fetch(
-                UPSERT_SIGNATURE,
-                node_id,
-                map_id,
-                code,
-                group_type,
-                subgroup,
-                sig_type,
-            )
-            return dict(rows[0])
-        except asyncpg.exceptions.UniqueViolationError as e:
-            raise UniqueViolationError(str(e)) from e
-        except asyncpg.exceptions.IntegrityConstraintViolationError as e:
-            raise IntegrityError(str(e)) from e
+        result = await self.db_session.execute(
+            UPSERT_SIGNATURE,
+            node_id,
+            map_id,
+            code,
+            group_type,
+            subgroup,
+            sig_type,
+        )
+        return result.one(schema_type=SignatureUpsertResult)
 
     async def bulk_upsert_signatures(
         self,
@@ -816,10 +804,10 @@ class MapService(RouteBaseService):
                 s.get("subgroup"),
                 s.get("type"),
             )
-            if row["is_insert"]:
-                created_ids.append(row["id"])
+            if row.is_insert:
+                created_ids.append(row.id)
             else:
-                updated_ids.append(row["id"])
+                updated_ids.append(row.id)
 
         deleted_ids = await self._delete_missing_signatures(node_id, codes) if delete_missing else []
 
