@@ -14,6 +14,7 @@ from routes.universe.dependencies import (
     NeighbourSystem,
     SystemDetails,
     SystemSearchResult,
+    UserSearchResult,
     WormholeSearchResult,
 )
 from routes.universe.queries import (
@@ -21,6 +22,7 @@ from routes.universe.queries import (
     LIST_UNIDENTIFIED_SYSTEMS,
     SEARCH_LOCAL_ENTITIES,
     SEARCH_SYSTEMS,
+    SEARCH_USERS,
 )
 from services.encryption import EncryptionService
 from services.eve_sso import EveSSOService
@@ -203,6 +205,24 @@ class UniverseService:
             query,
             pattern,
             schema_type=LocalEntitySearchResult,
+        )
+
+    async def search_users(self, query: str) -> list[UserSearchResult]:
+        """Search users by character name for admin management.
+
+        Returns users with their character info, suitable for adding admins.
+
+        Results are sorted by match quality:
+        1. Exact matches
+        2. Prefix matches
+        3. Trigram similarity matches
+        """
+        pattern = f"{query}%"
+        return await self.db_session.select(
+            SEARCH_USERS,
+            query,
+            pattern,
+            schema_type=UserSearchResult,
         )
 
     async def get_access_token(

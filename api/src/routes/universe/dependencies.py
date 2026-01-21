@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from uuid import UUID
+
 import msgspec
 from litestar.dto.config import DTOConfig
 from litestar.dto.msgspec_dto import MsgspecDTO
@@ -90,6 +92,20 @@ class LocalSearchResponse(msgspec.Struct):
     """Response containing local entity search results."""
 
     results: list[LocalEntitySearchResult]
+
+
+class UserSearchResult(msgspec.Struct):
+    """A single user search result (for admin management)."""
+
+    user_id: UUID
+    character_id: int
+    character_name: str
+
+
+class UserSearchResponse(msgspec.Struct):
+    """Response containing user search results."""
+
+    results: list[UserSearchResult]
 
 
 class NeighbourSystem(msgspec.Struct):

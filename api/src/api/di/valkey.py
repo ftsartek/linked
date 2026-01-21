@@ -23,9 +23,9 @@ def get_rl_store() -> ValkeyStore:
     return get_root_store().with_namespace("rate_limit")
 
 
-def get_routes_store() -> ValkeyStore:
-    """Create the routes store (namespaced under root)."""
-    return get_root_store().with_namespace("routes")
+def get_cache_store() -> ValkeyStore:
+    """Create the response cache store (namespaced under root)."""
+    return get_root_store().with_namespace("cache")
 
 
 async def provide_valkey_client() -> Valkey:

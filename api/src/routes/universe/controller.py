@@ -6,7 +6,7 @@ from litestar.exceptions import ClientException, NotAuthorizedException, NotFoun
 from litestar.params import Parameter
 from litestar.status_codes import HTTP_200_OK
 
-from api.auth.guards import require_auth
+from api.auth.guards import require_acl_access, require_auth
 from routes.universe.dependencies import (
     LocalSearchResponse,
     SystemDetails,
@@ -14,6 +14,7 @@ from routes.universe.dependencies import (
     SystemSearchResponse,
     SystemSearchResponseDTO,
     UniverseSearchResponse,
+    UserSearchResponse,
     WormholeSearchResponseDTO,
     WormholeSearchResult,
 )
@@ -36,7 +37,7 @@ class UniverseController(Controller):
     """Universe search endpoints."""
 
     path = "/universe"
-    guards = [require_auth]
+    guards = [require_auth, require_acl_access]
     dependencies = {
         "universe_service": Provide(provide_universe_service),
         "universe_service_auth": Provide(provide_universe_service_with_auth),
@@ -54,7 +55,7 @@ class UniverseController(Controller):
         systems = await universe_service.search_systems(q)
         return SystemSearchResponse(systems=systems)
 
-    @get("/wormholes", return_dto=WormholeSearchResponseDTO)
+    @get("/wormholes", return_dto=WormholeSearchResponseDTO, cache=3600)
     async def search_wormholes(
         self,
         universe_service: UniverseService,
@@ -68,19 +69,24 @@ class UniverseController(Controller):
             q: Wormhole code to search for
             target_class: Filter by target system class
             source_class: Filter by source system class (includes K162 which can appear anywhere)
+
+        Response is cached for 1 hour as wormhole data is static.
         """
         return await universe_service.search_wormholes(q, target_class, source_class)
 
-    @get("/systems/unidentified", return_dto=SystemSearchResponseDTO)
+    @get("/systems/unidentified", return_dto=SystemSearchResponseDTO, cache=3600)
     async def list_unidentified_systems(
         self,
         universe_service: UniverseService,
     ) -> SystemSearchResponse:
-        """List all unidentified placeholder systems."""
+        """List all unidentified placeholder systems.
+
+        Response is cached for 1 hour as this data is static.
+        """
         systems = await universe_service.list_unidentified_systems()
         return SystemSearchResponse(systems=systems)
 
-    @get("/systems/{system_id:int}/details", return_dto=SystemDetailsDTO)
+    @get("/systems/{system_id:int}/details", return_dto=SystemDetailsDTO, cache=3600)
     async def get_system_details(
         self,
         universe_service: UniverseService,
@@ -89,6 +95,7 @@ class UniverseController(Controller):
         """Get detailed information about a system.
 
         Returns planet count, moon count, radius, and neighbouring systems.
+        Response is cached for 1 hour as system data is static.
         """
         details = await universe_service.get_system_details(system_id)
         if details is None:
@@ -185,6 +192,34 @@ class UniverseController(Controller):
 
         results = await universe_service.search_local_entities(q)
         return LocalSearchResponse(results=results)
+
+    @get("/search/users")
+    async def search_users(
+        self,
+        universe_service: UniverseService,
+        q: str,
+    ) -> UserSearchResponse:
+        """Search users by character name for admin management.
+
+        Returns users with their character info, suitable for adding admins.
+        Only returns users who have logged in (exist in the local database).
+
+        Results are sorted by match quality:
+        1. Exact matches
+        2. Prefix matches
+        3. Trigram similarity matches
+
+        Args:
+            q: Search query (minimum 3 characters)
+
+        Returns:
+            List of users with character info
+        """
+        if len(q) < 3:
+            raise ClientException("Search query must be at least 3 characters")
+
+        results = await universe_service.search_users(q)
+        return UserSearchResponse(results=results)
 
     @get("/images/{entity_type:str}/{entity_id:int}", guards=[])
     async def get_entity_image(

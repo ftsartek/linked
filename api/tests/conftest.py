@@ -165,3 +165,25 @@ async def test_client(_run_migrations: None) -> AsyncIterator[AsyncClient]:
     workdir = Path(__file__).parent.parent
     async with subprocess_async_client(workdir=workdir, app="tests.factories.app:app") as client:
         yield client
+
+
+@pytest.fixture(scope="session")
+async def second_test_client(_run_migrations: None) -> AsyncIterator[AsyncClient]:
+    """A second test client for multi-user tests (e.g., admin/ACL tests).
+
+    This client has its own session and can be authenticated as a different user.
+    """
+    workdir = Path(__file__).parent.parent
+    async with subprocess_async_client(workdir=workdir, app="tests.factories.app:app") as client:
+        yield client
+
+
+@pytest.fixture(scope="session")
+async def unauthenticated_client(_run_migrations: None) -> AsyncIterator[AsyncClient]:
+    """A test client that is never authenticated.
+
+    Used to test 401 responses for unauthenticated access.
+    """
+    workdir = Path(__file__).parent.parent
+    async with subprocess_async_client(workdir=workdir, app="tests.factories.app:app") as client:
+        yield client

@@ -103,3 +103,26 @@ SELECT
 FROM system s
 WHERE s.id = $1;
 """
+
+# Search users by character name (for admin management)
+# Returns user_id and primary character info
+# Results are sorted by: exact match > prefix match > trigram similarity
+SEARCH_USERS = """\
+WITH ranked_chars AS (
+    SELECT
+        c.user_id,
+        c.id AS character_id,
+        c.name AS character_name,
+        CASE
+            WHEN LOWER(c.name) = LOWER($1) THEN 0
+            WHEN c.name ILIKE $2 THEN 1
+            ELSE 2
+        END AS rank_tier,
+        similarity(c.name, $1) AS sim_score
+    FROM character c
+    WHERE c.name ILIKE $2 OR c.name % $1
+)
+SELECT user_id, character_id, character_name
+FROM ranked_chars
+ORDER BY rank_tier ASC, sim_score DESC;
+"""

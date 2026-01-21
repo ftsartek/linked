@@ -4,6 +4,181 @@
  */
 
 export interface paths {
+	'/admin/admins': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** ListAdmins */
+		get: operations['AdminAdminsListAdmins'];
+		put?: never;
+		/** AddAdmin */
+		post: operations['AdminAdminsAddAdmin'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/admin/acl/alliances': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** ListAllianceAcl */
+		get: operations['AdminAclAlliancesListAllianceAcl'];
+		put?: never;
+		/** AddAllianceAcl */
+		post: operations['AdminAclAlliancesAddAllianceAcl'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/admin/acl/characters': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** ListCharacterAcl */
+		get: operations['AdminAclCharactersListCharacterAcl'];
+		put?: never;
+		/** AddCharacterAcl */
+		post: operations['AdminAclCharactersAddCharacterAcl'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/admin/acl/corporations': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** ListCorporationAcl */
+		get: operations['AdminAclCorporationsListCorporationAcl'];
+		put?: never;
+		/** AddCorporationAcl */
+		post: operations['AdminAclCorporationsAddCorporationAcl'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/admin/instance': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GetInstanceStatus */
+		get: operations['AdminInstanceGetInstanceStatus'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		/** UpdateInstanceSettings */
+		patch: operations['AdminInstanceUpdateInstanceSettings'];
+		trace?: never;
+	};
+	'/admin/admins/{user_id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** RemoveAdmin */
+		delete: operations['AdminAdminsUserIdRemoveAdmin'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/admin/acl/alliances/{alliance_id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** RemoveAllianceAcl */
+		delete: operations['AdminAclAlliancesAllianceIdRemoveAllianceAcl'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/admin/acl/characters/{character_id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** RemoveCharacterAcl */
+		delete: operations['AdminAclCharactersCharacterIdRemoveCharacterAcl'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/admin/acl/corporations/{corporation_id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** RemoveCorporationAcl */
+		delete: operations['AdminAclCorporationsCorporationIdRemoveCorporationAcl'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/admin/instance/transfer': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** TransferOwnership */
+		post: operations['AdminInstanceTransferTransferOwnership'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/auth/callback': {
 		parameters: {
 			query?: never;
@@ -826,6 +1001,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/universe/search/users': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** SearchUsers */
+		get: operations['UniverseSearchUsersSearchUsers'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/universe/wormholes': {
 		parameters: {
 			query?: never;
@@ -951,11 +1143,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
 	schemas: {
+		/** AddAdminRequest */
+		AddAdminRequest: {
+			/** Format: uuid */
+			user_id: string;
+		};
+		/** AddAllianceACLRequest */
+		AddAllianceACLRequest: {
+			alliance_id: number;
+			alliance_name: string;
+			alliance_ticker: string;
+		};
 		/** AddAllianceAccessRequest */
 		AddAllianceAccessRequest: {
 			alliance_id: number;
 			/** @default true */
 			read_only: boolean;
+		};
+		/** AddCharacterACLRequest */
+		AddCharacterACLRequest: {
+			character_id: number;
+			character_name: string;
 		};
 		/** AddCharacterAccessRequest */
 		AddCharacterAccessRequest: {
@@ -963,11 +1171,42 @@ export interface components {
 			/** @default true */
 			read_only: boolean;
 		};
+		/** AddCorporationACLRequest */
+		AddCorporationACLRequest: {
+			corporation_id: number;
+			corporation_name: string;
+			corporation_ticker: string;
+		};
 		/** AddCorporationAccessRequest */
 		AddCorporationAccessRequest: {
 			corporation_id: number;
 			/** @default true */
 			read_only: boolean;
+		};
+		/** AdminInfo */
+		AdminInfo: {
+			/** Format: uuid */
+			user_id: string;
+			character_id?: number | null;
+			character_name?: string | null;
+			granted_by?: string | null;
+			date_created?: string | null;
+		};
+		/** AdminListResponse */
+		AdminListResponse: {
+			admins: components['schemas']['AdminInfo'][];
+		};
+		/** AllianceACLEntry */
+		AllianceACLEntry: {
+			alliance_id: number;
+			alliance_name: string;
+			alliance_ticker: string;
+			added_by?: string | null;
+			date_created?: string | null;
+		};
+		/** AllianceACLListResponse */
+		AllianceACLListResponse: {
+			entries: components['schemas']['AllianceACLEntry'][];
 		};
 		/** AllianceAccessInfo */
 		AllianceAccessInfo: {
@@ -994,6 +1233,17 @@ export interface components {
 			updated: string[];
 			deleted: string[];
 		};
+		/** CharacterACLEntry */
+		CharacterACLEntry: {
+			character_id: number;
+			character_name: string;
+			added_by?: string | null;
+			date_created?: string | null;
+		};
+		/** CharacterACLListResponse */
+		CharacterACLListResponse: {
+			entries: components['schemas']['CharacterACLEntry'][];
+		};
 		/** CharacterAccessInfo */
 		CharacterAccessInfo: {
 			character_id: number;
@@ -1003,6 +1253,18 @@ export interface components {
 		/** CharacterListResponse */
 		CharacterListResponse: {
 			characters: components['schemas']['users_service_CharacterInfo'][];
+		};
+		/** CorporationACLEntry */
+		CorporationACLEntry: {
+			corporation_id: number;
+			corporation_name: string;
+			corporation_ticker: string;
+			added_by?: string | null;
+			date_created?: string | null;
+		};
+		/** CorporationACLListResponse */
+		CorporationACLListResponse: {
+			entries: components['schemas']['CorporationACLEntry'][];
 		};
 		/** CorporationAccessInfo */
 		CorporationAccessInfo: {
@@ -1236,6 +1498,17 @@ export interface components {
 			/** @enum {string} */
 			status: 'healthy' | 'unhealthy';
 		};
+		/** InstanceStatusResponse */
+		InstanceStatusResponse: {
+			/** Format: uuid */
+			owner_id: string;
+			owner_name?: string | null;
+			is_open: boolean;
+			character_acl_count: number;
+			corporation_acl_count: number;
+			alliance_acl_count: number;
+			admin_count: number;
+		};
 		/** ListUnidentifiedSystemsSystemSearchResponseResponseBody */
 		ListUnidentifiedSystemsSystemSearchResponseResponseBody: {
 			systems: components['schemas']['ListUnidentifiedSystemsSystemSearchResponse_0SystemSearchResultResponseBody'][];
@@ -1452,11 +1725,20 @@ export interface components {
 			solar_system_id: number;
 			notes: components['schemas']['EnrichedNoteInfo'][];
 		};
+		/** TransferOwnershipRequest */
+		TransferOwnershipRequest: {
+			/** Format: uuid */
+			new_owner_id: string;
+		};
 		/** UniverseSearchResponse */
 		UniverseSearchResponse: {
 			characters: components['schemas']['EntitySearchResult'][];
 			corporations: components['schemas']['EntitySearchResult'][];
 			alliances: components['schemas']['EntitySearchResult'][];
+		};
+		/** UpdateInstanceRequest */
+		UpdateInstanceRequest: {
+			is_open: boolean;
 		};
 		/** UpdateLinkRequest */
 		UpdateLinkRequest: {
@@ -1539,6 +1821,21 @@ export interface components {
 			id: string;
 			primary_character_id?: number | null;
 			characters: components['schemas']['auth_service_CharacterInfo'][];
+			/** @default false */
+			is_owner: boolean;
+			/** @default false */
+			is_admin: boolean;
+		};
+		/** UserSearchResponse */
+		UserSearchResponse: {
+			results: components['schemas']['UserSearchResult'][];
+		};
+		/** UserSearchResult */
+		UserSearchResult: {
+			/** Format: uuid */
+			user_id: string;
+			character_id: number;
+			character_name: string;
 		};
 		/** Viewport */
 		Viewport: {
@@ -1573,6 +1870,502 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+	AdminAdminsListAdmins: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['AdminListResponse'];
+				};
+			};
+		};
+	};
+	AdminAdminsAddAdmin: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['AddAdminRequest'];
+			};
+		};
+		responses: {
+			/** @description Request fulfilled, nothing follows */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	AdminAclAlliancesListAllianceAcl: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['AllianceACLListResponse'];
+				};
+			};
+		};
+	};
+	AdminAclAlliancesAddAllianceAcl: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['AddAllianceACLRequest'];
+			};
+		};
+		responses: {
+			/** @description Request fulfilled, nothing follows */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	AdminAclCharactersListCharacterAcl: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['CharacterACLListResponse'];
+				};
+			};
+		};
+	};
+	AdminAclCharactersAddCharacterAcl: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['AddCharacterACLRequest'];
+			};
+		};
+		responses: {
+			/** @description Request fulfilled, nothing follows */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	AdminAclCorporationsListCorporationAcl: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['CorporationACLListResponse'];
+				};
+			};
+		};
+	};
+	AdminAclCorporationsAddCorporationAcl: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['AddCorporationACLRequest'];
+			};
+		};
+		responses: {
+			/** @description Request fulfilled, nothing follows */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	AdminInstanceGetInstanceStatus: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['InstanceStatusResponse'];
+				};
+			};
+		};
+	};
+	AdminInstanceUpdateInstanceSettings: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['UpdateInstanceRequest'];
+			};
+		};
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['InstanceStatusResponse'];
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	AdminAdminsUserIdRemoveAdmin: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				user_id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, nothing follows */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	AdminAclAlliancesAllianceIdRemoveAllianceAcl: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				alliance_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, nothing follows */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	AdminAclCharactersCharacterIdRemoveCharacterAcl: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				character_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, nothing follows */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	AdminAclCorporationsCorporationIdRemoveCorporationAcl: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				corporation_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, nothing follows */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	AdminInstanceTransferTransferOwnership: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['TransferOwnershipRequest'];
+			};
+		};
+		responses: {
+			/** @description Document created, URL follows */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['InstanceStatusResponse'];
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
 	AuthCallbackCallback: {
 		parameters: {
 			query: {
@@ -3589,6 +4382,46 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['SearchSystemsSystemSearchResponseResponseBody'];
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	UniverseSearchUsersSearchUsers: {
+		parameters: {
+			query: {
+				q: string;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['UserSearchResponse'];
 				};
 			};
 			/** @description Bad request syntax or unsupported method */

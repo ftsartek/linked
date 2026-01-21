@@ -1,12 +1,28 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
+	import { goto, replaceState } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { getApiUrl } from '$lib/client/client';
 	import { user } from '$lib/stores/user';
+	import { toaster } from '$lib/stores/toaster';
 	import { resolve } from '$app/paths';
 
 	$effect(() => {
 		if ($user) {
 			goto(resolve('/maps'));
+		}
+	});
+
+	$effect(() => {
+		const error = $page.url.searchParams.get('error');
+		if (error === 'acl_denied') {
+			toaster.create({
+				title: 'Access Denied',
+				description: 'This instance is private. Contact an administrator for access.',
+				type: 'error',
+				duration: 10000
+			});
+			// Clear the error from URL without triggering navigation
+			replaceState(resolve('/'), {});
 		}
 	});
 </script>
