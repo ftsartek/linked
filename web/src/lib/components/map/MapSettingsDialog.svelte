@@ -3,12 +3,6 @@
 	import { apiClient } from '$lib/client/client';
 	import { toaster } from '$lib/stores/toaster';
 	import type { MapInfo, MapSettingsForm } from '$lib/helpers/mapTypes';
-	import {
-		SPACING_MIN,
-		SPACING_MAX,
-		SPACING_STEP,
-		validateSpacing
-	} from '$lib/helpers/layoutUtils';
 
 	interface Props {
 		dialog: ReturnType<typeof import('@skeletonlabs/skeleton-svelte').useDialog>;
@@ -34,6 +28,10 @@
 		rank_sep: 50
 	});
 
+	// Form validation
+	const isNameValid = $derived(form.name.trim().length >= 4);
+	const canSave = $derived(isNameValid && !saving);
+
 	// Initialize form from mapInfo when dialog opens
 	$effect(() => {
 		if (open && mapInfo && !hasInitialized) {
@@ -55,19 +53,17 @@
 	});
 
 	async function handleSave() {
+		if (!isNameValid) return;
+
 		saving = true;
 
 		const { data, error } = await apiClient.PATCH('/maps/{map_id}', {
 			params: { path: { map_id } },
 			body: {
-				name: form.name,
+				name: form.name.trim(),
 				description: form.description || null,
 				is_public: form.is_public,
-				edge_type: form.edge_type,
-				rankdir: form.rankdir,
-				auto_layout: form.auto_layout,
-				node_sep: validateSpacing(form.node_sep),
-				rank_sep: validateSpacing(form.rank_sep)
+				edge_type: form.edge_type
 			}
 		});
 
@@ -107,8 +103,15 @@
 						<input
 							type="text"
 							bind:value={form.name}
-							class="mt-1 w-full rounded border-2 border-primary-950 bg-black px-3 py-2 text-white focus:border-primary-800 focus:outline-none"
+							required
+							minlength="4"
+							class="mt-1 w-full rounded border-2 bg-black px-3 py-2 text-white focus:outline-none {isNameValid
+								? 'border-primary-950 focus:border-primary-800'
+								: 'border-error-500 focus:border-error-400'}"
 						/>
+						{#if !isNameValid && form.name.length > 0}
+							<span class="text-xs text-error-500">Name must be at least 4 characters</span>
+						{/if}
 					</label>
 					<label class="block">
 						<span class="text-sm text-surface-300">Description</span>
@@ -135,46 +138,6 @@
 							<option value="simplebezier">Simple Bezier</option>
 						</select>
 					</label>
-					<label class="block">
-						<span class="text-sm text-surface-300">Layout Direction</span>
-						<select
-							bind:value={form.rankdir}
-							class="mt-1 w-full rounded border-2 border-primary-950 bg-black px-3 py-2 text-white focus:border-primary-800 focus:outline-none"
-						>
-							<option value="TB">Top to Bottom</option>
-							<option value="BT">Bottom to Top</option>
-							<option value="LR">Left to Right</option>
-							<option value="RL">Right to Left</option>
-						</select>
-					</label>
-					<label class="flex items-center gap-2">
-						<input type="checkbox" bind:checked={form.auto_layout} class="rounded" />
-						<span class="text-sm text-surface-300">Auto Layout</span>
-					</label>
-					<div class="grid grid-cols-2 gap-4">
-						<label class="block">
-							<span class="text-sm text-surface-300">Node Spacing</span>
-							<input
-								type="number"
-								bind:value={form.node_sep}
-								min={SPACING_MIN}
-								max={SPACING_MAX}
-								step={SPACING_STEP}
-								class="mt-1 w-full rounded border-2 border-primary-950 bg-black px-3 py-2 text-white focus:border-primary-800 focus:outline-none"
-							/>
-						</label>
-						<label class="block">
-							<span class="text-sm text-surface-300">Rank Spacing</span>
-							<input
-								type="number"
-								bind:value={form.rank_sep}
-								min={SPACING_MIN}
-								max={SPACING_MAX}
-								step={SPACING_STEP}
-								class="mt-1 w-full rounded border-2 border-primary-950 bg-black px-3 py-2 text-white focus:border-primary-800 focus:outline-none"
-							/>
-						</label>
-					</div>
 					<div class="mt-6 flex justify-end gap-3">
 						<Dialog.CloseTrigger
 							class="rounded bg-surface-600 px-4 py-2 text-white hover:bg-surface-500"
@@ -184,7 +147,7 @@
 						<button
 							class="rounded bg-primary-500 px-4 py-2 text-white hover:bg-primary-400 disabled:opacity-50"
 							onclick={handleSave}
-							disabled={saving}
+							disabled={!canSave}
 						>
 							{saving ? 'Saving...' : 'Save'}
 						</button>
