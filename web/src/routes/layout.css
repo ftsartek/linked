@@ -24,3 +24,14 @@
 .svelte-flow__controls button.lucide-btn svg {
 	fill: none !important;
 }
+
+/* MiniMap responsive visibility - only show on larger screens */
+.svelte-flow .minimap-responsive {
+	display: none;
+}
+
+@media (min-width: 1024px) and (min-height: 800px) {
+	.svelte-flow .minimap-responsive {
+		display: block;
+	}
+}

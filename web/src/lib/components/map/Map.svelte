@@ -8,8 +8,8 @@
 		Background,
 		Controls,
 		ControlButton,
+		MiniMap,
 		useSvelteFlow,
-		ConnectionLineType,
 		type Node,
 		type Edge,
 		BackgroundVariant
@@ -63,6 +63,7 @@
 	// Components
 	import SystemNode from './Node.svelte';
 	import FloatingEdge from './FloatingEdge.svelte';
+	import ConnectionLine from './ConnectionLine.svelte';
 	import MapSettingsDialog from './MapSettingsDialog.svelte';
 	import MapSharingDialog from './MapSharingDialog.svelte';
 	import MapContextMenu from './MapContextMenu.svelte';
@@ -165,7 +166,7 @@
 			mapInfo = data.map;
 			edgeType = (data.map.edge_type as EdgeType) ?? 'default';
 			rankdir = (data.map.rankdir as Rankdir) ?? 'LR';
-			nodes = transformNodes(data.nodes);
+			nodes = transformNodes(data.nodes, locked || data.map.edit_access === false);
 			edges = transformEdges(data.links);
 			lastEventId = data.last_event_id ?? null;
 
@@ -492,7 +493,7 @@
 										...n,
 										position: { x: nodeData.pos_x, y: nodeData.pos_y },
 										data: nodeData,
-										draggable: !nodeData.locked
+										draggable: !isLocked && !nodeData.locked
 									}
 								: n
 						);
@@ -576,14 +577,14 @@
 <SvelteFlowProvider>
 	<div class="relative h-full min-h-100 w-full overflow-hidden rounded-xl">
 		{#if loading}
-			<div class="flex h-full min-h-100 items-center justify-center bg-black/75 backdrop-blur-2xl">
-				<Progress value={null} class="w-fit items-center">
-					<Progress.Circle>
-						<Progress.CircleTrack />
-						<Progress.CircleRange />
-					</Progress.Circle>
+			<div class="absolute top-0 right-0 left-0 z-10">
+				<Progress value={null} class="h-1 w-full rounded-none">
+					<Progress.Track class="h-1 rounded-none bg-transparent">
+						<Progress.Range class="h-1 rounded-none bg-primary-500" />
+					</Progress.Track>
 				</Progress>
 			</div>
+			<div class="h-full min-h-100 bg-black/75 backdrop-blur-2xl"></div>
 		{:else if error}
 			<div class="flex h-full min-h-100 items-center justify-center">
 				<div class="rounded-lg bg-error-500/20 p-4 text-error-500">
@@ -600,11 +601,11 @@
 				snapGrid={[20, 20]}
 				elevateEdgesOnSelect={false}
 				proOptions={{ hideAttribution: true }}
-				elementsSelectable={!isLocked}
+				elementsSelectable={true}
 				nodesDraggable={!isLocked}
 				nodesConnectable={!isLocked}
 				deleteKey={isLocked ? null : ['Backspace', 'Delete']}
-				connectionLineType={ConnectionLineType.Straight}
+				connectionLineComponent={ConnectionLine}
 				oninit={handleFlowInit}
 				onmoveend={handleMoveEnd}
 				onpanecontextmenu={handlePaneContextMenu}
@@ -627,7 +628,10 @@
 				<Controls showLock={false}>
 					<ControlButton
 						class="lucide-btn"
-						onclick={() => (locked = !locked)}
+						onclick={() => {
+							locked = !locked;
+							loadMap();
+						}}
 						disabled={isReadOnly}
 						title={isReadOnly ? 'Map is read-only' : isLocked ? 'Unlock' : 'Lock'}
 					>
@@ -663,6 +667,17 @@
 						<RefreshCw size={18} strokeWidth={3} />
 					</ControlButton>
 				</Controls>
+				<MiniMap
+					class="minimap-responsive"
+					style="border-radius: 6px; overflow: hidden;"
+					position="bottom-right"
+					pannable
+					zoomable
+					bgColor="rgba(0, 5, 15, 0.6)"
+					maskColor="rgba(22, 30, 35, 0.7)"
+					nodeColor="rgba(95, 102, 115, 0.8)"
+					nodeBorderRadius={4}
+				/>
 			</SvelteFlow>
 
 			{#if contextMenu}

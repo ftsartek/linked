@@ -6,12 +6,12 @@ export type LinkInfo = components['schemas']['EnrichedLinkInfo'];
 export type SystemSearchResult =
 	components['schemas']['SearchSystemsSystemSearchResponse_0SystemSearchResultResponseBody'];
 
-export function transformNodes(apiNodes: NodeInfo[]): Node[] {
+export function transformNodes(apiNodes: NodeInfo[], isReadOnly: boolean = false): Node[] {
 	return apiNodes.map((node) => ({
 		id: node.id,
 		position: { x: node.pos_x, y: node.pos_y },
 		data: node,
-		draggable: !node.locked
+		draggable: !isReadOnly && !node.locked
 	}));
 }
 

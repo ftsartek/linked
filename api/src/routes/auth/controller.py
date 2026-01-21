@@ -11,7 +11,7 @@ from litestar.response import Redirect
 
 from api.auth.guards import require_auth
 from config import Settings
-from routes.auth.dependencies import ERR_AUTH_INVALID_STATE, auth_rate_limit_config
+from routes.auth.dependencies import ERR_AUTH_INVALID_STATE, auth_ext_rate_limit_config, auth_rate_limit_config
 from routes.auth.service import AuthService, UserInfo, provide_auth_service
 from services.encryption import provide_encryption_service
 from services.eve_sso import EveSSOService
@@ -93,13 +93,13 @@ class AuthController(Controller):
 
         return Redirect(path=app_settings.frontend_url)
 
-    @post("/logout")
+    @post("/logout", middleware=[auth_ext_rate_limit_config.middleware])
     async def logout(self, request: Request) -> dict[str, bool]:
         """Log out current user by clearing session."""
         request.session.clear()
         return {"success": True}
 
-    @get("/me", guards=[require_auth])
+    @get("/me", guards=[require_auth], middleware=[auth_ext_rate_limit_config.middleware])
     async def me(self, request: Request, auth_service: AuthService) -> UserInfo:
         """Get current authenticated user and their linked characters."""
         return await auth_service.get_current_user(request.user)
