@@ -111,7 +111,7 @@
 		</Combobox.Control>
 		<Combobox.Positioner class="z-60">
 			<Combobox.Content
-				class="max-h-60 overflow-auto rounded-sm border border-surface-600 bg-surface-800 shadow-xl"
+				class="max-h-60 overflow-auto rounded-lg bg-black/50 shadow-xl backdrop-blur-sm"
 			>
 				{#if items.length === 0}
 					<div class="px-3 py-2 text-sm text-surface-400">
@@ -121,7 +121,7 @@
 					{#each items as item (item.id)}
 						<Combobox.Item
 							item={{ value: String(item.id), label: item.name }}
-							class="cursor-pointer px-3 py-2 text-white hover:bg-primary-950/60 data-highlighted:bg-primary-950/50"
+							class="cursor-pointer px-3 py-2 text-white hover:bg-primary-950/50 data-highlighted:bg-primary-950/30"
 						>
 							<Combobox.ItemText>
 								{item.name}
