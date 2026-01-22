@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Dialog, Portal, Progress, useDialog } from '@skeletonlabs/skeleton-svelte';
-	import { Trash2, Globe, Lock } from 'lucide-svelte';
+	import { Trash2, Globe, Lock, Map } from 'lucide-svelte';
 	import EntitySearch from '../search/EntitySearch.svelte';
 	import { apiClient } from '$lib/client/client';
 	import { toaster } from '$lib/stores/toaster';
@@ -14,9 +14,11 @@
 	// Loading states
 	let loading = $state(true);
 	let updating = $state(false);
+	let updatingMapCreation = $state(false);
 
 	// Instance settings
 	let isOpen = $state(false);
+	let allowMapCreation = $state(true);
 
 	// ACL data
 	let characters = $state<CharacterACLEntry[]>([]);
@@ -42,6 +44,7 @@
 
 		if (statusRes.data) {
 			isOpen = statusRes.data.is_open;
+			allowMapCreation = statusRes.data.allow_map_creation;
 		}
 
 		characters = charRes.data?.entries ?? [];
@@ -81,6 +84,31 @@
 
 		updating = false;
 		publicDialog().setOpen(false);
+	}
+
+	async function toggleMapCreation() {
+		updatingMapCreation = true;
+		const newValue = !allowMapCreation;
+
+		const { data, error } = await apiClient.PATCH('/admin/instance', {
+			body: { allow_map_creation: newValue }
+		});
+
+		if (error) {
+			const message = 'detail' in error ? (error.detail as string) : 'Failed to update setting';
+			toaster.create({ title: 'Error', description: message, type: 'error' });
+		} else if (data) {
+			allowMapCreation = data.allow_map_creation;
+			toaster.create({
+				title: 'Success',
+				description: allowMapCreation
+					? 'All users can now create maps'
+					: 'Only admins can now create maps',
+				type: 'success'
+			});
+		}
+
+		updatingMapCreation = false;
 	}
 
 	async function handleAddEntity(entity: {
@@ -248,32 +276,61 @@
 		<p class="text-sm text-surface-400">Manage who can access this instance.</p>
 	</div>
 
-	<!-- Public Instance Status & Button -->
-	<div
-		class="mb-4 flex items-center justify-between rounded-lg border-2 border-surface-900 bg-black/50 p-3"
-	>
-		<div class="flex items-center gap-3">
-			{#if isOpen}
-				<Globe size={20} class="text-success-400" />
-				<div>
-					<span class="font-medium text-success-400">Public Instance</span>
-					<p class="text-xs text-surface-400">Anyone can access without ACL entry</p>
-				</div>
-			{:else}
-				<Lock size={20} class="text-surface-400" />
-				<div>
-					<span class="font-medium">Private Instance</span>
-					<p class="text-xs text-surface-400">Only ACL entries can access</p>
-				</div>
-			{/if}
-		</div>
-		<button
-			onclick={openPublicDialog}
-			class="btn btn-sm {isOpen ? 'preset-outlined-warning-500' : 'preset-outlined-success-500'}"
-			disabled={loading}
+	<!-- Instance Settings -->
+	<div class="mb-4 grid gap-3">
+		<!-- Public Instance Status & Button -->
+		<div
+			class="flex items-center justify-between rounded-lg border-2 border-surface-900 bg-black/50 p-3"
 		>
-			{isOpen ? 'Make Private' : 'Make Public'}
-		</button>
+			<div class="flex items-center gap-3">
+				{#if isOpen}
+					<Globe size={20} class="text-success-400" />
+					<div>
+						<span class="font-medium text-success-400">Public Instance</span>
+						<p class="text-xs text-surface-400">Anyone can access without ACL entry</p>
+					</div>
+				{:else}
+					<Lock size={20} class="text-surface-400" />
+					<div>
+						<span class="font-medium">Private Instance</span>
+						<p class="text-xs text-surface-400">Only ACL entries can access</p>
+					</div>
+				{/if}
+			</div>
+			<button
+				onclick={openPublicDialog}
+				class="btn btn-sm {isOpen ? 'preset-outlined-warning-500' : 'preset-outlined-success-500'}"
+				disabled={loading}
+			>
+				{isOpen ? 'Make Private' : 'Make Public'}
+			</button>
+		</div>
+
+		<!-- Map Creation Toggle -->
+		<div
+			class="flex items-center justify-between rounded-lg border-2 border-surface-900 bg-black/50 p-3"
+		>
+			<div class="flex items-center gap-3">
+				<Map size={20} class={allowMapCreation ? 'text-success-400' : 'text-surface-400'} />
+				<div>
+					<span class="font-medium" class:text-success-400={allowMapCreation}>
+						{allowMapCreation ? 'Open Map Creation' : 'Restricted Map Creation'}
+					</span>
+					<p class="text-xs text-surface-400">
+						{allowMapCreation ? 'All users can create maps' : 'Only admins can create maps'}
+					</p>
+				</div>
+			</div>
+			<button
+				onclick={toggleMapCreation}
+				class="btn btn-sm {allowMapCreation
+					? 'preset-outlined-warning-500'
+					: 'preset-outlined-success-500'}"
+				disabled={loading || updatingMapCreation}
+			>
+				{updatingMapCreation ? 'Updating...' : allowMapCreation ? 'Restrict' : 'Allow All'}
+			</button>
+		</div>
 	</div>
 
 	{#if !isOpen}

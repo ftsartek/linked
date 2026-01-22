@@ -44,7 +44,9 @@ from .dependencies import (
 from .events import ACCESS_REVOCATION_TYPES, EventType, MapEvent
 from .queries import (
     CHECK_MAP_PUBLIC,
+    COUNT_ALL_PUBLIC_MAPS,
     COUNT_PUBLIC_MAPS,
+    COUNT_SEARCH_ALL_PUBLIC_MAPS,
     COUNT_SEARCH_PUBLIC_MAPS,
     DELETE_LINK,
     DELETE_NODE,
@@ -76,6 +78,7 @@ from .queries import (
     INSERT_NOTE,
     INSERT_SIGNATURE,
     INSERT_SUBSCRIPTION,
+    LIST_ALL_PUBLIC_MAPS,
     LIST_ALLIANCE_MAPS,
     LIST_CHARACTER_SHARED_MAPS,
     LIST_CORPORATION_MAPS,
@@ -86,6 +89,7 @@ from .queries import (
     LIST_PUBLIC_MAPS,
     LIST_SUBSCRIBED_MAPS,
     REVERSE_LINK,
+    SEARCH_ALL_PUBLIC_MAPS,
     SEARCH_PUBLIC_MAPS,
     SOFT_DELETE_MAP,
     SOFT_DELETE_MAP_LINKS,
@@ -395,6 +399,38 @@ class MapService(RouteBaseService):
         total = await self.db_session.select_value(
             COUNT_SEARCH_PUBLIC_MAPS, user_id, corporation_id, alliance_id, query
         )
+        return maps, total or 0
+
+    async def list_all_public_maps(
+        self,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[PublicMapInfo], int]:
+        """List ALL public maps without any filtering (for admin use)."""
+        maps = await self.db_session.select(
+            LIST_ALL_PUBLIC_MAPS,
+            limit,
+            offset,
+            schema_type=PublicMapInfo,
+        )
+        total = await self.db_session.select_value(COUNT_ALL_PUBLIC_MAPS)
+        return maps, total or 0
+
+    async def search_all_public_maps(
+        self,
+        query: str,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[PublicMapInfo], int]:
+        """Search ALL public maps without any filtering (for admin use)."""
+        maps = await self.db_session.select(
+            SEARCH_ALL_PUBLIC_MAPS,
+            query,
+            limit,
+            offset,
+            schema_type=PublicMapInfo,
+        )
+        total = await self.db_session.select_value(COUNT_SEARCH_ALL_PUBLIC_MAPS, query)
         return maps, total or 0
 
     async def list_subscribed_maps(self, user_id: UUID) -> list[MapInfo]:

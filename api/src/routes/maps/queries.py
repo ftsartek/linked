@@ -368,6 +368,51 @@ WHERE m.is_public = true
     AND (m.name ILIKE '%' || $4 || '%' OR m.description ILIKE '%' || $4 || '%');
 """
 
+# Admin versions - list ALL public maps without filtering out owned/accessible ones
+LIST_ALL_PUBLIC_MAPS = """
+SELECT
+    m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only,
+    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep,
+    m.date_created, m.date_updated,
+    false AS edit_access,
+    COUNT(ms.user_id)::int AS subscription_count,
+    false AS is_subscribed
+FROM map m
+LEFT JOIN map_subscription ms ON m.id = ms.map_id
+WHERE m.is_public = true AND m.date_deleted IS NULL
+GROUP BY m.id
+ORDER BY subscription_count DESC, m.date_created DESC
+LIMIT $1 OFFSET $2;
+"""
+
+COUNT_ALL_PUBLIC_MAPS = """
+SELECT COUNT(*) FROM map m
+WHERE m.is_public = true AND m.date_deleted IS NULL;
+"""
+
+SEARCH_ALL_PUBLIC_MAPS = """
+SELECT
+    m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only,
+    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep,
+    m.date_created, m.date_updated,
+    false AS edit_access,
+    COUNT(ms.user_id)::int AS subscription_count,
+    false AS is_subscribed
+FROM map m
+LEFT JOIN map_subscription ms ON m.id = ms.map_id
+WHERE m.is_public = true AND m.date_deleted IS NULL
+    AND (m.name ILIKE '%' || $1 || '%' OR m.description ILIKE '%' || $1 || '%')
+GROUP BY m.id
+ORDER BY subscription_count DESC, m.date_created DESC
+LIMIT $2 OFFSET $3;
+"""
+
+COUNT_SEARCH_ALL_PUBLIC_MAPS = """
+SELECT COUNT(*) FROM map m
+WHERE m.is_public = true AND m.date_deleted IS NULL
+    AND (m.name ILIKE '%' || $1 || '%' OR m.description ILIKE '%' || $1 || '%');
+"""
+
 LIST_SUBSCRIBED_MAPS = """
 SELECT
     m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only,

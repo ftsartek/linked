@@ -25,6 +25,7 @@ ERR_LINK_NOT_FOUND = "Link not found"
 ERR_LINK_NODE_MISMATCH = "Link not found or node not connected to link"
 ERR_SIGNATURE_NOT_FOUND = "Signature not found"
 ERR_NOTE_NOT_FOUND = "Note not found"
+ERR_MAP_CREATION_DISABLED = "Map creation is disabled for non-admin users"
 
 
 class StaticInfo(msgspec.Struct):
@@ -357,6 +358,13 @@ def _validate_node_rank_sep(value: int | None, field_name: str) -> None:
         raise ValueError(msg)
 
 
+def _validate_map_name(name: str) -> None:
+    """Validate map name length."""
+    if len(name.strip()) < 4:
+        msg = "Map name must be at least 4 characters"
+        raise ValueError(msg)
+
+
 @dataclass
 class CreateMapRequest:
     """Request body for creating a map."""
@@ -372,6 +380,7 @@ class CreateMapRequest:
     rank_sep: int = 60
 
     def __post_init__(self) -> None:
+        _validate_map_name(self.name)
         _validate_node_rank_sep(self.node_sep, "node_sep")
         _validate_node_rank_sep(self.rank_sep, "rank_sep")
 
@@ -391,6 +400,8 @@ class UpdateMapRequest:
     rank_sep: int | None = None
 
     def __post_init__(self) -> None:
+        if self.name is not None:
+            _validate_map_name(self.name)
         _validate_node_rank_sep(self.node_sep, "node_sep")
         _validate_node_rank_sep(self.rank_sep, "rank_sep")
 

@@ -15,6 +15,9 @@ import pytest
 from httpx import AsyncClient
 
 from tests.factories.static_data import (
+    CORP_SHARED_MAP_ID,
+    PUBLIC_MAP_ID,
+    PUBLIC_MAP_NAME,
     TEST2_ALLIANCE_ID,
     TEST2_CHARACTER_ID,
     TEST2_CHARACTER_NAME,
@@ -426,6 +429,74 @@ async def test_instance_is_now_open(
     await test_client.patch("/admin/instance", json={"is_open": False})
 
 
+@pytest.mark.order(832)
+async def test_instance_has_allow_map_creation_field(
+    test_client: AsyncClient,
+) -> None:
+    """GET /admin/instance includes allow_map_creation field."""
+    response = await test_client.get("/admin/instance")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert "allow_map_creation" in data
+
+
+@pytest.mark.order(833)
+async def test_owner_can_update_allow_map_creation(
+    test_client: AsyncClient,
+) -> None:
+    """PATCH /admin/instance with allow_map_creation succeeds."""
+    # Set to True
+    response = await test_client.patch(
+        "/admin/instance",
+        json={"allow_map_creation": True},
+    )
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["allow_map_creation"] is True
+
+    # Set back to False
+    response = await test_client.patch(
+        "/admin/instance",
+        json={"allow_map_creation": False},
+    )
+    assert response.status_code == 200
+    assert response.json()["allow_map_creation"] is False
+
+
+@pytest.mark.order(834)
+async def test_partial_update_instance_settings(
+    test_client: AsyncClient,
+) -> None:
+    """PATCH with only one field doesn't reset other fields."""
+    # First set both fields to known values
+    await test_client.patch(
+        "/admin/instance",
+        json={"is_open": True, "allow_map_creation": True},
+    )
+
+    # Update only is_open
+    response = await test_client.patch(
+        "/admin/instance",
+        json={"is_open": False},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["is_open"] is False
+    assert data["allow_map_creation"] is True  # Should remain True
+
+    # Update only allow_map_creation
+    response = await test_client.patch(
+        "/admin/instance",
+        json={"allow_map_creation": False},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["is_open"] is False  # Should remain False
+    assert data["allow_map_creation"] is False
+
+
 # ============================================================================
 # Ownership Transfer
 # ============================================================================
@@ -578,6 +649,225 @@ async def test_regular_user_cannot_access_admin(
     # They are still authenticated from earlier, but not privileged
     response = await second_test_client.get("/admin/instance")
     assert response.status_code == 403, f"Expected 403, got {response.status_code}: {response.text}"
+
+
+# ============================================================================
+# Admin Public Maps
+# ============================================================================
+
+
+@pytest.mark.order(860)
+async def test_admin_can_list_public_maps(
+    test_client: AsyncClient,
+) -> None:
+    """GET /admin/public-maps returns list of public maps."""
+    response = await test_client.get("/admin/public-maps")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert "maps" in data
+    assert "total" in data
+    assert isinstance(data["maps"], list)
+
+
+@pytest.mark.order(861)
+async def test_admin_can_search_public_maps(
+    test_client: AsyncClient,
+) -> None:
+    """GET /admin/public-maps/search finds public maps by name."""
+    # Search for part of PUBLIC_MAP_NAME ("Public Wormhole Atlas")
+    response = await test_client.get("/admin/public-maps/search", params={"q": "Atlas"})
+    assert response.status_code == 200
+
+    data = response.json()
+    assert "maps" in data
+    # Should find the pre-seeded public map
+    map_names = [m["name"] for m in data["maps"]]
+    assert PUBLIC_MAP_NAME in map_names
+
+
+@pytest.mark.order(862)
+async def test_admin_public_maps_pagination(
+    test_client: AsyncClient,
+) -> None:
+    """GET /admin/public-maps supports limit and offset."""
+    # Test with limit
+    response = await test_client.get("/admin/public-maps", params={"limit": 1})
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["maps"]) <= 1
+
+    # Test with offset
+    response = await test_client.get("/admin/public-maps", params={"offset": 100})
+    assert response.status_code == 200
+
+
+@pytest.mark.order(863)
+async def test_regular_user_cannot_access_admin_public_maps(
+    second_test_client: AsyncClient,
+) -> None:
+    """Non-admin user gets 403 on admin public-maps endpoints."""
+    # second_test_client should not be admin at this point (removed in test 851)
+    response = await second_test_client.get("/admin/public-maps")
+    assert response.status_code == 403
+
+    response = await second_test_client.get("/admin/public-maps/search", params={"q": "test"})
+    assert response.status_code == 403
+
+
+# ============================================================================
+# Default Map Subscriptions
+# ============================================================================
+
+
+@pytest.mark.order(870)
+async def test_default_subscriptions_initially_empty(
+    test_client: AsyncClient,
+) -> None:
+    """GET /admin/default-subscriptions returns empty list initially."""
+    response = await test_client.get("/admin/default-subscriptions")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert "entries" in data
+    assert data["entries"] == []
+
+
+@pytest.mark.order(871)
+async def test_add_default_subscription_map_not_found(
+    test_client: AsyncClient,
+) -> None:
+    """POST /admin/default-subscriptions with non-existent map returns 404."""
+    fake_map_id = "00000000-0000-0000-0000-000000009999"
+    response = await test_client.post(
+        "/admin/default-subscriptions",
+        json={"map_id": fake_map_id},
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.order(872)
+async def test_add_default_subscription_non_public_map(
+    test_client: AsyncClient,
+) -> None:
+    """POST /admin/default-subscriptions with non-public map returns 400."""
+    # CORP_SHARED_MAP_ID is not public
+    response = await test_client.post(
+        "/admin/default-subscriptions",
+        json={"map_id": CORP_SHARED_MAP_ID},
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.order(873)
+async def test_owner_can_add_default_subscription(
+    test_client: AsyncClient,
+) -> None:
+    """POST /admin/default-subscriptions with public map succeeds."""
+    response = await test_client.post(
+        "/admin/default-subscriptions",
+        json={"map_id": PUBLIC_MAP_ID},
+    )
+    assert response.status_code == 204
+
+
+@pytest.mark.order(874)
+async def test_default_subscription_appears_in_list(
+    test_client: AsyncClient,
+) -> None:
+    """GET /admin/default-subscriptions includes added entry."""
+    response = await test_client.get("/admin/default-subscriptions")
+    assert response.status_code == 200
+
+    data = response.json()
+    map_ids = [e["map_id"] for e in data["entries"]]
+    assert PUBLIC_MAP_ID in map_ids
+
+    # Verify entry has expected fields
+    entry = next(e for e in data["entries"] if e["map_id"] == PUBLIC_MAP_ID)
+    assert entry["map_name"] == PUBLIC_MAP_NAME
+    assert "added_by" in entry
+    assert "date_created" in entry
+
+
+@pytest.mark.order(875)
+async def test_add_duplicate_default_subscription(
+    test_client: AsyncClient,
+) -> None:
+    """POST /admin/default-subscriptions with already-added map handles gracefully."""
+    # Adding the same map again - should either succeed (idempotent) or return conflict
+    response = await test_client.post(
+        "/admin/default-subscriptions",
+        json={"map_id": PUBLIC_MAP_ID},
+    )
+    # Accept 204 (idempotent) or 409 (conflict)
+    assert response.status_code in (204, 409)
+
+
+@pytest.mark.order(876)
+async def test_regular_user_cannot_list_default_subscriptions(
+    second_test_client: AsyncClient,
+) -> None:
+    """Non-admin user gets 403 on default-subscriptions GET."""
+    response = await second_test_client.get("/admin/default-subscriptions")
+    assert response.status_code == 403
+
+
+@pytest.mark.order(877)
+async def test_regular_user_cannot_add_default_subscription(
+    second_test_client: AsyncClient,
+) -> None:
+    """Non-admin user gets 403 on default-subscriptions POST."""
+    response = await second_test_client.post(
+        "/admin/default-subscriptions",
+        json={"map_id": PUBLIC_MAP_ID},
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.order(878)
+async def test_regular_user_cannot_remove_default_subscription(
+    second_test_client: AsyncClient,
+) -> None:
+    """Non-admin user gets 403 on default-subscriptions DELETE."""
+    response = await second_test_client.delete(f"/admin/default-subscriptions/{PUBLIC_MAP_ID}")
+    assert response.status_code == 403
+
+
+@pytest.mark.order(880)
+async def test_remove_default_subscription(
+    test_client: AsyncClient,
+) -> None:
+    """DELETE /admin/default-subscriptions/{map_id} succeeds."""
+    response = await test_client.delete(f"/admin/default-subscriptions/{PUBLIC_MAP_ID}")
+    assert response.status_code == 204
+
+    # Verify it's removed
+    response = await test_client.get("/admin/default-subscriptions")
+    assert response.status_code == 200
+    data = response.json()
+    map_ids = [e["map_id"] for e in data["entries"]]
+    assert PUBLIC_MAP_ID not in map_ids
+
+
+@pytest.mark.order(881)
+async def test_remove_default_subscription_not_found(
+    test_client: AsyncClient,
+) -> None:
+    """DELETE /admin/default-subscriptions with non-existent entry returns 404."""
+    fake_map_id = "00000000-0000-0000-0000-000000009999"
+    response = await test_client.delete(f"/admin/default-subscriptions/{fake_map_id}")
+    assert response.status_code == 404
+
+
+@pytest.mark.order(882)
+async def test_remove_already_removed_default_subscription(
+    test_client: AsyncClient,
+) -> None:
+    """DELETE /admin/default-subscriptions twice returns 404 on second attempt."""
+    # PUBLIC_MAP_ID was already removed in test 880
+    response = await test_client.delete(f"/admin/default-subscriptions/{PUBLIC_MAP_ID}")
+    assert response.status_code == 404
 
 
 # ============================================================================

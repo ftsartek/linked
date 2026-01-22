@@ -6,6 +6,7 @@
 	import PublicMapSubscriptionsCard from '$lib/components/account/PublicMapSubscriptionsCard.svelte';
 	import InstanceACLCard from '$lib/components/account/InstanceACLCard.svelte';
 	import InstanceAdminsCard from '$lib/components/account/InstanceAdminsCard.svelte';
+	import DefaultSubscriptionsCard from '$lib/components/account/DefaultSubscriptionsCard.svelte';
 
 	$effect(() => {
 		if ($user === null) {
@@ -33,6 +34,11 @@
 			</div>
 			<div class="col-span-2">
 				<InstanceAdminsCard />
+			</div>
+		</div>
+		<div class="mt-6 grid grid-cols-5 items-stretch gap-6">
+			<div class="col-span-2">
+				<DefaultSubscriptionsCard />
 			</div>
 		</div>
 	{/if}

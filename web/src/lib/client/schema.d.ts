@@ -76,6 +76,24 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/admin/default-subscriptions': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** ListDefaultSubscriptions */
+		get: operations['AdminDefaultSubscriptionsListDefaultSubscriptions'];
+		put?: never;
+		/** AddDefaultSubscription */
+		post: operations['AdminDefaultSubscriptionsAddDefaultSubscription'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/admin/instance': {
 		parameters: {
 			query?: never;
@@ -92,6 +110,23 @@ export interface paths {
 		head?: never;
 		/** UpdateInstanceSettings */
 		patch: operations['AdminInstanceUpdateInstanceSettings'];
+		trace?: never;
+	};
+	'/admin/public-maps': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** ListAllPublicMaps */
+		get: operations['AdminPublicMapsListAllPublicMaps'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
 		trace?: never;
 	};
 	'/admin/admins/{user_id}': {
@@ -157,6 +192,40 @@ export interface paths {
 		post?: never;
 		/** RemoveCorporationAcl */
 		delete: operations['AdminAclCorporationsCorporationIdRemoveCorporationAcl'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/admin/default-subscriptions/{map_id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post?: never;
+		/** RemoveDefaultSubscription */
+		delete: operations['AdminDefaultSubscriptionsMapIdRemoveDefaultSubscription'];
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/admin/public-maps/search': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** SearchAllPublicMaps */
+		get: operations['AdminPublicMapsSearchSearchAllPublicMaps'];
+		put?: never;
+		post?: never;
+		delete?: never;
 		options?: never;
 		head?: never;
 		patch?: never;
@@ -1183,6 +1252,11 @@ export interface components {
 			/** @default true */
 			read_only: boolean;
 		};
+		/** AddDefaultSubscriptionRequest */
+		AddDefaultSubscriptionRequest: {
+			/** Format: uuid */
+			map_id: string;
+		};
 		/** AdminInfo */
 		AdminInfo: {
 			/** Format: uuid */
@@ -1358,6 +1432,18 @@ export interface components {
 			/** Format: uuid */
 			signature_id: string;
 		};
+		/** DefaultSubscriptionInfo */
+		DefaultSubscriptionInfo: {
+			/** Format: uuid */
+			map_id: string;
+			map_name: string;
+			added_by?: string | null;
+			date_created?: string | null;
+		};
+		/** DefaultSubscriptionListResponse */
+		DefaultSubscriptionListResponse: {
+			entries: components['schemas']['DefaultSubscriptionInfo'][];
+		};
 		/** DeleteLinkResponse */
 		DeleteLinkResponse: {
 			/** Format: uuid */
@@ -1504,6 +1590,7 @@ export interface components {
 			owner_id: string;
 			owner_name?: string | null;
 			is_open: boolean;
+			allow_map_creation: boolean;
 			character_acl_count: number;
 			corporation_acl_count: number;
 			alliance_acl_count: number;
@@ -1630,13 +1717,6 @@ export interface components {
 			/** @default false */
 			is_subscribed: boolean;
 		};
-		/** PublicMapListResponse */
-		PublicMapListResponse: {
-			maps: components['schemas']['PublicMapInfo'][];
-			total: number;
-			limit: number;
-			offset: number;
-		};
 		/**
 		 * RankDir
 		 * @description Dagre rankdir layout direction values.
@@ -1738,7 +1818,8 @@ export interface components {
 		};
 		/** UpdateInstanceRequest */
 		UpdateInstanceRequest: {
-			is_open: boolean;
+			is_open?: boolean | null;
+			allow_map_creation?: boolean | null;
 		};
 		/** UpdateLinkRequest */
 		UpdateLinkRequest: {
@@ -1825,6 +1906,8 @@ export interface components {
 			is_owner: boolean;
 			/** @default false */
 			is_admin: boolean;
+			/** @default true */
+			can_create_maps: boolean;
 		};
 		/** UserSearchResponse */
 		UserSearchResponse: {
@@ -1843,6 +1926,11 @@ export interface components {
 			y: number;
 			zoom: number;
 		};
+		/** PublicMapListResponse */
+		admin_dependencies_PublicMapListResponse: {
+			maps: components['schemas']['PublicMapInfo'][];
+			total: number;
+		};
 		/** CharacterInfo */
 		auth_service_CharacterInfo: {
 			id: number;
@@ -1851,6 +1939,13 @@ export interface components {
 			alliance_id?: number | null;
 			/** Format: date-time */
 			date_created: string;
+		};
+		/** PublicMapListResponse */
+		maps_dependencies_PublicMapListResponse: {
+			maps: components['schemas']['PublicMapInfo'][];
+			total: number;
+			limit: number;
+			offset: number;
 		};
 		/** CharacterInfo */
 		users_service_CharacterInfo: {
@@ -2110,6 +2205,66 @@ export interface operations {
 			};
 		};
 	};
+	AdminDefaultSubscriptionsListDefaultSubscriptions: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['DefaultSubscriptionListResponse'];
+				};
+			};
+		};
+	};
+	AdminDefaultSubscriptionsAddDefaultSubscription: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				'application/json': components['schemas']['AddDefaultSubscriptionRequest'];
+			};
+		};
+		responses: {
+			/** @description Request fulfilled, nothing follows */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
 	AdminInstanceGetInstanceStatus: {
 		parameters: {
 			query?: never;
@@ -2150,6 +2305,47 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['InstanceStatusResponse'];
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	AdminPublicMapsListAllPublicMaps: {
+		parameters: {
+			query?: {
+				limit?: number;
+				offset?: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['admin_dependencies_PublicMapListResponse'];
 				};
 			};
 			/** @description Bad request syntax or unsupported method */
@@ -2303,6 +2499,86 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content?: never;
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	AdminDefaultSubscriptionsMapIdRemoveDefaultSubscription: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				map_id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, nothing follows */
+			204: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content?: never;
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	AdminPublicMapsSearchSearchAllPublicMaps: {
+		parameters: {
+			query: {
+				q: string;
+				limit?: number;
+				offset?: number;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['admin_dependencies_PublicMapListResponse'];
+				};
 			};
 			/** @description Bad request syntax or unsupported method */
 			400: {
@@ -3609,7 +3885,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': components['schemas']['PublicMapListResponse'];
+					'application/json': components['schemas']['maps_dependencies_PublicMapListResponse'];
 				};
 			};
 			/** @description Bad request syntax or unsupported method */
@@ -3808,7 +4084,7 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					'application/json': components['schemas']['PublicMapListResponse'];
+					'application/json': components['schemas']['maps_dependencies_PublicMapListResponse'];
 				};
 			};
 			/** @description Bad request syntax or unsupported method */

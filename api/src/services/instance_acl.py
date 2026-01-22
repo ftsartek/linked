@@ -10,6 +10,21 @@ from uuid import UUID
 
 from sqlspec import AsyncDriverAdapterBase
 
+from database.models.default_subscription import (
+    DELETE_STMT as DEFAULT_SUB_DELETE_STMT,
+)
+from database.models.default_subscription import (
+    GET_MAP_IDS_STMT as DEFAULT_SUB_MAP_IDS_STMT,
+)
+from database.models.default_subscription import (
+    INSERT_STMT as DEFAULT_SUB_INSERT_STMT,
+)
+from database.models.default_subscription import (
+    LIST_STMT as DEFAULT_SUB_LIST_STMT,
+)
+from database.models.default_subscription import (
+    DefaultMapSubscriptionWithName,
+)
 from database.models.instance_acl import (
     ALLIANCE_DELETE_STMT,
     ALLIANCE_INSERT_STMT,
@@ -46,6 +61,7 @@ from database.models.instance_admin import (
 from database.models.instance_settings import (
     CHECK_HAS_OWNER_STMT,
     CHECK_IS_OWNER_STMT,
+    UPDATE_ALLOW_MAP_CREATION_STMT,
     UPDATE_IS_OPEN_STMT,
     UPDATE_OWNER_STMT,
     InstanceSettings,
@@ -118,6 +134,14 @@ class InstanceACLService:
         return await self.db_session.select_one(
             UPDATE_IS_OPEN_STMT,
             is_open,
+            schema_type=InstanceSettings,
+        )
+
+    async def set_allow_map_creation(self, allow: bool) -> InstanceSettings:
+        """Set whether non-admin users can create maps."""
+        return await self.db_session.select_one(
+            UPDATE_ALLOW_MAP_CREATION_STMT,
+            allow,
             schema_type=InstanceSettings,
         )
 
@@ -281,6 +305,36 @@ class InstanceACLService:
             COUNT_ACL_ENTRIES_STMT,
             schema_type=InstanceACLCounts,
         )
+
+    # ========================================================================
+    # Default Map Subscriptions
+    # ========================================================================
+
+    async def list_default_subscriptions(self) -> list[DefaultMapSubscriptionWithName]:
+        """List all default map subscriptions with map names."""
+        return await self.db_session.select(
+            DEFAULT_SUB_LIST_STMT,
+            schema_type=DefaultMapSubscriptionWithName,
+        )
+
+    async def get_default_map_ids(self) -> list[UUID]:
+        """Get IDs of all default subscription maps (for signup flow)."""
+        rows = await self.db_session.select(DEFAULT_SUB_MAP_IDS_STMT)
+        return [row["map_id"] for row in rows]
+
+    async def add_default_subscription(self, map_id: UUID, added_by: UUID) -> bool:
+        """Add a map to default subscriptions. Returns True if added."""
+        result = await self.db_session.select_one_or_none(
+            DEFAULT_SUB_INSERT_STMT,
+            map_id,
+            added_by,
+        )
+        return result is not None
+
+    async def remove_default_subscription(self, map_id: UUID) -> bool:
+        """Remove a map from default subscriptions. Returns True if removed."""
+        result = await self.db_session.execute(DEFAULT_SUB_DELETE_STMT, map_id)
+        return result.num_rows > 0
 
 
 async def provide_instance_acl_service(

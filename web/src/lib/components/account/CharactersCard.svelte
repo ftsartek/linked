@@ -121,9 +121,7 @@
 <section class="flex h-full flex-col rounded-xl bg-black/75 p-6 backdrop-blur-2xl">
 	<div class="mb-4">
 		<h2 class="text-xl font-semibold">Characters</h2>
-		<p class="text-sm text-surface-400">
-			Manage characters linked to your account. Your primary character is shown in the navbar.
-		</p>
+		<p class="text-sm text-surface-400">Manage characters linked to your account</p>
 	</div>
 
 	<div class="flex-1">

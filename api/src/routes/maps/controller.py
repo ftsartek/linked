@@ -16,6 +16,7 @@ from api.auth.guards import require_acl_access, require_auth
 from routes.maps.dependencies import (
     ERR_LINK_NODE_MISMATCH,
     ERR_LINK_NOT_FOUND,
+    ERR_MAP_CREATION_DISABLED,
     ERR_MAP_NO_ACCESS,
     ERR_MAP_NO_EDIT_ACCESS,
     ERR_MAP_NOT_FOUND,
@@ -84,6 +85,7 @@ from routes.maps.service import (
     NodeLockedError,
     provide_map_service,
 )
+from services.instance_acl import InstanceACLService, provide_instance_acl_service
 
 
 class MapController(Controller):
@@ -94,6 +96,7 @@ class MapController(Controller):
     dependencies = {
         "map_service": Provide(provide_map_service),
         "event_publisher": Provide(provide_event_publisher),
+        "acl_service": Provide(provide_instance_acl_service),
     }
 
     @post("/")
@@ -101,9 +104,17 @@ class MapController(Controller):
         self,
         request: Request,
         map_service: MapService,
+        acl_service: InstanceACLService,
         data: CreateMapRequest,
     ) -> MapInfo:
         """Create a new map owned by the current user."""
+        # Check if map creation is allowed for this user
+        is_privileged = await acl_service.is_privileged(request.user.id)
+        if not is_privileged:
+            settings = await acl_service.get_settings()
+            if settings is None or not settings.allow_map_creation:
+                raise NotAuthorizedException(ERR_MAP_CREATION_DISABLED)
+
         return await map_service.create_map(
             owner_id=request.user.id,
             name=data.name,

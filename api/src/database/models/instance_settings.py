@@ -7,7 +7,7 @@ import msgspec
 
 # Get the current instance settings (singleton)
 SELECT_STMT = """\
-SELECT owner_id, is_open, date_created, date_updated
+SELECT owner_id, is_open, allow_map_creation, date_created, date_updated
 FROM instance_settings
 WHERE id = 1;
 """
@@ -25,7 +25,7 @@ UPDATE_IS_OPEN_STMT = """\
 UPDATE instance_settings
 SET is_open = $1, date_updated = NOW()
 WHERE id = 1
-RETURNING owner_id, is_open, date_created, date_updated;
+RETURNING owner_id, is_open, allow_map_creation, date_created, date_updated;
 """
 
 # Transfer ownership to a new user
@@ -33,7 +33,7 @@ UPDATE_OWNER_STMT = """\
 UPDATE instance_settings
 SET owner_id = $1, date_updated = NOW()
 WHERE id = 1
-RETURNING owner_id, is_open, date_created, date_updated;
+RETURNING owner_id, is_open, allow_map_creation, date_created, date_updated;
 """
 
 # Check if instance has an owner (for first-user detection)
@@ -46,11 +46,20 @@ CHECK_IS_OWNER_STMT = """\
 SELECT EXISTS(SELECT 1 FROM instance_settings WHERE id = 1 AND owner_id = $1);
 """
 
+# Update allow_map_creation setting
+UPDATE_ALLOW_MAP_CREATION_STMT = """\
+UPDATE instance_settings
+SET allow_map_creation = $1, date_updated = NOW()
+WHERE id = 1
+RETURNING owner_id, is_open, allow_map_creation, date_created, date_updated;
+"""
+
 
 class InstanceSettings(msgspec.Struct):
     """Instance-wide settings including owner."""
 
     owner_id: UUID
     is_open: bool = False
+    allow_map_creation: bool = True
     date_created: datetime | None = None
     date_updated: datetime | None = None

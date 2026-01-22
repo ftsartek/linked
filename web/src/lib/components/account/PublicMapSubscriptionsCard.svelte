@@ -40,9 +40,7 @@
 	<div class="mb-4 flex items-start justify-between gap-4">
 		<div>
 			<h2 class="text-xl font-semibold">Public Map Subscriptions</h2>
-			<p class="text-sm text-surface-400">
-				Browse and subscribe to public maps shared by the community.
-			</p>
+			<p class="text-sm text-surface-400">Browse and manage public shared maps</p>
 		</div>
 		<button
 			onclick={() => browseDialog.open()}
