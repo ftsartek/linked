@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
+from routes.maps.dependencies import PublicMapInfo
+
 # ============================================================================
 # Instance Status
 # ============================================================================
@@ -18,6 +20,7 @@ class InstanceStatusResponse:
     owner_id: UUID
     owner_name: str | None
     is_open: bool
+    allow_map_creation: bool
     character_acl_count: int
     corporation_acl_count: int
     alliance_acl_count: int
@@ -28,7 +31,8 @@ class InstanceStatusResponse:
 class UpdateInstanceRequest:
     """Request to update instance settings."""
 
-    is_open: bool
+    is_open: bool | None = None
+    allow_map_creation: bool | None = None
 
 
 # ============================================================================
@@ -165,3 +169,45 @@ class AddAllianceACLRequest:
     alliance_id: int
     alliance_name: str
     alliance_ticker: str
+
+
+# ============================================================================
+# Default Map Subscriptions
+# ============================================================================
+
+
+@dataclass
+class DefaultSubscriptionInfo:
+    """Default subscription entry for display."""
+
+    map_id: UUID
+    map_name: str
+    added_by: UUID | None
+    date_created: datetime | None
+
+
+@dataclass
+class DefaultSubscriptionListResponse:
+    """List of default subscription entries."""
+
+    entries: list[DefaultSubscriptionInfo]
+
+
+@dataclass
+class AddDefaultSubscriptionRequest:
+    """Request to add a map to default subscriptions."""
+
+    map_id: UUID
+
+
+# ============================================================================
+# Public Maps (Admin)
+# ============================================================================
+
+
+@dataclass
+class PublicMapListResponse:
+    """Paginated list of public maps for admin."""
+
+    maps: list[PublicMapInfo]
+    total: int

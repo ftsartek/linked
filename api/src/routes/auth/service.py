@@ -11,6 +11,7 @@ from api.auth.middleware import SessionUser
 from database.models.alliance import INSERT_STMT as ALLIANCE_INSERT
 from database.models.character import INSERT_STMT as CHARACTER_INSERT
 from database.models.corporation import INSERT_STMT as CORPORATION_INSERT
+from database.models.map_subscription import INSERT_STMT as MAP_SUBSCRIPTION_INSERT
 from database.models.refresh_token import UPSERT_STMT as REFRESH_TOKEN_UPSERT
 from database.models.user import INSERT_STMT as USER_INSERT
 from esi_client import ESIClient
@@ -57,6 +58,7 @@ class UserInfo:
     characters: list[CharacterInfo]
     is_owner: bool = False
     is_admin: bool = False
+    can_create_maps: bool = True
 
 
 @dataclass
@@ -251,12 +253,23 @@ class AuthService:
         primary_character_id = await self.get_primary_character_id(session_user.id)
         is_owner = await self.acl_service.is_owner(session_user.id)
         is_admin = await self.acl_service.is_admin(session_user.id)
+
+        # Determine if user can create maps
+        # Privileged users (owner/admin) can always create maps
+        # Regular users depend on the allow_map_creation setting
+        if is_owner or is_admin:
+            can_create_maps = True
+        else:
+            settings = await self.acl_service.get_settings()
+            can_create_maps = settings.allow_map_creation if settings else True
+
         return UserInfo(
             id=session_user.id,
             primary_character_id=primary_character_id,
             characters=characters,
             is_owner=is_owner,
             is_admin=is_admin,
+            can_create_maps=can_create_maps,
         )
 
     async def process_callback(
@@ -327,67 +340,13 @@ class AuthService:
         corporation_id, alliance_id = await self.fetch_and_upsert_affiliations(char_info.character_id)
 
         if is_linking:
-            if current_user is None:
-                raise ValueError("Must be logged in to link characters")
-
-            if existing_char is not None:
-                if existing_char.user_id != current_user.id:
-                    raise ValueError("Character is already linked to another account")
-                # Character already linked to this user, just update tokens
-            else:
-                # Create new character linked to current user
-                await self.create_character(
-                    char_info.character_id,
-                    current_user.id,
-                    char_info.character_name,
-                    corporation_id,
-                    alliance_id,
-                )
-
-            user_id = current_user.id
+            user_id = await self._handle_character_linking(
+                char_info, current_user, existing_char, corporation_id, alliance_id
+            )
+        elif existing_char is not None:
+            user_id = await self._handle_existing_user_login(existing_char)
         else:
-            # Normal login mode
-            if existing_char is not None:
-                # Character exists, log in as that user
-                # Check ACL for existing users
-                has_access = await self.acl_service.check_user_access(existing_char.user_id)
-                if not has_access:
-                    raise ACLDeniedError("Access denied by instance ACL")
-
-                user_id = existing_char.user_id
-            else:
-                # New user signup - check if this is the first user (becomes owner)
-                is_first_user = not await self.acl_service.has_owner()
-
-                if not is_first_user:
-                    # Check ACL for new signups (before user exists)
-                    has_access = await self.acl_service.check_character_access(
-                        char_info.character_id,
-                        corporation_id,
-                        alliance_id,
-                    )
-                    if not has_access:
-                        raise ACLDeniedError("Signups are restricted by ACL")
-
-                # Create new user and character
-                user_id = await self.create_user()
-                await self.create_character(
-                    char_info.character_id,
-                    user_id,
-                    char_info.character_name,
-                    corporation_id,
-                    alliance_id,
-                )
-                # Set first character as primary
-                await self.set_primary_character(user_id, char_info.character_id)
-
-                # If first user, make them the instance owner
-                if is_first_user:
-                    await self.acl_service.set_owner(user_id)
-                    logger.info(
-                        "First user %s set as instance owner",
-                        char_info.character_name,
-                    )
+            user_id = await self._handle_new_user_signup(char_info, corporation_id, alliance_id)
 
         # Store encrypted refresh token
         await self.store_refresh_token(
@@ -395,6 +354,130 @@ class AuthService:
             tokens.refresh_token,
             char_info.scopes,
         )
+
+        return user_id
+
+    async def _handle_character_linking(
+        self,
+        char_info: SSOCharacterInfo,
+        current_user: SessionUser | None,
+        existing_char: CharacterUserInfo | None,
+        corporation_id: int | None,
+        alliance_id: int | None,
+    ) -> UUID:
+        """Handle linking an additional character to an existing user account.
+
+        Args:
+            char_info: Character info from JWT validation
+            current_user: Current session user (must be authenticated)
+            existing_char: Existing character record if any
+            corporation_id: Character's corporation ID (may be None if ESI unavailable)
+            alliance_id: Character's alliance ID if any
+
+        Returns:
+            The current user's ID
+
+        Raises:
+            ValueError: If not logged in, or character belongs to another user
+        """
+        if current_user is None:
+            raise ValueError("Must be logged in to link characters")
+
+        if existing_char is not None:
+            if existing_char.user_id != current_user.id:
+                raise ValueError("Character is already linked to another account")
+            # Character already linked to this user, just update tokens
+        else:
+            # Create new character linked to current user
+            await self.create_character(
+                char_info.character_id,
+                current_user.id,
+                char_info.character_name,
+                corporation_id,
+                alliance_id,
+            )
+
+        return current_user.id
+
+    async def _handle_existing_user_login(self, existing_char: CharacterUserInfo) -> UUID:
+        """Handle login for an existing user via known character.
+
+        Args:
+            existing_char: The existing character record
+
+        Returns:
+            The user ID associated with the character
+
+        Raises:
+            ACLDeniedError: If access is denied by instance ACL
+        """
+        has_access = await self.acl_service.check_user_access(existing_char.user_id)
+        if not has_access:
+            raise ACLDeniedError("Access denied by instance ACL")
+
+        return existing_char.user_id
+
+    async def _handle_new_user_signup(
+        self,
+        char_info: SSOCharacterInfo,
+        corporation_id: int | None,
+        alliance_id: int | None,
+    ) -> UUID:
+        """Handle signup for a new user.
+
+        Creates a new user account and character, handles first-user ownership,
+        and subscribes to default maps.
+
+        Args:
+            char_info: Character info from JWT validation
+            corporation_id: Character's corporation ID (may be None if ESI unavailable)
+            alliance_id: Character's alliance ID if any
+
+        Returns:
+            The newly created user ID
+
+        Raises:
+            ACLDeniedError: If signups are restricted by ACL
+        """
+        is_first_user = not await self.acl_service.has_owner()
+
+        if not is_first_user:
+            # Check ACL for new signups (before user exists)
+            has_access = await self.acl_service.check_character_access(
+                char_info.character_id,
+                corporation_id,
+                alliance_id,
+            )
+            if not has_access:
+                raise ACLDeniedError("Signups are restricted by ACL")
+
+        # Create new user and character
+        user_id = await self.create_user()
+        await self.create_character(
+            char_info.character_id,
+            user_id,
+            char_info.character_name,
+            corporation_id,
+            alliance_id,
+        )
+        # Set first character as primary
+        await self.set_primary_character(user_id, char_info.character_id)
+
+        # If first user, make them the instance owner
+        if is_first_user:
+            await self.acl_service.set_owner(user_id)
+            logger.info("First user %s set as instance owner", char_info.character_name)
+
+        # Subscribe new user to default maps
+        default_map_ids = await self.acl_service.get_default_map_ids()
+        for map_id in default_map_ids:
+            await self.db_session.execute(MAP_SUBSCRIPTION_INSERT, map_id, user_id)
+        if default_map_ids:
+            logger.info(
+                "Subscribed new user %s to %d default maps",
+                char_info.character_name,
+                len(default_map_ids),
+            )
 
         return user_id
 

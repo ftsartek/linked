@@ -15,6 +15,7 @@ from routes.admin.dependencies import (
     AddAllianceACLRequest,
     AddCharacterACLRequest,
     AddCorporationACLRequest,
+    AddDefaultSubscriptionRequest,
     AdminInfo,
     AdminListResponse,
     AllianceACLEntry,
@@ -23,10 +24,14 @@ from routes.admin.dependencies import (
     CharacterACLListResponse,
     CorporationACLEntry,
     CorporationACLListResponse,
+    DefaultSubscriptionInfo,
+    DefaultSubscriptionListResponse,
     InstanceStatusResponse,
+    PublicMapListResponse,
     TransferOwnershipRequest,
     UpdateInstanceRequest,
 )
+from routes.maps.service import MapService, provide_map_service
 from services.instance_acl import InstanceACLService, provide_instance_acl_service
 
 
@@ -37,6 +42,7 @@ class AdminController(Controller):
     guards = [require_auth]
     dependencies = {
         "acl_service": Provide(provide_instance_acl_service),
+        "map_service": Provide(provide_map_service),
     }
 
     # ========================================================================
@@ -68,6 +74,7 @@ class AdminController(Controller):
             owner_id=settings.owner_id,
             owner_name=owner_name,
             is_open=settings.is_open,
+            allow_map_creation=settings.allow_map_creation,
             character_acl_count=counts.character_count,
             corporation_acl_count=counts.corporation_count,
             alliance_acl_count=counts.alliance_count,
@@ -88,8 +95,11 @@ class AdminController(Controller):
         acl_service: InstanceACLService,
         data: UpdateInstanceRequest,
     ) -> InstanceStatusResponse:
-        """Update instance settings (is_open)."""
-        await acl_service.set_open(data.is_open)
+        """Update instance settings (is_open, allow_map_creation)."""
+        if data.is_open is not None:
+            await acl_service.set_open(data.is_open)
+        if data.allow_map_creation is not None:
+            await acl_service.set_allow_map_creation(data.allow_map_creation)
         return await self._get_instance_status(acl_service)
 
     @post("/instance/transfer", guards=[require_owner])
@@ -338,3 +348,104 @@ class AdminController(Controller):
         removed = await acl_service.remove_alliance_acl(alliance_id)
         if not removed:
             raise NotFoundException("Alliance ACL entry not found")
+
+    # ========================================================================
+    # Default Map Subscriptions
+    # ========================================================================
+
+    @get("/default-subscriptions", guards=[require_admin])
+    async def list_default_subscriptions(
+        self,
+        acl_service: InstanceACLService,
+    ) -> DefaultSubscriptionListResponse:
+        """List all default map subscriptions."""
+        entries = await acl_service.list_default_subscriptions()
+        return DefaultSubscriptionListResponse(
+            entries=[
+                DefaultSubscriptionInfo(
+                    map_id=e.map_id,
+                    map_name=e.map_name,
+                    added_by=e.added_by,
+                    date_created=e.date_created,
+                )
+                for e in entries
+            ]
+        )
+
+    @post("/default-subscriptions", guards=[require_admin], status_code=HTTP_204_NO_CONTENT)
+    async def add_default_subscription(
+        self,
+        request: Request,
+        acl_service: InstanceACLService,
+        data: AddDefaultSubscriptionRequest,
+    ) -> None:
+        """Add a public map to default subscriptions.
+
+        New users will be automatically subscribed to this map on signup.
+        The map must be public.
+        """
+        # Verify the map exists and is public
+        map_info = await acl_service.db_session.select_one_or_none(
+            """
+            SELECT id, is_public FROM map
+            WHERE id = $1 AND date_deleted IS NULL
+            """,
+            data.map_id,
+        )
+        if map_info is None:
+            raise NotFoundException("Map not found")
+        if not map_info["is_public"]:
+            raise ClientException("Only public maps can be added to default subscriptions")
+
+        await acl_service.add_default_subscription(data.map_id, added_by=request.user.id)
+
+    @delete(
+        "/default-subscriptions/{map_id:uuid}",
+        guards=[require_admin],
+        status_code=HTTP_204_NO_CONTENT,
+    )
+    async def remove_default_subscription(
+        self,
+        acl_service: InstanceACLService,
+        map_id: UUID,
+    ) -> None:
+        """Remove a map from default subscriptions."""
+        removed = await acl_service.remove_default_subscription(map_id)
+        if not removed:
+            raise NotFoundException("Default subscription not found")
+
+    # ========================================================================
+    # Public Maps (Admin Access - No Filtering)
+    # ========================================================================
+
+    @get("/public-maps", guards=[require_admin])
+    async def list_all_public_maps(
+        self,
+        map_service: MapService,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> PublicMapListResponse:
+        """List ALL public maps without filtering (for admin use).
+
+        Unlike the user-facing public maps endpoint, this does not filter out
+        maps the admin already owns or has access to, allowing admins to add
+        their own public maps as default subscriptions.
+        """
+        maps, total = await map_service.list_all_public_maps(limit=limit, offset=offset)
+        return PublicMapListResponse(maps=maps, total=total)
+
+    @get("/public-maps/search", guards=[require_admin])
+    async def search_all_public_maps(
+        self,
+        map_service: MapService,
+        q: str,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> PublicMapListResponse:
+        """Search ALL public maps without filtering (for admin use).
+
+        Unlike the user-facing search endpoint, this does not filter out
+        maps the admin already owns or has access to.
+        """
+        maps, total = await map_service.search_all_public_maps(query=q, limit=limit, offset=offset)
+        return PublicMapListResponse(maps=maps, total=total)

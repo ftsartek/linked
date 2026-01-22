@@ -2,7 +2,7 @@
 Description: Add instance-level access control with owner/admin roles and character/corporation/alliance ACLs
 Version: 20260119205640
 Created: 2026-01-19T20:56:40+00:00
-Author: Claude"""
+Author: Jordan Russell <jordan@artek.nz>"""
 
 from collections.abc import Iterable
 
