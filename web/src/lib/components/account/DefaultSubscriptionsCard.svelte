@@ -154,7 +154,16 @@
 	});
 </script>
 
-<section class="flex h-full flex-col rounded-xl bg-black/75 p-6 backdrop-blur-2xl">
+<section class="relative flex h-full flex-col rounded-xl bg-black/75 p-6 backdrop-blur-2xl">
+	{#if loading}
+		<div class="absolute top-0 right-0 left-0 z-10">
+			<Progress value={null} class="h-1 w-full rounded-none">
+				<Progress.Track class="h-1 rounded-none bg-transparent">
+					<Progress.Range class="h-1 rounded-none bg-primary-500" />
+				</Progress.Track>
+			</Progress>
+		</div>
+	{/if}
 	<!-- Header -->
 	<div class="mb-4">
 		<h2 class="text-xl font-semibold">Default Subscriptions</h2>
@@ -164,14 +173,7 @@
 	</div>
 
 	{#if loading}
-		<div class="flex flex-1 items-center justify-center py-8">
-			<Progress value={null}>
-				<Progress.Circle>
-					<Progress.CircleTrack />
-					<Progress.CircleRange />
-				</Progress.Circle>
-			</Progress>
-		</div>
+		<div class="flex flex-1 items-center justify-center py-8"></div>
 	{:else}
 		<!-- Add Button -->
 		<div class="mb-4">
@@ -235,16 +237,16 @@
 				</div>
 
 				<!-- Results -->
-				<div class="flex-1 overflow-auto">
+				<div class="relative flex-1 overflow-auto">
 					{#if searchingPublic}
-						<div class="flex justify-center py-8">
-							<Progress value={null}>
-								<Progress.Circle>
-									<Progress.CircleTrack />
-									<Progress.CircleRange />
-								</Progress.Circle>
+						<div class="absolute top-0 right-0 left-0 z-10">
+							<Progress value={null} class="h-1 w-full rounded-none">
+								<Progress.Track class="h-1 rounded-none bg-transparent">
+									<Progress.Range class="h-1 rounded-none bg-primary-500" />
+								</Progress.Track>
 							</Progress>
 						</div>
+						<div class="flex justify-center py-8"></div>
 					{:else if publicMaps.length === 0}
 						<div class="py-8 text-center text-surface-400">
 							{searchQuery.length >= 2
