@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from sqlspec.adapters.asyncpg.driver import AsyncpgDriver
 from sqlspec.extensions.litestar import SQLSpecPlugin
 
-from database import db_config, sql
+from database import sql
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -35,7 +35,7 @@ async def provide_session_from_scope(state: State, scope: Scope) -> AsyncIterato
     Yields:
         An AsyncpgDriver session instance.
     """
-    plugin_state = sqlspec_plugin._get_plugin_state(db_config)
+    plugin_state = sqlspec_plugin._get_plugin_state("db_session")
 
     pool = state.get(plugin_state.pool_key)
     if pool is None:
