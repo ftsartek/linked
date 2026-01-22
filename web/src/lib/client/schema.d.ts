@@ -951,6 +951,40 @@ export interface paths {
 		patch: operations['MapsMapIdNodesNodeIdSystemUpdateNodeSystem'];
 		trace?: never;
 	};
+	'/reference/wormholes/{wormhole_id}': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GetWormhole */
+		get: operations['ReferenceWormholesWormholeIdGetWormhole'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	'/reference/wormholes': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** ListWormholes */
+		get: operations['ReferenceWormholesListWormholes'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/routes/{map_id}': {
 		parameters: {
 			query?: never;
@@ -1579,6 +1613,19 @@ export interface components {
 			security_status?: number | null;
 			system_class?: number | null;
 		};
+		/** GetWormholeWormholeTypeDetailResponseBody */
+		GetWormholeWormholeTypeDetailResponseBody: {
+			id: number;
+			code: string;
+			target_class?: number | null;
+			target_name: string;
+			sources?: number[] | null;
+			source_names: string[];
+			lifetime?: number | null;
+			mass_total?: number | null;
+			mass_jump_max?: number | null;
+			mass_regen?: number | null;
+		};
 		/** HealthResponse */
 		HealthResponse: {
 			/** @enum {string} */
@@ -1606,6 +1653,13 @@ export interface components {
 			name: string;
 			system_class?: number | null;
 			class_name?: string | null;
+		};
+		/** ListWormholesWormholeTypeSummaryResponseBody */
+		ListWormholesWormholeTypeSummaryResponseBody: {
+			id: number;
+			code: string;
+			target_class?: number | null;
+			sources?: number[] | null;
 		};
 		/** LocalEntitySearchResult */
 		LocalEntitySearchResult: {
@@ -4405,6 +4459,66 @@ export interface operations {
 							  }
 							| unknown[];
 					};
+				};
+			};
+		};
+	};
+	ReferenceWormholesWormholeIdGetWormhole: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				wormhole_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['GetWormholeWormholeTypeDetailResponseBody'];
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	ReferenceWormholesListWormholes: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ListWormholesWormholeTypeSummaryResponseBody'][];
 				};
 			};
 		};
