@@ -264,7 +264,18 @@
 	}
 </script>
 
-<div class="flex h-full min-h-80 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl">
+<div
+	class="relative flex h-full min-h-80 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl"
+>
+	{#if loading}
+		<div class="absolute top-0 right-0 left-0 z-10">
+			<Progress value={null} class="h-1 w-full rounded-none">
+				<Progress.Track class="h-1 rounded-none bg-transparent">
+					<Progress.Range class="h-1 rounded-none bg-primary-500" />
+				</Progress.Track>
+			</Progress>
+		</div>
+	{/if}
 	<!-- Header -->
 	<div
 		class="flex w-full flex-row items-center justify-between border-b-2 border-primary-950/50 px-3 py-2"
@@ -282,14 +293,7 @@
 				<p class="text-sm text-surface-400">Select a node to view notes</p>
 			</div>
 		{:else if loading}
-			<div class="flex h-full items-center justify-center">
-				<Progress value={null} class="w-fit items-center">
-					<Progress.Circle>
-						<Progress.CircleTrack />
-						<Progress.CircleRange />
-					</Progress.Circle>
-				</Progress>
-			</div>
+			<div class="flex h-full items-center justify-center"></div>
 		{:else if error}
 			<div class="flex h-full items-center justify-center">
 				<p class="text-sm text-error-500">{error}</p>

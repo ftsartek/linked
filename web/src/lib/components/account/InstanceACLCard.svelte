@@ -269,7 +269,16 @@
 	}
 </script>
 
-<section class="flex h-full flex-col rounded-xl bg-black/75 p-6 backdrop-blur-2xl">
+<section class="relative flex h-full flex-col rounded-xl bg-black/75 p-6 backdrop-blur-2xl">
+	{#if loading}
+		<div class="absolute top-0 right-0 left-0 z-10">
+			<Progress value={null} class="h-1 w-full rounded-none">
+				<Progress.Track class="h-1 rounded-none bg-transparent">
+					<Progress.Range class="h-1 rounded-none bg-primary-500" />
+				</Progress.Track>
+			</Progress>
+		</div>
+	{/if}
 	<!-- Header -->
 	<div class="mb-4">
 		<h2 class="text-xl font-semibold">Instance Access Control</h2>
@@ -373,14 +382,7 @@
 		<!-- Content based on active tab -->
 		<div class="flex-1 overflow-auto">
 			{#if loading}
-				<div class="flex items-center justify-center py-8">
-					<Progress value={null}>
-						<Progress.Circle>
-							<Progress.CircleTrack />
-							<Progress.CircleRange />
-						</Progress.Circle>
-					</Progress>
-				</div>
+				<div class="flex items-center justify-center py-8"></div>
 			{:else if activeTab === 'characters'}
 				<div class="grid gap-3">
 					{#each characters as char (char.character_id)}

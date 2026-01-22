@@ -227,7 +227,18 @@
 	<Portal>
 		<Dialog.Backdrop class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs" />
 		<Dialog.Positioner class="fixed inset-0 z-50 flex items-center justify-center p-4">
-			<Dialog.Content class="w-full max-w-lg rounded-lg bg-black/50 p-6 shadow-xl backdrop-blur-sm">
+			<Dialog.Content
+				class="relative w-full max-w-lg rounded-lg bg-black/50 p-6 shadow-xl backdrop-blur-sm"
+			>
+				{#if loading}
+					<div class="absolute top-0 right-0 left-0 z-10">
+						<Progress value={null} class="h-1 w-full rounded-none">
+							<Progress.Track class="h-1 rounded-none bg-transparent">
+								<Progress.Range class="h-1 rounded-none bg-primary-500" />
+							</Progress.Track>
+						</Progress>
+					</div>
+				{/if}
 				<Dialog.Title class="mb-4 text-xl font-bold text-white">Share Map</Dialog.Title>
 				<div>
 					<!-- Search to add new access -->
@@ -273,14 +284,7 @@
 					</div>
 
 					{#if loading}
-						<div class="flex justify-center py-8">
-							<Progress value={null} class="w-fit">
-								<Progress.Circle>
-									<Progress.CircleTrack />
-									<Progress.CircleRange />
-								</Progress.Circle>
-							</Progress>
-						</div>
+						<div class="flex justify-center py-8"></div>
 					{:else if sharingTab === 'characters'}
 						<!-- Characters Tab -->
 						<div class="space-y-3">
