@@ -27,6 +27,7 @@
 		<a href={resolve('/reference/wormholes')} class="text-surface-400 hover:text-white">
 			Wormholes
 		</a>
+		<a href={resolve('/reference/systems')} class="text-surface-400 hover:text-white"> Systems </a>
 	</div>
 	{#if $user !== undefined && $user !== null}
 		<div class="flex items-center gap-3">

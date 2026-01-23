@@ -3,6 +3,18 @@ import type { components } from '$lib/client/schema';
 export type WormholeSummary = components['schemas']['ListWormholesWormholeTypeSummaryResponseBody'];
 export type WormholeDetail = components['schemas']['GetWormholeWormholeTypeDetailResponseBody'];
 
+// Grouped wormhole systems response types
+export type WormholeSystemsGrouped =
+	components['schemas']['ListWormholeSystemsWormholeSystemsGroupedResponseBody'];
+export type WormholeRegion =
+	components['schemas']['ListWormholeSystemsWormholeSystemsGrouped_0WormholeRegionResponseBody'];
+export type WormholeConstellation =
+	components['schemas']['ListWormholeSystemsWormholeRegion_0WormholeConstellationResponseBody'];
+export type WormholeSystemItem =
+	components['schemas']['ListWormholeSystemsWormholeConstellation_0WormholeSystemItemResponseBody'];
+export type WormholeSystemStatic =
+	components['schemas']['ListWormholeSystemsWormholeSystemItem_0WormholeSystemStaticResponseBody'];
+
 export function formatMass(mass: number | null | undefined): string {
 	if (mass === null || mass === undefined) return '-';
 	if (mass >= 1_000_000_000) {
