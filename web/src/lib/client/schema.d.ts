@@ -968,6 +968,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/reference/systems': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** ListWormholeSystems */
+		get: operations['ReferenceSystemsListWormholeSystems'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/reference/wormholes': {
 		parameters: {
 			query?: never;
@@ -1653,6 +1670,41 @@ export interface components {
 			name: string;
 			system_class?: number | null;
 			class_name?: string | null;
+		};
+		/** ListWormholeSystemsWormholeConstellation_0WormholeSystemItemResponseBody */
+		ListWormholeSystemsWormholeConstellation_0WormholeSystemItemResponseBody: {
+			id: number;
+			name: string;
+			system_class: number;
+			class_name: string;
+			effect_id?: number | null;
+			effect_name?: string | null;
+			shattered: boolean;
+			statics: components['schemas']['ListWormholeSystemsWormholeSystemItem_0WormholeSystemStaticResponseBody'][];
+		};
+		/** ListWormholeSystemsWormholeRegion_0WormholeConstellationResponseBody */
+		ListWormholeSystemsWormholeRegion_0WormholeConstellationResponseBody: {
+			id: number;
+			name: string;
+			systems: components['schemas']['ListWormholeSystemsWormholeConstellation_0WormholeSystemItemResponseBody'][];
+		};
+		/** ListWormholeSystemsWormholeSystemItem_0WormholeSystemStaticResponseBody */
+		ListWormholeSystemsWormholeSystemItem_0WormholeSystemStaticResponseBody: {
+			id: number;
+			code: string;
+			target_class?: number | null;
+			target_name: string;
+		};
+		/** ListWormholeSystemsWormholeSystemsGroupedResponseBody */
+		ListWormholeSystemsWormholeSystemsGroupedResponseBody: {
+			regions: components['schemas']['ListWormholeSystemsWormholeSystemsGrouped_0WormholeRegionResponseBody'][];
+			total_systems: number;
+		};
+		/** ListWormholeSystemsWormholeSystemsGrouped_0WormholeRegionResponseBody */
+		ListWormholeSystemsWormholeSystemsGrouped_0WormholeRegionResponseBody: {
+			id: number;
+			name: string;
+			constellations: components['schemas']['ListWormholeSystemsWormholeRegion_0WormholeConstellationResponseBody'][];
 		};
 		/** ListWormholesWormholeTypeSummaryResponseBody */
 		ListWormholesWormholeTypeSummaryResponseBody: {
@@ -4481,6 +4533,51 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['GetWormholeWormholeTypeDetailResponseBody'];
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
+				};
+			};
+		};
+	};
+	ReferenceSystemsListWormholeSystems: {
+		parameters: {
+			query?: {
+				class?: number[] | null;
+				effect?: number | null;
+				region?: number | null;
+				constellation?: number | null;
+				shattered?: boolean | null;
+				static?: number | null;
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['ListWormholeSystemsWormholeSystemsGroupedResponseBody'];
 				};
 			};
 			/** @description Bad request syntax or unsupported method */
