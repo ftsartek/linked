@@ -364,7 +364,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/38/49/57857ba9d02ba4df3
 
 [[package]]
 name = "linked-eve"
-version = "0.0.13"
+version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "asyncclick" },
