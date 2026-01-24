@@ -19,7 +19,16 @@
 </script>
 
 <nav class="flex items-center justify-between bg-black/75 p-4 backdrop-blur-2xl">
-	<a href={resolve('/maps')} class="text-xl font-bold">Linked</a>
+	<div class="flex items-center gap-4">
+		<a href={resolve('/maps')} class="text-xl font-bold">Linked</a>
+		{#if $user}
+			<a href={resolve('/maps')} class="text-surface-400 hover:text-white">Maps</a>
+		{/if}
+		<a href={resolve('/reference/wormholes')} class="text-surface-400 hover:text-white">
+			Wormholes
+		</a>
+		<a href={resolve('/reference/systems')} class="text-surface-400 hover:text-white"> Systems </a>
+	</div>
 	{#if $user !== undefined && $user !== null}
 		<div class="flex items-center gap-3">
 			{#if primaryCharacter}
