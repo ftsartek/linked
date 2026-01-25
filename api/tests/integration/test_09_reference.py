@@ -26,7 +26,7 @@ from tests.integration.conftest import IntegrationTestState
 # =============================================================================
 
 
-@pytest.mark.order(700)
+@pytest.mark.order(900)
 async def test_list_wormholes(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -52,7 +52,7 @@ async def test_list_wormholes(
         assert item["sources"] is None or isinstance(item["sources"], list)
 
 
-@pytest.mark.order(701)
+@pytest.mark.order(901)
 async def test_list_wormholes_contains_known_types(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -71,7 +71,7 @@ async def test_list_wormholes_contains_known_types(
     assert "H296" in codes
 
 
-@pytest.mark.order(702)
+@pytest.mark.order(902)
 async def test_list_wormholes_unauthenticated(
     unauthenticated_client: AsyncClient,
 ) -> None:
@@ -89,7 +89,7 @@ async def test_list_wormholes_unauthenticated(
 # =============================================================================
 
 
-@pytest.mark.order(710)
+@pytest.mark.order(910)
 async def test_get_wormhole_detail_k162(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -120,7 +120,7 @@ async def test_get_wormhole_detail_k162(
     assert isinstance(data["source_names"], list)
 
 
-@pytest.mark.order(711)
+@pytest.mark.order(911)
 async def test_get_wormhole_detail_with_target_class(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -137,7 +137,7 @@ async def test_get_wormhole_detail_with_target_class(
     assert data["target_name"] == "C5"
 
 
-@pytest.mark.order(712)
+@pytest.mark.order(912)
 async def test_get_wormhole_detail_unauthenticated(
     unauthenticated_client: AsyncClient,
 ) -> None:
@@ -149,7 +149,7 @@ async def test_get_wormhole_detail_unauthenticated(
     assert data["code"] == "K162"
 
 
-@pytest.mark.order(713)
+@pytest.mark.order(913)
 async def test_get_wormhole_not_found(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -160,7 +160,7 @@ async def test_get_wormhole_not_found(
     assert response.status_code == 404
 
 
-@pytest.mark.order(714)
+@pytest.mark.order(914)
 async def test_get_wormhole_invalid_id(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -198,7 +198,7 @@ def _flatten_systems(data: dict) -> list[dict]:
     return systems
 
 
-@pytest.mark.order(720)
+@pytest.mark.order(920)
 async def test_list_wormhole_systems(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -251,7 +251,7 @@ async def test_list_wormhole_systems(
                 assert isinstance(system["statics"], list)
 
 
-@pytest.mark.order(721)
+@pytest.mark.order(921)
 async def test_list_wormhole_systems_contains_known_systems(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -270,7 +270,7 @@ async def test_list_wormhole_systems_contains_known_systems(
     assert J345678_SYSTEM_ID in system_ids
 
 
-@pytest.mark.order(722)
+@pytest.mark.order(922)
 async def test_list_wormhole_systems_with_statics(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -302,7 +302,7 @@ async def test_list_wormhole_systems_with_statics(
     assert n944_static["target_name"] == "C5"
 
 
-@pytest.mark.order(723)
+@pytest.mark.order(923)
 async def test_list_wormhole_systems_with_effects(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -333,7 +333,7 @@ async def test_list_wormhole_systems_with_effects(
     assert j345678["effect_name"] is None
 
 
-@pytest.mark.order(724)
+@pytest.mark.order(924)
 async def test_list_wormhole_systems_unauthenticated(
     unauthenticated_client: AsyncClient,
 ) -> None:
@@ -348,7 +348,7 @@ async def test_list_wormhole_systems_unauthenticated(
     assert data["total_systems"] >= 3
 
 
-@pytest.mark.order(725)
+@pytest.mark.order(925)
 async def test_list_wormhole_systems_grouping(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -379,7 +379,7 @@ async def test_list_wormhole_systems_grouping(
 # =============================================================================
 
 
-@pytest.mark.order(730)
+@pytest.mark.order(930)
 async def test_filter_wormhole_systems_by_class(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -405,7 +405,7 @@ async def test_filter_wormhole_systems_by_class(
     assert J234567_SYSTEM_ID not in system_ids
 
 
-@pytest.mark.order(731)
+@pytest.mark.order(931)
 async def test_filter_wormhole_systems_by_effect(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -428,7 +428,7 @@ async def test_filter_wormhole_systems_by_effect(
     assert J123456_SYSTEM_ID in system_ids
 
 
-@pytest.mark.order(732)
+@pytest.mark.order(932)
 async def test_filter_wormhole_systems_by_static(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -452,7 +452,7 @@ async def test_filter_wormhole_systems_by_static(
     assert J234567_SYSTEM_ID in system_ids
 
 
-@pytest.mark.order(733)
+@pytest.mark.order(933)
 async def test_filter_wormhole_systems_combined_filters(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -477,7 +477,7 @@ async def test_filter_wormhole_systems_combined_filters(
     assert J345678_SYSTEM_ID not in system_ids
 
 
-@pytest.mark.order(734)
+@pytest.mark.order(934)
 async def test_filter_wormhole_systems_no_results(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001
@@ -493,7 +493,7 @@ async def test_filter_wormhole_systems_no_results(
     assert data["total_systems"] == 0
 
 
-@pytest.mark.order(735)
+@pytest.mark.order(935)
 async def test_filter_wormhole_systems_by_shattered(
     test_client: AsyncClient,
     test_state: IntegrationTestState,  # noqa: ARG001

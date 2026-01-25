@@ -7,7 +7,7 @@ without making real HTTP requests.
 from __future__ import annotations
 
 from esi_client import ESIClient
-from esi_client.models import ESIAlliance, ESICharacter, ESICorporation
+from esi_client.models import ESIAlliance, ESICharacter, ESICorporation, ServerStatus
 from tests.factories.static_data import (
     AMARR_SYSTEM_ID,
     DODIXIE_SYSTEM_ID,
@@ -103,6 +103,15 @@ class MockESIClient(ESIClient):
         return ESIAlliance(
             name=f"Alliance {alliance_id}",
             ticker="ALLY",
+        )
+
+    async def get_server_status(self) -> ServerStatus:
+        """Return mock server status data."""
+        return ServerStatus(
+            players=12345,
+            server_version="1234567",
+            start_time="2026-01-25T11:00:00Z",
+            vip=None,
         )
 
     async def get_route(

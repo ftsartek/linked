@@ -1019,6 +1019,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/status/eve': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		/** GetEveStatus */
+		get: operations['StatusEveGetEveStatus'];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/universe/images/{entity_type}/{entity_id}': {
 		parameters: {
 			query?: never;
@@ -1523,6 +1540,13 @@ export interface components {
 		DeleteSignatureResponse: {
 			/** Format: uuid */
 			signature_id: string;
+		};
+		/** EVEStatusResponse */
+		EVEStatusResponse: {
+			online: boolean;
+			/** @default false */
+			vip: boolean;
+			players?: number | null;
 		};
 		/**
 		 * EdgeType
@@ -4663,6 +4687,26 @@ export interface operations {
 							  }
 							| unknown[];
 					};
+				};
+			};
+		};
+	};
+	StatusEveGetEveStatus: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Request fulfilled, document follows */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['EVEStatusResponse'];
 				};
 			};
 		};

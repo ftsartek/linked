@@ -1,10 +1,11 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { apiClient } from '$lib/client/client';
+	import { apiClient, getApiUrl } from '$lib/client/client';
 	import { user } from '$lib/stores/user';
 	import { resolve } from '$app/paths';
 	import { Settings, LogOut } from 'lucide-svelte';
 	import { getCharacterPortrait } from '$lib/helpers/images';
+	import ServerStatus from './ServerStatus.svelte';
 
 	// Get primary character, falling back to first character if no primary set
 	const primaryCharacter = $derived(
@@ -18,7 +19,7 @@
 	}
 </script>
 
-<nav class="flex items-center justify-between bg-black/75 p-4 backdrop-blur-2xl">
+<nav class="relative flex min-h-16 items-center justify-between bg-black/75 p-4 backdrop-blur-2xl">
 	<div class="flex items-center gap-4">
 		<a href={resolve('/maps')} class="text-xl font-bold">Linked</a>
 		{#if $user}
@@ -28,6 +29,9 @@
 			Wormholes
 		</a>
 		<a href={resolve('/reference/systems')} class="text-surface-400 hover:text-white"> Systems </a>
+	</div>
+	<div class="absolute left-1/2 -translate-x-1/2">
+		<ServerStatus />
 	</div>
 	{#if $user !== undefined && $user !== null}
 		<div class="flex items-center gap-3">
@@ -49,5 +53,10 @@
 				<LogOut size={16} />
 			</button>
 		</div>
+	{:else if $user === null}
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- External API URL, not a SvelteKit route -->
+		<a href={getApiUrl('/auth/login')}>
+			<img src="/eve-login-dark-sm.png" alt="Login with EVE Online" class="h-8" />
+		</a>
 	{/if}
 </nav>

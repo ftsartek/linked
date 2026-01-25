@@ -7,6 +7,9 @@ from .search import (
     ESINameResult,
     ESISearchResponse,
 )
+from .status import (
+    ServerStatus,
+)
 from .universe import (
     Constellation,
     DogmaAttribute,
@@ -29,6 +32,7 @@ __all__ = [
     "Planet",
     "Position",
     "Region",
+    "ServerStatus",
     "System",
     "UniverseGroup",
     "UniverseType",
