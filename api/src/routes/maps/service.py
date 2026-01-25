@@ -142,6 +142,7 @@ class MapService(RouteBaseService):
         auto_layout: bool = False,
         node_sep: int = 50,
         rank_sep: int = 50,
+        location_tracking_enabled: bool = True,
     ) -> MapInfo:
         """Create a new map owned by the given user."""
         return await self.db_session.select_one(
@@ -156,6 +157,7 @@ class MapService(RouteBaseService):
             auto_layout,
             node_sep,
             rank_sep,
+            location_tracking_enabled,
             schema_type=MapInfo,
         )
 
@@ -231,6 +233,7 @@ class MapService(RouteBaseService):
         auto_layout: bool | None = None,
         node_sep: int | None = None,
         rank_sep: int | None = None,
+        location_tracking_enabled: bool | None = None,
     ) -> MapInfo | None:
         """Update a map. Returns None if map doesn't exist."""
         return await self.db_session.select_one_or_none(
@@ -245,6 +248,7 @@ class MapService(RouteBaseService):
             auto_layout,
             node_sep,
             rank_sep,
+            location_tracking_enabled,
             schema_type=MapInfo,
         )
 

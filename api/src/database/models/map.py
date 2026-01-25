@@ -7,11 +7,13 @@ import msgspec
 
 INSERT_STMT = """\
 INSERT INTO map
-    (owner_id, name, description, is_public, public_read_only, edge_type, rankdir, auto_layout, node_sep, rank_sep)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    (owner_id, name, description, is_public, public_read_only, edge_type, rankdir,
+     auto_layout, node_sep, rank_sep, location_tracking_enabled)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 RETURNING
-    id, owner_id, name, description, is_public, public_read_only, edge_type,
-    rankdir, auto_layout, node_sep, rank_sep, date_created, date_updated, true AS edit_access;
+    id, owner_id, name, description, is_public, public_read_only, edge_type, rankdir,
+    auto_layout, node_sep, rank_sep, location_tracking_enabled, date_created, date_updated,
+    true AS edit_access;
 """
 
 UPDATE_STMT = """\
@@ -25,10 +27,12 @@ SET name = $2,
     auto_layout = $8,
     node_sep = $9,
     rank_sep = $10,
+    location_tracking_enabled = $11,
     date_updated = NOW()
 WHERE id = $1
-RETURNING id, owner_id, name, description, is_public, public_read_only, edge_type,
-    rankdir, auto_layout, node_sep, rank_sep, date_created, date_updated, true AS edit_access;
+RETURNING id, owner_id, name, description, is_public, public_read_only, edge_type, rankdir,
+    auto_layout, node_sep, rank_sep, location_tracking_enabled, date_created, date_updated,
+    true AS edit_access;
 """
 
 
@@ -45,6 +49,7 @@ class Map(msgspec.Struct):
     auto_layout: bool = False
     node_sep: int = 50
     rank_sep: int = 50
+    location_tracking_enabled: bool = True
     id: UUID | None = None
     date_created: datetime | None = None
     date_updated: datetime | None = None

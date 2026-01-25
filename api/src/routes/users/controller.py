@@ -7,6 +7,7 @@ from uuid import UUID
 from litestar import Controller, Request, delete, get, patch, put
 from litestar.di import Provide
 from litestar.exceptions import ClientException, NotFoundException
+from litestar.params import Parameter
 from litestar.response import Redirect
 from litestar.status_codes import HTTP_204_NO_CONTENT
 
@@ -18,7 +19,7 @@ from routes.users.service import (
     UserService,
     provide_user_service,
 )
-from services.eve_sso import BASE_SCOPES, EveSSOService
+from services.eve_sso import EveSSOService, ScopeGroup, build_scopes
 
 
 @dataclass
@@ -69,17 +70,29 @@ class UserController(Controller):
     }
 
     @get("/characters/link")
-    async def link_character(self, request: Request, sso_service: EveSSOService) -> Redirect:
+    async def link_character(
+        self,
+        request: Request,
+        sso_service: EveSSOService,
+        scope_groups: list[ScopeGroup] | None = Parameter(query="scopes", default=None),
+    ) -> Redirect:
         """Initiate EVE SSO flow to link additional character.
 
         Redirects to EVE SSO to authorize a new character
         that will be linked to the current account.
+
+        Args:
+            scope_groups: Optional list of additional scope groups to request.
+                Valid values: "location". Example: ?scopes=location
         """
         state = secrets.token_urlsafe(32)
         request.session["oauth_state"] = state
         request.session["linking"] = True
+        if scope_groups:
+            request.session["scope_groups"] = [str(g) for g in scope_groups]
 
-        auth_url = sso_service.get_authorization_url(state, scopes=BASE_SCOPES)
+        scopes = build_scopes(scope_groups)
+        auth_url = sso_service.get_authorization_url(state, scopes=scopes)
 
         return Redirect(path=auth_url)
 

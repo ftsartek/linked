@@ -14,7 +14,7 @@ from config import Settings
 from routes.auth.dependencies import ERR_AUTH_INVALID_STATE, auth_ext_rate_limit_config, auth_rate_limit_config
 from routes.auth.service import AuthService, UserInfo, provide_auth_service
 from services.encryption import provide_encryption_service
-from services.eve_sso import BASE_SCOPES, EveSSOService
+from services.eve_sso import EveSSOService, ScopeGroup, build_scopes
 
 
 class AuthController(Controller):
@@ -28,32 +28,56 @@ class AuthController(Controller):
     }
 
     @get("/login")
-    async def login(self, request: Request, sso_service: EveSSOService) -> Redirect:
+    async def login(
+        self,
+        request: Request,
+        sso_service: EveSSOService,
+        scope_groups: list[ScopeGroup] | None = Parameter(query="scopes", default=None),
+    ) -> Redirect:
         """Initiate EVE SSO login flow.
 
         Generates a random state parameter, stores it in session,
         and redirects to EVE SSO authorization page.
+
+        Args:
+            scope_groups: Optional list of additional scope groups to request.
+                Valid values: "location". Example: ?scopes=location
         """
         state = secrets.token_urlsafe(32)
         request.session["oauth_state"] = state
         request.session["linking"] = False
+        if scope_groups:
+            request.session["scope_groups"] = [str(g) for g in scope_groups]
 
-        auth_url = sso_service.get_authorization_url(state, scopes=BASE_SCOPES)
+        scopes = build_scopes(scope_groups)
+        auth_url = sso_service.get_authorization_url(state, scopes=scopes)
 
         return Redirect(path=auth_url)
 
     @get("/link", guards=[require_auth])
-    async def link(self, request: Request, sso_service: EveSSOService) -> Redirect:
+    async def link(
+        self,
+        request: Request,
+        sso_service: EveSSOService,
+        scope_groups: list[ScopeGroup] | None = Parameter(query="scopes", default=None),
+    ) -> Redirect:
         """Initiate EVE SSO flow to link additional character.
 
         Requires authenticated user. Redirects to EVE SSO to authorize
         a new character that will be linked to the current account.
+
+        Args:
+            scope_groups: Optional list of additional scope groups to request.
+                Valid values: "location". Example: ?scopes=location
         """
         state = secrets.token_urlsafe(32)
         request.session["oauth_state"] = state
         request.session["linking"] = True
+        if scope_groups:
+            request.session["scope_groups"] = [str(g) for g in scope_groups]
 
-        auth_url = sso_service.get_authorization_url(state, scopes=BASE_SCOPES)
+        scopes = build_scopes(scope_groups)
+        auth_url = sso_service.get_authorization_url(state, scopes=scopes)
 
         return Redirect(path=auth_url)
 
@@ -76,6 +100,7 @@ class AuthController(Controller):
         # Clear state from session
         del request.session["oauth_state"]
         is_linking = request.session.pop("linking", False)
+        request.session.pop("scope_groups", None)  # Clean up scope groups
 
         try:
             result = await auth_service.process_callback(

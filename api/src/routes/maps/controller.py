@@ -126,6 +126,7 @@ class MapController(Controller):
             auto_layout=data.auto_layout,
             node_sep=data.node_sep,
             rank_sep=data.rank_sep,
+            location_tracking_enabled=data.location_tracking_enabled,
         )
 
     @get("/owned")
@@ -379,6 +380,7 @@ class MapController(Controller):
             auto_layout=data.auto_layout,
             node_sep=data.node_sep,
             rank_sep=data.rank_sep,
+            location_tracking_enabled=data.location_tracking_enabled,
         )
         if result is None:
             raise NotFoundException(ERR_MAP_NOT_FOUND)

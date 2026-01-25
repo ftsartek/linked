@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import base64
 from dataclasses import dataclass
+from enum import StrEnum
 from urllib.parse import urlencode
 
 import httpx
@@ -20,6 +21,54 @@ BASE_SCOPES = [
     "publicData",
     "esi-search.search_structures.v1",
 ]
+
+
+class ScopeGroup(StrEnum):
+    """Optional ESI scope groups that can be requested during authorization."""
+
+    LOCATION = "location"
+
+
+OPTIONAL_SCOPE_GROUPS: dict[ScopeGroup, list[str]] = {
+    ScopeGroup.LOCATION: [
+        "esi-location.read_location.v1",
+        "esi-location.read_online.v1",
+        "esi-location.read_ship_type.v1",
+    ]
+}
+
+
+def build_scopes(scope_groups: list[ScopeGroup] | None = None) -> list[str]:
+    """Build complete scope list from base + requested optional groups.
+
+    Args:
+        scope_groups: Optional list of scope group identifiers to include
+
+    Returns:
+        Combined list of unique scopes (base + optional groups)
+    """
+    if scope_groups is None:
+        scope_groups = []
+    return list(
+        {
+            *BASE_SCOPES,
+            *(scope for group in scope_groups for scope in OPTIONAL_SCOPE_GROUPS.get(group, [])),
+        }
+    )
+
+
+def has_scope_group(granted_scopes: list[str], group: ScopeGroup) -> bool:
+    """Check if granted scopes include all scopes for a given group.
+
+    Args:
+        granted_scopes: List of scopes from refresh_token.scopes
+        group: The scope group to check for
+
+    Returns:
+        True if all scopes in the group are present
+    """
+    required = OPTIONAL_SCOPE_GROUPS.get(group, [])
+    return all(scope in granted_scopes for scope in required)
 
 
 @dataclass

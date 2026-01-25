@@ -85,6 +85,7 @@ class MapInfo(msgspec.Struct):
     auto_layout: bool = False
     node_sep: int = 60
     rank_sep: int = 60
+    location_tracking_enabled: bool = True
     edit_access: bool = False
 
 
@@ -277,6 +278,7 @@ class PublicMapInfo(msgspec.Struct):
     auto_layout: bool = False
     node_sep: int = 60
     rank_sep: int = 60
+    location_tracking_enabled: bool = True
     edit_access: bool = False
     subscription_count: int = 0
     is_subscribed: bool = False
@@ -378,6 +380,7 @@ class CreateMapRequest:
     auto_layout: bool = False
     node_sep: int = 60
     rank_sep: int = 60
+    location_tracking_enabled: bool = True
 
     def __post_init__(self) -> None:
         _validate_map_name(self.name)
@@ -398,6 +401,7 @@ class UpdateMapRequest:
     auto_layout: bool | None = None
     node_sep: int | None = None
     rank_sep: int | None = None
+    location_tracking_enabled: bool | None = None
 
     def __post_init__(self) -> None:
         if self.name is not None:

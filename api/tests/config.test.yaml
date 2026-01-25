@@ -38,6 +38,10 @@ valkey:
 session:
   max_age: 604800
 
+rate_limit:
+  auth_requests_per_minute: 1000
+  auth_extended_requests_per_minute: 1000
+
 image_cache:
   dir: /tmp/linked_cache
   ttl_seconds: 259200
