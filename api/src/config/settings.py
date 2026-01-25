@@ -3,6 +3,7 @@ from __future__ import annotations
 import secrets
 import warnings
 from functools import lru_cache
+from importlib import metadata
 from os import getenv
 from pathlib import Path
 from typing import Literal
@@ -11,6 +12,8 @@ from cryptography.fernet import Fernet
 from msgspec import Struct, field
 
 from .loader import ConfigLoader
+
+__VERSION__ = metadata.version("linked")
 
 
 class BaseStruct(Struct, omit_defaults=False, kw_only=True):
@@ -59,10 +62,14 @@ class CompressionSettings(BaseStruct):
 class ESISettings(BaseStruct):
     """EVE ESI API settings."""
 
-    user_agent: str = ""
+    contact_email: str = ""
     timeout: float = 30.0
     client_secret: str = ""
     client_id: str = ""
+
+    @property
+    def user_agent(self) -> str:
+        return f"LinkedEVE/{__VERSION__} ({self.contact_email})"
 
     def __post_init__(self) -> None:
         self.client_secret = getenv("EVE_CLIENT_SECRET", "") or self.client_secret
@@ -71,6 +78,9 @@ class ESISettings(BaseStruct):
 
         if not self.client_id:
             warnings.warn("EVE client ID is not set.")
+
+        if not self.contact_email:
+            warnings.warn("ESI contact email is not set.")
 
 
 class EVESSOSettings(BaseStruct):

@@ -24,7 +24,7 @@ compression:
 
 esi:
   # Include app name and contact email
-  user_agent: "LinkedEVE/0.0.1 (you@example.com)"
+  user_agent: "you@example.com"
   timeout: 30.0
 
 eve_sso:
@@ -32,18 +32,6 @@ eve_sso:
   #   EVE_CLIENT_ID - from https://developers.eveonline.com/
   #   EVE_CLIENT_SECRET - from https://developers.eveonline.com/
   callback_url: https://linked.example.com/api/auth/callback
-  scopes:
-    - publicData
-    - esi-search.search_structures.v1
-    - esi-corporations.read_corporation_membership.v1
-    - esi-corporations.read_structures.v1
-    - esi-corporations.track_members.v1
-    - esi-corporations.read_divisions.v1
-    - esi-corporations.read_standings.v1
-    - esi-planets.read_customs_offices.v1
-    - esi-corporations.read_facilities.v1
-    - esi-universe.read_structures.v1
-    - esi-corporations.read_starbases.v1
 
 valkey:
   host: localhost
