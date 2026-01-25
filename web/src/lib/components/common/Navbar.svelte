@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { apiClient } from '$lib/client/client';
+	import { apiClient, getApiUrl } from '$lib/client/client';
 	import { user } from '$lib/stores/user';
 	import { resolve } from '$app/paths';
 	import { Settings, LogOut } from 'lucide-svelte';
@@ -19,7 +19,7 @@
 	}
 </script>
 
-<nav class="relative flex items-center justify-between bg-black/75 p-4 backdrop-blur-2xl">
+<nav class="relative flex min-h-16 items-center justify-between bg-black/75 p-4 backdrop-blur-2xl">
 	<div class="flex items-center gap-4">
 		<a href={resolve('/maps')} class="text-xl font-bold">Linked</a>
 		{#if $user}
@@ -53,5 +53,10 @@
 				<LogOut size={16} />
 			</button>
 		</div>
+	{:else if $user === null}
+		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- External API URL, not a SvelteKit route -->
+		<a href={getApiUrl('/auth/login')}>
+			<img src="/eve-login-dark-sm.png" alt="Login with EVE Online" class="h-8" />
+		</a>
 	{/if}
 </nav>
