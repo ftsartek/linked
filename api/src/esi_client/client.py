@@ -24,6 +24,9 @@ from .models import (
 
 T = TypeVar("T")
 
+# ESI compatibility date - update periodically to opt into API changes
+ESI_COMPATIBILITY_DATE = "2026-01-25"
+
 
 def _wrap_http_error(e: httpx.HTTPStatusError, path: str) -> ESIError:
     """Wrap an httpx.HTTPStatusError in a domain-specific ESI exception."""
@@ -53,7 +56,10 @@ class ESIClient:
     async def __aenter__(self) -> ESIClient:
         self._client = httpx.AsyncClient(
             base_url=self.BASE_URL,
-            headers={"User-Agent": self._user_agent},
+            headers={
+                "User-Agent": self._user_agent,
+                "X-Compatibility-Date": ESI_COMPATIBILITY_DATE,
+            },
             timeout=self._timeout,
         )
         return self
