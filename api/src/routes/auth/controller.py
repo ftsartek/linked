@@ -14,7 +14,7 @@ from config import Settings
 from routes.auth.dependencies import ERR_AUTH_INVALID_STATE, auth_ext_rate_limit_config, auth_rate_limit_config
 from routes.auth.service import AuthService, UserInfo, provide_auth_service
 from services.encryption import provide_encryption_service
-from services.eve_sso import EveSSOService
+from services.eve_sso import BASE_SCOPES, EveSSOService
 
 
 class AuthController(Controller):
@@ -38,7 +38,7 @@ class AuthController(Controller):
         request.session["oauth_state"] = state
         request.session["linking"] = False
 
-        auth_url = sso_service.get_authorization_url(state)
+        auth_url = sso_service.get_authorization_url(state, scopes=BASE_SCOPES)
 
         return Redirect(path=auth_url)
 
@@ -53,7 +53,7 @@ class AuthController(Controller):
         request.session["oauth_state"] = state
         request.session["linking"] = True
 
-        auth_url = sso_service.get_authorization_url(state)
+        auth_url = sso_service.get_authorization_url(state, scopes=BASE_SCOPES)
 
         return Redirect(path=auth_url)
 

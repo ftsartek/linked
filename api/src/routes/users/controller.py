@@ -18,7 +18,7 @@ from routes.users.service import (
     UserService,
     provide_user_service,
 )
-from services.eve_sso import EveSSOService
+from services.eve_sso import BASE_SCOPES, EveSSOService
 
 
 @dataclass
@@ -79,7 +79,7 @@ class UserController(Controller):
         request.session["oauth_state"] = state
         request.session["linking"] = True
 
-        auth_url = sso_service.get_authorization_url(state)
+        auth_url = sso_service.get_authorization_url(state, scopes=BASE_SCOPES)
 
         return Redirect(path=auth_url)
 

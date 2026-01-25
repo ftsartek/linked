@@ -16,6 +16,11 @@ EVE_SSO_TOKEN_URL = "https://login.eveonline.com/v2/oauth/token"
 EVE_SSO_JWKS_URL = "https://login.eveonline.com/oauth/jwks"
 EVE_SSO_ISSUER = "https://login.eveonline.com"
 
+BASE_SCOPES = [
+    "publicData",
+    "esi-search.search_structures.v1",
+]
+
 
 @dataclass
 class TokenResponse:
@@ -58,7 +63,7 @@ class EveSSOService:
             self._jwks_client = PyJWKClient(EVE_SSO_JWKS_URL, cache_keys=True)
         return self._jwks_client
 
-    def get_authorization_url(self, state: str, scopes: list[str] | None = None) -> str:
+    def get_authorization_url(self, state: str, scopes: list[str]) -> str:
         """Build the EVE SSO authorization URL.
 
         Args:
@@ -68,8 +73,6 @@ class EveSSOService:
         Returns:
             Full authorization URL to redirect user to
         """
-        if scopes is None:
-            scopes = get_settings().eve_sso.scopes
 
         params = {
             "response_type": "code",

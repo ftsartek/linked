@@ -87,13 +87,6 @@ class EVESSOSettings(BaseStruct):
     """EVE SSO authentication settings."""
 
     callback_url: str = "http://localhost:8000/auth/callback"
-    scopes: list[str] = field(
-        default_factory=lambda: [
-            "publicData",
-            "esi-search.search_structures.v1",
-        ]
-    )
-
     token_encryption_key: str = ""
 
     def __post_init__(self) -> None:
