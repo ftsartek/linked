@@ -13,7 +13,7 @@ from msgspec import Struct, field
 
 from .loader import ConfigLoader
 
-__VERSION__ = metadata.version("linked")
+__VERSION__ = metadata.version("linked-eve")
 
 
 class BaseStruct(Struct, omit_defaults=False, kw_only=True):
@@ -132,6 +132,15 @@ class SessionSettings(BaseStruct):
     max_age: int = 604800  # 7 days in seconds
 
 
+class RateLimitSettings(BaseStruct):
+    """Rate limiting settings."""
+
+    # Auth endpoints (login, link, callback) - stricter limit
+    auth_requests_per_minute: int = 10
+    # Extended auth endpoints (me, logout) - more lenient
+    auth_extended_requests_per_minute: int = 180
+
+
 class ImageCacheSettings(BaseStruct):
     """Image cache settings."""
 
@@ -200,6 +209,7 @@ class Settings(BaseStruct):
     eve_sso: EVESSOSettings = field(default_factory=lambda: EVESSOSettings())
     valkey: ValkeySettings = field(default_factory=lambda: ValkeySettings())
     session: SessionSettings = field(default_factory=lambda: SessionSettings())
+    rate_limit: RateLimitSettings = field(default_factory=lambda: RateLimitSettings())
     image_cache: ImageCacheSettings = field(default_factory=lambda: ImageCacheSettings())
     postgres: PostgresSettings = field(default_factory=lambda: PostgresSettings())
     data: DataSettings = field(default_factory=lambda: DataSettings())
