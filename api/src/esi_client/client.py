@@ -16,6 +16,7 @@ from .models import (
     ESINameResult,
     ESISearchResponse,
     Region,
+    ServerStatus,
     System,
     UniverseGroup,
     UniverseType,
@@ -115,6 +116,10 @@ class ESIClient:
 
     async def get_type(self, type_id: int) -> UniverseType:
         return await self._get_typed(f"/universe/types/{type_id}/", UniverseType)
+
+    async def get_server_status(self) -> ServerStatus:
+        """Get EVE Online server status."""
+        return await self._get_typed("/status/", ServerStatus)
 
     async def get_character(self, character_id: int) -> ESICharacter:
         """Get public information about a character."""

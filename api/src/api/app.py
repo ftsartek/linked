@@ -27,6 +27,7 @@ from routes import (
     MapController,
     ReferenceController,
     RoutingController,
+    StatusController,
     UniverseController,
     UserController,
 )
@@ -41,6 +42,7 @@ DEFAULT_ROUTE_HANDLERS: list[ControllerRouterHandler] = [
     MapController,
     ReferenceController,
     RoutingController,
+    StatusController,
     UniverseController,
     UserController,
 ]
