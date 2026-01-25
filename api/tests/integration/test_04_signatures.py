@@ -524,6 +524,12 @@ async def test_delete_signature(
     test_state.signature_ids.remove(sig_id)
 
 
+# TODO: This test is flaky - revisit SSE event ordering/filtering.
+# Issue: Events arrive out of order (e.g., event 53, then old events 4-12).
+# The Last-Event-ID filtering doesn't reliably exclude historical events,
+# and the delete event sometimes never arrives within the timeout.
+# This suggests bugs in either the SSE implementation or the test's
+# event collection/filtering logic.
 @pytest.mark.order(331)
 async def test_delete_signature_sse_event(
     test_client: AsyncClient,
