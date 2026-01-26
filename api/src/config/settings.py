@@ -102,8 +102,7 @@ class ValkeySettings(BaseStruct):
     password: str = ""
     host: str = "localhost"
     port: int = 6379
-    session_db: int = 0
-    event_db: int = 1
+    db: int = 0
     user: str = "default"
 
     def __post_init__(self) -> None:
@@ -112,18 +111,11 @@ class ValkeySettings(BaseStruct):
             self.password = env_pass
 
     @property
-    def session_url(self) -> str:
+    def url(self) -> str:
         """Build Valkey URL for session storage."""
         if self.password:
-            return f"valkey://{self.user}:{self.password}@{self.host}:{self.port}/{self.session_db}"
-        return f"valkey://{self.user}@{self.host}:{self.port}/{self.session_db}"
-
-    @property
-    def event_url(self) -> str:
-        """Build Valkey URL for event storage."""
-        if self.password:
-            return f"valkey://{self.user}:{self.password}@{self.host}:{self.port}/{self.event_db}"
-        return f"valkey://{self.user}@{self.host}:{self.port}/{self.event_db}"
+            return f"valkey://{self.user}:{self.password}@{self.host}:{self.port}/{self.db}"
+        return f"valkey://{self.user}@{self.host}:{self.port}/{self.db}"
 
 
 class SessionSettings(BaseStruct):

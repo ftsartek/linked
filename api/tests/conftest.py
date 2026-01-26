@@ -105,7 +105,7 @@ def valkey_responsive() -> str:
         pause=0.2,
         check=lambda: is_responsive(get_settings().valkey.host, get_settings().valkey.port),
     )
-    return get_settings().valkey.session_url
+    return get_settings().valkey.url
 
 
 # =============================================================================

@@ -31,8 +31,7 @@ eve_sso:
 valkey:
   host: localhost
   port: 6380 # Test port (matches docker-compose.yml)
-  session_db: 0
-  event_db: 1
+  db: 0
   user: default
 
 session:

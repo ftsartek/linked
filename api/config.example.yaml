@@ -36,8 +36,7 @@ eve_sso:
 valkey:
   host: localhost
   port: 6379
-  session_db: 0
-  event_db: 1
+  db: 0
   user: default
   # Password set via VALKEY_PASSWORD env var (optional, leave unset if no auth)
 
