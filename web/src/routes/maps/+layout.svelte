@@ -115,7 +115,8 @@
 				rankdir: 'TB',
 				auto_layout: false,
 				node_sep: 100,
-				rank_sep: 60
+				rank_sep: 60,
+				location_tracking_enabled: false
 			}
 		});
 
@@ -287,9 +288,9 @@
 		</div>
 	</div>
 
-	<!-- 
+	<!--
 		Responsive Layout using CSS Grid with named areas
-		
+
 		5 Layouts based on screen size + aspect ratio:
 		1. Mobile (<640px): stacked vertically
 		2. Small/Tablet Portrait (640-1279px, portrait): map top, 2-col cards

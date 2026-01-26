@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { Dialog, Portal, Progress, Tooltip, useDialog } from '@skeletonlabs/skeleton-svelte';
-	import { Star, Trash2 } from 'lucide-svelte';
-	import { apiClient, getApiUrl } from '$lib/client/client';
+	import { Star, Trash2, RefreshCw } from 'lucide-svelte';
+	import { apiClient } from '$lib/client/client';
 	import { user } from '$lib/stores/user';
 	import { toaster } from '$lib/stores/toaster';
 	import { getCharacterPortrait } from '$lib/helpers/images';
+	import { getScopeGroupInfo } from '$lib/helpers/scopeGroups';
+	import ScopeSelectionDialog from './ScopeSelectionDialog.svelte';
 	import type { components } from '$lib/client/schema';
 
-	type CharacterInfo = components['schemas']['users_service_CharacterInfo'];
+	type CharacterInfo = components['schemas']['auth_service_CharacterInfo'];
 
 	let characters = $state<CharacterInfo[]>([]);
 	let loading = $state(true);
@@ -18,6 +20,13 @@
 	let deleting = $state(false);
 	const deleteDialog = useDialog({ id: 'delete-character-dialog' });
 
+	// Link character dialog state
+	const linkDialog = useDialog({ id: 'link-character-dialog' });
+
+	// Update permissions dialog state
+	const updateScopesDialog = useDialog({ id: 'update-scopes-dialog' });
+	let characterToUpdate = $state<CharacterInfo | null>(null);
+
 	// Derive primary character ID from user store
 	let primaryCharacterId = $derived($user?.primary_character_id ?? null);
 
@@ -25,7 +34,7 @@
 		loading = true;
 		error = null;
 
-		const { data, error: apiError } = await apiClient.GET('/users/characters');
+		const { data, error: apiError } = await apiClient.GET('/auth/me');
 
 		if (apiError) {
 			error = 'Failed to load characters';
@@ -70,6 +79,15 @@
 	function openDeleteDialog(character: CharacterInfo) {
 		characterToDelete = character;
 		deleteDialog().setOpen(true);
+	}
+
+	function openLinkDialog() {
+		linkDialog().setOpen(true);
+	}
+
+	function openUpdateScopesDialog(character: CharacterInfo) {
+		characterToUpdate = character;
+		updateScopesDialog().setOpen(true);
 	}
 
 	async function confirmDelete() {
@@ -166,7 +184,7 @@
 
 						<!-- Character Info -->
 						<div class="flex-1">
-							<div class="flex items-center gap-2">
+							<div class="flex flex-wrap items-center gap-2">
 								<span class="font-medium">{character.name}</span>
 								{#if isPrimary}
 									<span
@@ -175,6 +193,34 @@
 										Primary
 									</span>
 								{/if}
+								{#each character.scope_groups as scopeId (scopeId)}
+									{@const scopeInfo = getScopeGroupInfo(scopeId)}
+									{#if scopeInfo}
+										<Tooltip positioning={{ placement: 'top' }}>
+											<Tooltip.Trigger>
+												<span
+													class="rounded bg-tertiary-500/20 px-1.5 py-0.5 text-xs font-medium text-tertiary-400"
+												>
+													{scopeInfo.name}
+												</span>
+											</Tooltip.Trigger>
+											<Portal>
+												<Tooltip.Positioner>
+													<Tooltip.Content
+														class="z-10 max-w-xs rounded-lg border border-surface-600 bg-surface-800 px-2 py-1 text-xs shadow-xl"
+													>
+														<Tooltip.Arrow
+															class="[--arrow-background:var(--color-surface-800)] [--arrow-size:--spacing(2)]"
+														>
+															<Tooltip.ArrowTip />
+														</Tooltip.Arrow>
+														<span class="text-white">{scopeInfo.description}</span>
+													</Tooltip.Content>
+												</Tooltip.Positioner>
+											</Portal>
+										</Tooltip>
+									{/if}
+								{/each}
 							</div>
 							<div class="text-sm text-surface-400">
 								Added {formatDate(character.date_created)}
@@ -183,6 +229,32 @@
 
 						<!-- Actions -->
 						<div class="flex items-center gap-2">
+							<!-- Update Permissions Button -->
+							<Tooltip positioning={{ placement: 'top' }}>
+								<Tooltip.Trigger>
+									<button
+										onclick={() => openUpdateScopesDialog(character)}
+										class="btn preset-outlined-surface-500 btn-sm"
+									>
+										<RefreshCw size={16} />
+									</button>
+								</Tooltip.Trigger>
+								<Portal>
+									<Tooltip.Positioner>
+										<Tooltip.Content
+											class="z-10 rounded-lg border border-surface-600 bg-surface-800 px-2 py-1 text-xs shadow-xl"
+										>
+											<Tooltip.Arrow
+												class="[--arrow-background:var(--color-surface-800)] [--arrow-size:--spacing(2)]"
+											>
+												<Tooltip.ArrowTip />
+											</Tooltip.Arrow>
+											<span class="text-white">Update permissions</span>
+										</Tooltip.Content>
+									</Tooltip.Positioner>
+								</Portal>
+							</Tooltip>
+
 							<!-- Set Primary Button -->
 							<button
 								onclick={() => setPrimaryCharacter(character.id)}
@@ -216,28 +288,9 @@
 
 		<!-- Add Character Button (bottom right) -->
 		<div class="mt-4 flex justify-end">
-			<Tooltip positioning={{ placement: 'top' }}>
-				<Tooltip.Trigger>
-					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- External API URL, not a SvelteKit route -->
-					<a href={getApiUrl('/users/characters/link')}>
-						<img src="/eve-sso-login.png" alt="Add Character with EVE Online" />
-					</a>
-				</Tooltip.Trigger>
-				<Portal>
-					<Tooltip.Positioner>
-						<Tooltip.Content
-							class="z-10 rounded-lg border border-surface-600 bg-surface-800 px-2 py-1 text-xs shadow-xl"
-						>
-							<Tooltip.Arrow
-								class="[--arrow-background:var(--color-surface-800)] [--arrow-size:--spacing(2)]"
-							>
-								<Tooltip.ArrowTip />
-							</Tooltip.Arrow>
-							<span class="text-white">Link another character</span>
-						</Tooltip.Content>
-					</Tooltip.Positioner>
-				</Portal>
-			</Tooltip>
+			<button onclick={openLinkDialog} class="btn preset-outlined-primary-500 btn-sm">
+				Link Character
+			</button>
 		</div>
 	</div>
 </section>
@@ -263,3 +316,21 @@
 		</Dialog.Positioner>
 	</Portal>
 </Dialog.Provider>
+
+<!-- Link Character Dialog -->
+<ScopeSelectionDialog
+	dialog={linkDialog}
+	authPath="/users/characters/link"
+	title="Link Character"
+	description="Select which permissions to grant for this character:"
+/>
+
+<!-- Update Permissions Dialog -->
+<ScopeSelectionDialog
+	dialog={updateScopesDialog}
+	authPath="/users/characters/link"
+	title="Update Permissions"
+	description="Update permissions for {characterToUpdate?.name ??
+		'this character'}. This will re-authenticate with EVE Online."
+	initialScopes={characterToUpdate?.scope_groups ?? []}
+/>
