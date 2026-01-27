@@ -11,6 +11,13 @@ class ESIError(Exception):
         self.status_code = status_code
 
 
+class ESIForbiddenError(ESIError):
+    """Raised when ESI returns 403 Forbidden."""
+
+    def __init__(self, message: str = "Access forbidden") -> None:
+        super().__init__(message, status_code=403)
+
+
 class ESINotFoundError(ESIError):
     """Raised when ESI returns 404 Not Found."""
 

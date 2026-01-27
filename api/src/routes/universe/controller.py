@@ -113,6 +113,7 @@ class UniverseController(Controller):
         """Search for characters, corporations, and alliances by name.
 
         Uses EVE ESI authenticated search which supports substring matching.
+        Requires the search scope to be granted.
 
         Args:
             q: Search query (minimum 3 characters)
@@ -133,6 +134,12 @@ class UniverseController(Controller):
             raise ClientException(f"Invalid categories: {', '.join(invalid)}")
 
         character_id = request.user.character_id
+        user_id = str(request.user.id)
+
+        # Check if character has search scope
+        has_scope = await universe_service_auth.has_search_scope(character_id, user_id)
+        if not has_scope:
+            raise NotAuthorizedException("Search scope not granted for this character")
 
         # Get cached access token from session
         cached_token = request.session.get(ESI_ACCESS_TOKEN_KEY)

@@ -9,6 +9,7 @@
 	import RouteCard from '$lib/components/system/RouteCard.svelte';
 	import NotesCard from '$lib/components/system/NotesCard.svelte';
 	import SystemDetailsCard from '$lib/components/system/SystemDetailsCard.svelte';
+	import CharacterLocationsCard from '$lib/components/system/CharacterLocationsCard.svelte';
 	import type { components } from '$lib/client/schema';
 	import type { Snippet } from 'svelte';
 
@@ -115,7 +116,8 @@
 				rankdir: 'TB',
 				auto_layout: false,
 				node_sep: 100,
-				rank_sep: 60
+				rank_sep: 60,
+				location_tracking_enabled: false
 			}
 		});
 
@@ -287,9 +289,9 @@
 		</div>
 	</div>
 
-	<!-- 
+	<!--
 		Responsive Layout using CSS Grid with named areas
-		
+
 		5 Layouts based on screen size + aspect ratio:
 		1. Mobile (<640px): stacked vertically
 		2. Small/Tablet Portrait (640-1279px, portrait): map top, 2-col cards
@@ -322,6 +324,11 @@
 		<div class="min-h-0 [grid-area:routes]">
 			<RouteCard />
 		</div>
+
+		<!-- Character Locations Card -->
+		<div class="min-h-0 [grid-area:locs]">
+			<CharacterLocationsCard />
+		</div>
 	</div>
 </div>
 
@@ -345,33 +352,35 @@
 				'sigs'
 				'notes'
 				'sys'
-				'routes';
+				'routes'
+				'locs';
 			grid-template-columns: 1fr;
-			grid-template-rows: 60vh repeat(4, auto);
+			grid-template-rows: 60vh repeat(5, auto);
 		}
 	}
 
 	/* 2. Small/Tablet Portrait (640-1279px, portrait aspect) */
-	/* Map on top, cards in 2 rows: left 2/3, right 1/3, fixed card height */
+	/* Map on top, cards in rows, locs half-width at bottom */
 	@media (min-width: 640px) and (max-width: 1279px) and (max-aspect-ratio: 4/3) {
 		.responsive-layout {
 			grid-template-areas:
-				'map map map'
-				'sigs sigs sys'
-				'notes notes routes';
-			grid-template-columns: 1fr 1fr 1fr;
-			grid-template-rows: 55vh 320px 320px;
+				'map map'
+				'sigs sys'
+				'notes routes'
+				'locs .';
+			grid-template-columns: 1fr 1fr;
+			grid-template-rows: 55vh 320px 320px 320px;
 		}
 	}
 
 	/* 3. Small/Tablet Landscape (640-1279px, landscape aspect) */
-	/* Map + Sigs/Notes on top, Sys + Routes side-by-side bottom-left under map */
+	/* Map + Sigs/Notes on top, Sys + Routes + Locs bottom row */
 	@media (min-width: 640px) and (max-width: 1279px) and (min-aspect-ratio: 4/3) {
 		.responsive-layout {
 			grid-template-areas:
 				'map map map sigs'
 				'map map map notes'
-				'sys routes . .';
+				'sys routes locs .';
 			grid-template-columns: 1fr 1fr 1fr 1fr;
 			grid-template-rows:
 				calc((100vh - 120px) / 2)
@@ -381,26 +390,27 @@
 	}
 
 	/* 4. Large Desktop Portrait (>=1280px, portrait aspect) */
-	/* Map on top, cards in 2x2 grid with fixed height */
+	/* Map on top, cards in 2x2 grid, locs half-width at bottom */
 	@media (min-width: 1280px) and (max-aspect-ratio: 4/3) {
 		.responsive-layout {
 			grid-template-areas:
 				'map map'
 				'sigs notes'
-				'sys routes';
+				'sys routes'
+				'locs .';
 			grid-template-columns: 1fr 1fr;
-			grid-template-rows: 55vh 320px 320px;
+			grid-template-rows: 55vh 320px 320px 320px;
 		}
 	}
 
 	/* 5. Large Desktop Landscape (>=1280px, landscape aspect) */
-	/* Map + Sigs/Notes on right, Sys + Routes side-by-side bottom-left under map */
+	/* Map + Sigs/Notes on right, Sys + Routes + Locs bottom row */
 	@media (min-width: 1280px) and (min-aspect-ratio: 4/3) {
 		.responsive-layout {
 			grid-template-areas:
 				'map map map sigs'
 				'map map map notes'
-				'sys routes . .';
+				'sys routes locs .';
 			grid-template-columns: 1fr 1fr 1fr 1fr;
 			grid-template-rows:
 				calc((100vh - 120px) / 2)

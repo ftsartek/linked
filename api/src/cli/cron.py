@@ -32,16 +32,17 @@ from services.lifecycle import (
 )
 from services.route_cache import TRADE_HUBS, RouteCacheService
 from utils.enums import RouteType
+from utils.valkey import EVENT_NAMESPACE
 
 
 async def _create_event_publisher(settings: Settings) -> EventPublisher:
     """Create an event publisher for cron context."""
-    valkey_client = valkey.from_url(settings.valkey.event_url, decode_responses=False)
+    valkey_client = valkey.from_url(settings.valkey.url, namespace=EVENT_NAMESPACE, decode_responses=False)
     channels_plugin = ChannelsPlugin(
         backend=RedisChannelsStreamBackend(
             history=100,
             redis=valkey_client,
-            key_prefix="MAP_EVENTS",
+            key_prefix=EVENT_NAMESPACE,
         ),
         arbitrary_channels_allowed=True,
         create_ws_route_handlers=False,

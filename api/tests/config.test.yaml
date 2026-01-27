@@ -22,33 +22,24 @@ compression:
   brotli_quality: 5
 
 esi:
-  user_agent: "LinkedTest/1.0 (test@example.com)"
+  contact_email: "test@example.com"
   timeout: 30.0
 
 eve_sso:
   callback_url: http://localhost:8000/auth/callback
-  scopes:
-    - publicData
-    - esi-search.search_structures.v1
-    - esi-corporations.read_corporation_membership.v1
-    - esi-corporations.read_structures.v1
-    - esi-corporations.track_members.v1
-    - esi-corporations.read_divisions.v1
-    - esi-corporations.read_standings.v1
-    - esi-planets.read_customs_offices.v1
-    - esi-corporations.read_facilities.v1
-    - esi-universe.read_structures.v1
-    - esi-corporations.read_starbases.v1
 
 valkey:
   host: localhost
   port: 6380 # Test port (matches docker-compose.yml)
-  session_db: 0
-  event_db: 1
+  db: 0
   user: default
 
 session:
   max_age: 604800
+
+rate_limit:
+  auth_requests_per_minute: 1000
+  auth_extended_requests_per_minute: 1000
 
 image_cache:
   dir: /tmp/linked_cache

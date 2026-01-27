@@ -17,7 +17,7 @@ from database.models.user import INSERT_STMT as USER_INSERT
 from esi_client import ESIClient
 from services.encryption import EncryptionService
 from services.eve_sso import CharacterInfo as SSOCharacterInfo
-from services.eve_sso import EveSSOService, TokenResponse
+from services.eve_sso import EveSSOService, ScopeGroup, TokenResponse, has_scope_group
 from services.instance_acl import InstanceACLService
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,20 @@ class CharacterInfo:
     corporation_id: int | None
     alliance_id: int | None
     date_created: datetime
+    scope_groups: list[str]
+
+
+@dataclass
+class CharacterWithScopes:
+    """Raw character data with scope flags from database."""
+
+    id: int
+    name: str
+    corporation_id: int | None
+    alliance_id: int | None
+    date_created: datetime
+    has_location_scope: bool
+    has_search_scope: bool
 
 
 @dataclass
@@ -138,8 +152,18 @@ class AuthService:
         character_id: int,
         refresh_token: str,
         scopes: list[str],
+        has_location_scope: bool = False,
+        has_search_scope: bool = False,
     ) -> None:
-        """Store encrypted refresh token."""
+        """Store encrypted refresh token with scope group flags.
+
+        Args:
+            character_id: EVE character ID
+            refresh_token: The refresh token to encrypt and store
+            scopes: List of granted scopes
+            has_location_scope: Whether location scopes were granted
+            has_search_scope: Whether search scopes were granted
+        """
         token = self.encryption_service.encrypt(refresh_token)
 
         await self.db_session.execute(
@@ -148,6 +172,8 @@ class AuthService:
             token,
             scopes,
             None,  # expires_at - refresh tokens don't have explicit expiry
+            has_location_scope,
+            has_search_scope,
         )
 
     async def upsert_corporation(
@@ -228,17 +254,45 @@ class AuthService:
         return corporation_id, alliance_id
 
     async def get_user_characters(self, user_id: UUID) -> list[CharacterInfo]:
-        """Get all characters for a user."""
-        return await self.db_session.select(
+        """Get all characters for a user with their scope groups."""
+        rows = await self.db_session.select(
             """
-            SELECT id, name, corporation_id, alliance_id, date_created
-            FROM character
-            WHERE user_id = $1
-            ORDER BY name
+            SELECT
+                c.id,
+                c.name,
+                c.corporation_id,
+                c.alliance_id,
+                c.date_created,
+                COALESCE(rt.has_location_scope, FALSE) as has_location_scope,
+                COALESCE(rt.has_search_scope, FALSE) as has_search_scope
+            FROM character c
+            LEFT JOIN refresh_token rt ON rt.character_id = c.id
+            WHERE c.user_id = $1
+            ORDER BY c.name
             """,
             user_id,
-            schema_type=CharacterInfo,
+            schema_type=CharacterWithScopes,
         )
+
+        # Map boolean scope flags to list of scope group strings
+        result = []
+        for row in rows:
+            scope_groups = []
+            if row.has_location_scope:
+                scope_groups.append(ScopeGroup.LOCATION.value)
+            if row.has_search_scope:
+                scope_groups.append(ScopeGroup.SEARCH.value)
+            result.append(
+                CharacterInfo(
+                    id=row.id,
+                    name=row.name,
+                    corporation_id=row.corporation_id,
+                    alliance_id=row.alliance_id,
+                    date_created=row.date_created,
+                    scope_groups=scope_groups,
+                )
+            )
+        return result
 
     async def get_primary_character_id(self, user_id: UUID) -> int | None:
         """Get user's primary character ID."""
@@ -348,11 +402,13 @@ class AuthService:
         else:
             user_id = await self._handle_new_user_signup(char_info, corporation_id, alliance_id)
 
-        # Store encrypted refresh token
+        # Store encrypted refresh token with scope group flags
         await self.store_refresh_token(
             char_info.character_id,
             tokens.refresh_token,
             char_info.scopes,
+            has_location_scope=has_scope_group(char_info.scopes, ScopeGroup.LOCATION),
+            has_search_scope=has_scope_group(char_info.scopes, ScopeGroup.SEARCH),
         )
 
         return user_id

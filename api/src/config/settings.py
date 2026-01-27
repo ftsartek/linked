@@ -3,6 +3,7 @@ from __future__ import annotations
 import secrets
 import warnings
 from functools import lru_cache
+from importlib import metadata
 from os import getenv
 from pathlib import Path
 from typing import Literal
@@ -11,6 +12,8 @@ from cryptography.fernet import Fernet
 from msgspec import Struct, field
 
 from .loader import ConfigLoader
+
+__VERSION__ = metadata.version("linked-eve")
 
 
 class BaseStruct(Struct, omit_defaults=False, kw_only=True):
@@ -59,10 +62,14 @@ class CompressionSettings(BaseStruct):
 class ESISettings(BaseStruct):
     """EVE ESI API settings."""
 
-    user_agent: str = ""
+    contact_email: str = ""
     timeout: float = 30.0
     client_secret: str = ""
     client_id: str = ""
+
+    @property
+    def user_agent(self) -> str:
+        return f"LinkedEVE/{__VERSION__} ({self.contact_email})"
 
     def __post_init__(self) -> None:
         self.client_secret = getenv("EVE_CLIENT_SECRET", "") or self.client_secret
@@ -72,18 +79,14 @@ class ESISettings(BaseStruct):
         if not self.client_id:
             warnings.warn("EVE client ID is not set.")
 
+        if not self.contact_email:
+            warnings.warn("ESI contact email is not set.")
+
 
 class EVESSOSettings(BaseStruct):
     """EVE SSO authentication settings."""
 
     callback_url: str = "http://localhost:8000/auth/callback"
-    scopes: list[str] = field(
-        default_factory=lambda: [
-            "publicData",
-            "esi-search.search_structures.v1",
-        ]
-    )
-
     token_encryption_key: str = ""
 
     def __post_init__(self) -> None:
@@ -99,8 +102,7 @@ class ValkeySettings(BaseStruct):
     password: str = ""
     host: str = "localhost"
     port: int = 6379
-    session_db: int = 0
-    event_db: int = 1
+    db: int = 0
     user: str = "default"
 
     def __post_init__(self) -> None:
@@ -109,24 +111,26 @@ class ValkeySettings(BaseStruct):
             self.password = env_pass
 
     @property
-    def session_url(self) -> str:
+    def url(self) -> str:
         """Build Valkey URL for session storage."""
         if self.password:
-            return f"valkey://{self.user}:{self.password}@{self.host}:{self.port}/{self.session_db}"
-        return f"valkey://{self.user}@{self.host}:{self.port}/{self.session_db}"
-
-    @property
-    def event_url(self) -> str:
-        """Build Valkey URL for event storage."""
-        if self.password:
-            return f"valkey://{self.user}:{self.password}@{self.host}:{self.port}/{self.event_db}"
-        return f"valkey://{self.user}@{self.host}:{self.port}/{self.event_db}"
+            return f"valkey://{self.user}:{self.password}@{self.host}:{self.port}/{self.db}"
+        return f"valkey://{self.user}@{self.host}:{self.port}/{self.db}"
 
 
 class SessionSettings(BaseStruct):
     """Session management settings."""
 
     max_age: int = 604800  # 7 days in seconds
+
+
+class RateLimitSettings(BaseStruct):
+    """Rate limiting settings."""
+
+    # Auth endpoints (login, link, callback) - stricter limit
+    auth_requests_per_minute: int = 10
+    # Extended auth endpoints (me, logout) - more lenient
+    auth_extended_requests_per_minute: int = 180
 
 
 class ImageCacheSettings(BaseStruct):
@@ -197,6 +201,7 @@ class Settings(BaseStruct):
     eve_sso: EVESSOSettings = field(default_factory=lambda: EVESSOSettings())
     valkey: ValkeySettings = field(default_factory=lambda: ValkeySettings())
     session: SessionSettings = field(default_factory=lambda: SessionSettings())
+    rate_limit: RateLimitSettings = field(default_factory=lambda: RateLimitSettings())
     image_cache: ImageCacheSettings = field(default_factory=lambda: ImageCacheSettings())
     postgres: PostgresSettings = field(default_factory=lambda: PostgresSettings())
     data: DataSettings = field(default_factory=lambda: DataSettings())

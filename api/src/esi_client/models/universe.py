@@ -63,3 +63,13 @@ class UniverseType(Struct):
     published: bool
     description: str | None = None
     dogma_attributes: list[DogmaAttribute] | None = None
+
+
+class ESIStructure(Struct):
+    """Structure information from ESI."""
+
+    name: str
+    owner_id: int
+    solar_system_id: int
+    type_id: int | None = None
+    position: Position | None = None

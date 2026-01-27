@@ -7,14 +7,18 @@ import msgspec
 
 from config import Settings
 
-from .exceptions import ESIError, ESINotFoundError, ESIRateLimitError, ESIServerError
+from .exceptions import ESIError, ESIForbiddenError, ESINotFoundError, ESIRateLimitError, ESIServerError
 from .models import (
     Constellation,
     ESIAlliance,
     ESICharacter,
+    ESICharacterLocation,
+    ESICharacterOnline,
+    ESICharacterShip,
     ESICorporation,
     ESINameResult,
     ESISearchResponse,
+    ESIStructure,
     Region,
     ServerStatus,
     System,
@@ -24,10 +28,15 @@ from .models import (
 
 T = TypeVar("T")
 
+# ESI compatibility date - update periodically to opt into API changes
+ESI_COMPATIBILITY_DATE = "2026-01-25"
+
 
 def _wrap_http_error(e: httpx.HTTPStatusError, path: str) -> ESIError:
     """Wrap an httpx.HTTPStatusError in a domain-specific ESI exception."""
     status = e.response.status_code
+    if status == 403:
+        return ESIForbiddenError(f"ESI access forbidden: {path}")
     if status == 404:
         return ESINotFoundError(f"ESI resource not found: {path}")
     if status == 429:
@@ -53,7 +62,10 @@ class ESIClient:
     async def __aenter__(self) -> ESIClient:
         self._client = httpx.AsyncClient(
             base_url=self.BASE_URL,
-            headers={"User-Agent": self._user_agent},
+            headers={
+                "User-Agent": self._user_agent,
+                "X-Compatibility-Date": ESI_COMPATIBILITY_DATE,
+            },
             timeout=self._timeout,
         )
         return self
@@ -174,6 +186,99 @@ class ESIClient:
 
         return msgspec.json.decode(response.content, type=ESISearchResponse)
 
+    async def get_character_location(
+        self,
+        access_token: str,
+        character_id: int,
+    ) -> ESICharacterLocation:
+        """Get character's current location.
+
+        Args:
+            access_token: Valid EVE SSO access token
+            character_id: Character ID to get location for
+
+        Returns:
+            ESICharacterLocation with solar_system_id, station_id, structure_id
+
+        Requires: esi-location.read_location.v1 scope
+        """
+        if self._client is None:
+            msg = "Client not initialized. Use 'async with' context manager."
+            raise RuntimeError(msg)
+
+        path = f"/characters/{character_id}/location/"
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        response = await self._client.get(path, headers=headers)
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise _wrap_http_error(e, path) from e
+
+        return msgspec.json.decode(response.content, type=ESICharacterLocation)
+
+    async def get_character_online(
+        self,
+        access_token: str,
+        character_id: int,
+    ) -> ESICharacterOnline:
+        """Get character's online status.
+
+        Args:
+            access_token: Valid EVE SSO access token
+            character_id: Character ID to get online status for
+
+        Returns:
+            ESICharacterOnline with online status and login timestamps
+
+        Requires: esi-location.read_online.v1 scope
+        """
+        if self._client is None:
+            msg = "Client not initialized. Use 'async with' context manager."
+            raise RuntimeError(msg)
+
+        path = f"/characters/{character_id}/online/"
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        response = await self._client.get(path, headers=headers)
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise _wrap_http_error(e, path) from e
+
+        return msgspec.json.decode(response.content, type=ESICharacterOnline)
+
+    async def get_character_ship(
+        self,
+        access_token: str,
+        character_id: int,
+    ) -> ESICharacterShip:
+        """Get character's current ship.
+
+        Args:
+            access_token: Valid EVE SSO access token
+            character_id: Character ID to get ship for
+
+        Returns:
+            ESICharacterShip with ship_type_id, ship_name, ship_item_id
+
+        Requires: esi-location.read_ship_type.v1 scope
+        """
+        if self._client is None:
+            msg = "Client not initialized. Use 'async with' context manager."
+            raise RuntimeError(msg)
+
+        path = f"/characters/{character_id}/ship/"
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        response = await self._client.get(path, headers=headers)
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise _wrap_http_error(e, path) from e
+
+        return msgspec.json.decode(response.content, type=ESICharacterShip)
+
     async def resolve_ids_to_names(self, ids: list[int]) -> list[ESINameResult]:
         """Resolve entity IDs to names using POST /universe/names.
 
@@ -233,6 +338,38 @@ class ESIClient:
             raise _wrap_http_error(e, path) from e
 
         return msgspec.json.decode(response.content, type=list[int])
+
+    async def get_structure(
+        self,
+        access_token: str,
+        structure_id: int,
+    ) -> ESIStructure:
+        """Get structure information.
+
+        Args:
+            access_token: Valid EVE SSO access token
+            structure_id: Structure ID to get info for
+
+        Returns:
+            ESIStructure with name, owner_id, solar_system_id, etc.
+
+        Requires: esi-universe.read_structures.v1 scope
+        Raises: ESIForbiddenError if user not on structure ACL
+        """
+        if self._client is None:
+            msg = "Client not initialized. Use 'async with' context manager."
+            raise RuntimeError(msg)
+
+        path = f"/universe/structures/{structure_id}/"
+        headers = {"Authorization": f"Bearer {access_token}"}
+
+        response = await self._client.get(path, headers=headers)
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise _wrap_http_error(e, path) from e
+
+        return msgspec.json.decode(response.content, type=ESIStructure)
 
 
 async def provide_esi_client(app_settings: Settings) -> ESIClient:

@@ -10,4 +10,5 @@ settings = get_settings()
 session_config = ServerSideSessionConfig(
     key="session",
     max_age=settings.session.max_age,
+    renew_on_access=True,
 )

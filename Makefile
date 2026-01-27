@@ -93,7 +93,7 @@ schema:
 	cd api && uv run linked schema -o ../openapi.json
 	cd web && npx openapi-typescript ../openapi.json -o src/lib/client/schema.d.ts
 	@rm -f openapi.json
-	@echo "TypeScript types generated at web/src/lib/client/schema.d.ts"
+	cd web && npx prettier --write src/lib/client/schema.d.ts
 
 # PostgreSQL container
 postgres:

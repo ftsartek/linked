@@ -4,21 +4,30 @@ import secrets
 from dataclasses import dataclass
 from uuid import UUID
 
-from litestar import Controller, Request, delete, get, patch, put
+from litestar import Controller, Request, delete, get, patch, post, put
 from litestar.di import Provide
 from litestar.exceptions import ClientException, NotFoundException
+from litestar.params import Parameter
 from litestar.response import Redirect
 from litestar.status_codes import HTTP_204_NO_CONTENT
 
 from api.auth.guards import require_acl_access, require_auth
+from api.di.valkey import provide_location_cache
 from routes.users.dependencies import ERR_CANNOT_DELETE_PRIMARY, ERR_CHARACTER_NOT_FOUND
+from routes.users.location import (
+    CharacterLocationData,
+    CharacterLocationError,
+    LocationService,
+    provide_location_service,
+)
 from routes.users.service import (
     CharacterInfo,
     CharacterListResponse,
     UserService,
     provide_user_service,
 )
-from services.eve_sso import EveSSOService
+from services.encryption import provide_encryption_service
+from services.eve_sso import EveSSOService, ScopeGroup, build_scopes
 
 
 @dataclass
@@ -66,20 +75,35 @@ class UserController(Controller):
     guards = [require_auth, require_acl_access]
     dependencies = {
         "user_service": Provide(provide_user_service),
+        "encryption_service": Provide(provide_encryption_service),
+        "location_service": Provide(provide_location_service),
+        "location_cache": Provide(provide_location_cache),
     }
 
     @get("/characters/link")
-    async def link_character(self, request: Request, sso_service: EveSSOService) -> Redirect:
+    async def link_character(
+        self,
+        request: Request,
+        sso_service: EveSSOService,
+        scope_groups: list[ScopeGroup] | None = Parameter(query="scopes", default=None),
+    ) -> Redirect:
         """Initiate EVE SSO flow to link additional character.
 
         Redirects to EVE SSO to authorize a new character
         that will be linked to the current account.
+
+        Args:
+            scope_groups: Optional list of additional scope groups to request.
+                Valid values: "location". Example: ?scopes=location
         """
         state = secrets.token_urlsafe(32)
         request.session["oauth_state"] = state
         request.session["linking"] = True
+        if scope_groups:
+            request.session["scope_groups"] = [str(g) for g in scope_groups]
 
-        auth_url = sso_service.get_authorization_url(state)
+        scopes = build_scopes(scope_groups)
+        auth_url = sso_service.get_authorization_url(state, scopes=scopes)
 
         return Redirect(path=auth_url)
 
@@ -197,3 +221,27 @@ class UserController(Controller):
             "zoom": data.viewport.zoom,
         }
         request.session["viewports"] = viewports
+
+    @post("/characters/{character_id:int}/location/refresh")
+    async def refresh_character_location(
+        self,
+        request: Request,
+        location_service: LocationService,
+        character_id: int,
+    ) -> CharacterLocationData | CharacterLocationError:
+        """Refresh location data for a specific character.
+
+        Fetches current location, online status, and ship information
+        for a character that has the location scope enabled.
+
+        Data is cached with stale-while-revalidate pattern:
+        - Location: 10 second stale threshold
+        - Online/Ship: 60 second stale threshold
+
+        Returns:
+            CharacterLocationData on success, CharacterLocationError on scope/token issues
+        """
+        result = await location_service.refresh_character_location(character_id, request.user.id)
+        if result is None:
+            raise NotFoundException(ERR_CHARACTER_NOT_FOUND)
+        return result

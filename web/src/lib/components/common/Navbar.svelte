@@ -1,21 +1,29 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { apiClient, getApiUrl } from '$lib/client/client';
+	import { apiClient } from '$lib/client/client';
 	import { user } from '$lib/stores/user';
 	import { resolve } from '$app/paths';
 	import { Settings, LogOut } from 'lucide-svelte';
 	import { getCharacterPortrait } from '$lib/helpers/images';
+	import { useDialog } from '@skeletonlabs/skeleton-svelte';
 	import ServerStatus from './ServerStatus.svelte';
+	import ScopeSelectionDialog from '../account/ScopeSelectionDialog.svelte';
 
 	// Get primary character, falling back to first character if no primary set
 	const primaryCharacter = $derived(
 		$user?.characters.find((c) => c.id === $user?.primary_character_id) ?? $user?.characters[0]
 	);
 
+	const loginDialog = useDialog({ id: 'login-dialog' });
+
 	async function logout() {
 		await apiClient.POST('/auth/logout');
 		user.set(null);
 		await goto(resolve('/'));
+	}
+
+	function openLoginDialog() {
+		loginDialog().setOpen(true);
 	}
 </script>
 
@@ -54,9 +62,15 @@
 			</button>
 		</div>
 	{:else if $user === null}
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- External API URL, not a SvelteKit route -->
-		<a href={getApiUrl('/auth/login')}>
-			<img src="/eve-login-dark-sm.png" alt="Login with EVE Online" class="h-8" />
-		</a>
+		<button onclick={openLoginDialog} class="btn preset-outlined-primary-500 btn-sm">Sign In</button
+		>
 	{/if}
 </nav>
+
+<!-- Login Dialog -->
+<ScopeSelectionDialog
+	dialog={loginDialog}
+	authPath="/auth/login"
+	title="Sign In"
+	description="Sign in with your EVE Online account. Select which permissions to grant - you can change these later."
+/>

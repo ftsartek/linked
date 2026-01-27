@@ -5,7 +5,8 @@ from __future__ import annotations
 LIST_OWNED_MAPS = """
 SELECT
     id, owner_id, name, description, is_public, public_read_only, edge_type,
-    rankdir, auto_layout, node_sep, rank_sep, date_created, date_updated, true AS edit_access
+    rankdir, auto_layout, node_sep, rank_sep, location_tracking_enabled,
+    date_created, date_updated, true AS edit_access
 FROM map
 WHERE owner_id = $1
 ORDER BY date_updated DESC;
@@ -13,7 +14,8 @@ ORDER BY date_updated DESC;
 
 LIST_CHARACTER_SHARED_MAPS = """
 SELECT DISTINCT m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only,
-    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep, m.date_created, m.date_updated,
+    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep, m.location_tracking_enabled,
+    m.date_created, m.date_updated,
     CASE
         WHEN m.owner_id = $1 THEN true
         ELSE NOT mch.read_only
@@ -26,8 +28,9 @@ ORDER BY m.date_updated DESC;
 """
 
 LIST_CORPORATION_MAPS = """
-SELECT m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only, m.edge_type, m.rankdir, m.auto_layout,
-    m.node_sep, m.rank_sep, m.date_created, m.date_updated,
+SELECT m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only, m.edge_type,
+    m.rankdir, m.auto_layout, m.node_sep, m.rank_sep, m.location_tracking_enabled,
+    m.date_created, m.date_updated,
     CASE
         WHEN m.owner_id = $2 THEN true
         WHEN mch.map_id IS NOT NULL THEN NOT mch.read_only
@@ -42,8 +45,9 @@ ORDER BY m.date_updated DESC;
 """
 
 LIST_ALLIANCE_MAPS = """
-SELECT m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only, m.edge_type, m.rankdir, m.auto_layout,
-    m.node_sep, m.rank_sep, m.date_created, m.date_updated,
+SELECT m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only, m.edge_type,
+    m.rankdir, m.auto_layout, m.node_sep, m.rank_sep, m.location_tracking_enabled,
+    m.date_created, m.date_updated,
     CASE
         WHEN m.owner_id = $2 THEN true
         WHEN mch.map_id IS NOT NULL THEN NOT mch.read_only
@@ -62,7 +66,8 @@ ORDER BY m.date_updated DESC;
 GET_MAP = """
 SELECT
     id, owner_id, name, description, is_public, public_read_only, edge_type,
-    rankdir, auto_layout, node_sep, rank_sep, date_created, date_updated
+    rankdir, auto_layout, node_sep, rank_sep, location_tracking_enabled,
+    date_created, date_updated
 FROM map
 WHERE id = $1;
 """
@@ -142,11 +147,13 @@ SET name = COALESCE($2, name),
     auto_layout = COALESCE($8, auto_layout),
     node_sep = COALESCE($9, node_sep),
     rank_sep = COALESCE($10, rank_sep),
+    location_tracking_enabled = COALESCE($11, location_tracking_enabled),
     date_updated = NOW()
 WHERE id = $1
 RETURNING
     id, owner_id, name, description, is_public, public_read_only, edge_type,
-    rankdir, auto_layout, node_sep, rank_sep, date_created, date_updated;
+    rankdir, auto_layout, node_sep, rank_sep, location_tracking_enabled,
+    date_created, date_updated;
 """
 
 DELETE_MAP = """
@@ -303,7 +310,7 @@ RETURNING id;
 LIST_PUBLIC_MAPS = """
 SELECT
     m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only,
-    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep,
+    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep, m.location_tracking_enabled,
     m.date_created, m.date_updated,
     false AS edit_access,
     COUNT(ms.user_id)::int AS subscription_count,
@@ -336,7 +343,7 @@ WHERE m.is_public = true
 SEARCH_PUBLIC_MAPS = """
 SELECT
     m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only,
-    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep,
+    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep, m.location_tracking_enabled,
     m.date_created, m.date_updated,
     false AS edit_access,
     COUNT(ms.user_id)::int AS subscription_count,
@@ -372,7 +379,7 @@ WHERE m.is_public = true
 LIST_ALL_PUBLIC_MAPS = """
 SELECT
     m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only,
-    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep,
+    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep, m.location_tracking_enabled,
     m.date_created, m.date_updated,
     false AS edit_access,
     COUNT(ms.user_id)::int AS subscription_count,
@@ -393,7 +400,7 @@ WHERE m.is_public = true AND m.date_deleted IS NULL;
 SEARCH_ALL_PUBLIC_MAPS = """
 SELECT
     m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only,
-    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep,
+    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep, m.location_tracking_enabled,
     m.date_created, m.date_updated,
     false AS edit_access,
     COUNT(ms.user_id)::int AS subscription_count,
@@ -416,7 +423,7 @@ WHERE m.is_public = true AND m.date_deleted IS NULL
 LIST_SUBSCRIBED_MAPS = """
 SELECT
     m.id, m.owner_id, m.name, m.description, m.is_public, m.public_read_only,
-    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep,
+    m.edge_type, m.rankdir, m.auto_layout, m.node_sep, m.rank_sep, m.location_tracking_enabled,
     m.date_created, m.date_updated,
     NOT m.public_read_only AS edit_access
 FROM map m

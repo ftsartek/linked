@@ -126,3 +126,11 @@ SELECT user_id, character_id, character_name
 FROM ranked_chars
 ORDER BY rank_tier ASC, sim_score DESC;
 """
+
+# Check if a character has the search scope enabled
+CHECK_SEARCH_SCOPE = """\
+SELECT COALESCE(rt.has_search_scope, FALSE) as has_search_scope
+FROM character c
+LEFT JOIN refresh_token rt ON rt.character_id = c.id
+WHERE c.id = $1 AND c.user_id = $2;
+"""

@@ -18,6 +18,7 @@ from routes.universe.dependencies import (
     WormholeSearchResult,
 )
 from routes.universe.queries import (
+    CHECK_SEARCH_SCOPE,
     GET_SYSTEM_DETAILS,
     LIST_UNIDENTIFIED_SYSTEMS,
     SEARCH_LOCAL_ENTITIES,
@@ -224,6 +225,23 @@ class UniverseService:
             pattern,
             schema_type=UserSearchResult,
         )
+
+    async def has_search_scope(self, character_id: int, user_id: str) -> bool:
+        """Check if a character has the search scope enabled.
+
+        Args:
+            character_id: EVE character ID
+            user_id: User ID (UUID as string)
+
+        Returns:
+            True if the character has the search scope, False otherwise
+        """
+        result = await self.db_session.select_value(
+            CHECK_SEARCH_SCOPE,
+            character_id,
+            user_id,
+        )
+        return bool(result)
 
     async def get_access_token(
         self,

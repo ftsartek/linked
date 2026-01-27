@@ -5,12 +5,15 @@ from litestar.stores.valkey import ValkeyStore
 from valkey.asyncio import Valkey
 
 from config import get_settings
+from utils.valkey import NamespacedValkey
+
+LOCATION_NAMESPACE = "location"
 
 
 def get_root_store() -> ValkeyStore:
     """Create the root Valkey store."""
     settings = get_settings()
-    return ValkeyStore.with_client(url=settings.valkey.session_url)
+    return ValkeyStore.with_client(url=settings.valkey.url)
 
 
 def get_sessions_store() -> ValkeyStore:
@@ -31,7 +34,13 @@ def get_cache_store() -> ValkeyStore:
 async def provide_valkey_client() -> Valkey:
     """Provide a raw Valkey client for event queues.
 
-    Uses valkey_event_db for event storage (separate from sessions).
+    This is namespaced at the channel level, so is passed through directly.
     """
     settings = get_settings()
-    return valkey.from_url(settings.valkey.event_url, decode_responses=False)
+    return valkey.from_url(settings.valkey.url, decode_responses=False)
+
+
+async def provide_location_cache() -> NamespacedValkey:
+    """Provide a namespaced Valkey client for character location caching."""
+    settings = get_settings()
+    return NamespacedValkey.from_url(settings.valkey.url, namespace=LOCATION_NAMESPACE)
