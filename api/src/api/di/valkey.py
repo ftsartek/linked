@@ -5,6 +5,9 @@ from litestar.stores.valkey import ValkeyStore
 from valkey.asyncio import Valkey
 
 from config import get_settings
+from utils.valkey import NamespacedValkey
+
+LOCATION_NAMESPACE = "location"
 
 
 def get_root_store() -> ValkeyStore:
@@ -35,3 +38,9 @@ async def provide_valkey_client() -> Valkey:
     """
     settings = get_settings()
     return valkey.from_url(settings.valkey.url, decode_responses=False)
+
+
+async def provide_location_cache() -> NamespacedValkey:
+    """Provide a namespaced Valkey client for character location caching."""
+    settings = get_settings()
+    return NamespacedValkey.from_url(settings.valkey.url, namespace=LOCATION_NAMESPACE)

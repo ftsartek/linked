@@ -1242,6 +1242,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	'/users/characters/{character_id}/location/refresh': {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		/** RefreshCharacterLocation */
+		post: operations['UsersCharactersCharacterIdLocationRefreshRefreshCharacterLocation'];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	'/users/primary-character': {
 		parameters: {
 			query?: never;
@@ -1395,6 +1412,30 @@ export interface components {
 		/** CharacterListResponse */
 		CharacterListResponse: {
 			characters: components['schemas']['users_service_CharacterInfo'][];
+		};
+		/** CharacterLocationData */
+		CharacterLocationData: {
+			character_id: number;
+			character_name: string;
+			solar_system_id?: number | null;
+			solar_system_name?: string | null;
+			station_id?: number | null;
+			station_name?: string | null;
+			structure_id?: number | null;
+			structure_name?: string | null;
+			online?: boolean | null;
+			ship_type_id?: number | null;
+			ship_type_name?: string | null;
+			ship_name?: string | null;
+			/** Format: date-time */
+			last_updated: string;
+			is_stale: boolean;
+		};
+		/** CharacterLocationError */
+		CharacterLocationError: {
+			character_id: number;
+			character_name: string;
+			error: string;
 		};
 		/** CorporationACLEntry */
 		CorporationACLEntry: {
@@ -5265,6 +5306,48 @@ export interface operations {
 				};
 				content: {
 					'application/json': components['schemas']['CharacterListResponse'];
+				};
+			};
+		};
+	};
+	UsersCharactersCharacterIdLocationRefreshRefreshCharacterLocation: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				character_id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Document created, URL follows */
+			201: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json':
+						| components['schemas']['CharacterLocationData']
+						| components['schemas']['CharacterLocationError'];
+				};
+			};
+			/** @description Bad request syntax or unsupported method */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': {
+						status_code: number;
+						detail: string;
+						extra?:
+							| null
+							| {
+									[key: string]: unknown;
+							  }
+							| unknown[];
+					};
 				};
 			};
 		};
