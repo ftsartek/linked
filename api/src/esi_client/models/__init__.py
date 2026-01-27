@@ -3,6 +3,11 @@ from .entities import (
     ESICharacter,
     ESICorporation,
 )
+from .location import (
+    ESICharacterLocation,
+    ESICharacterOnline,
+    ESICharacterShip,
+)
 from .search import (
     ESINameResult,
     ESISearchResponse,
@@ -13,6 +18,7 @@ from .status import (
 from .universe import (
     Constellation,
     DogmaAttribute,
+    ESIStructure,
     Planet,
     Position,
     Region,
@@ -26,9 +32,13 @@ __all__ = [
     "DogmaAttribute",
     "ESIAlliance",
     "ESICharacter",
+    "ESICharacterLocation",
+    "ESICharacterOnline",
+    "ESICharacterShip",
     "ESICorporation",
     "ESINameResult",
     "ESISearchResponse",
+    "ESIStructure",
     "Planet",
     "Position",
     "Region",
