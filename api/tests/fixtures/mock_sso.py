@@ -71,7 +71,7 @@ class MockEveSSOService(EveSSOService):
             scopes=scopes,
         )
 
-    async def exchange_code(self, code: str) -> TokenResponse:
+    async def exchange_code(self, code: str, code_verifier: str) -> TokenResponse:
         """Exchange authorization code for mock tokens.
 
         In test mode, we treat the code as a mock access token directly,
@@ -79,10 +79,13 @@ class MockEveSSOService(EveSSOService):
 
         Args:
             code: The authorization code (which is actually a mock access token)
+            code_verifier: PKCE code verifier (ignored in mock)
 
         Returns:
             TokenResponse with the code as both access and refresh token
         """
+        # In test mode, we don't validate the code_verifier
+        _ = code_verifier
         return TokenResponse(
             access_token=code,
             refresh_token=f"refresh_{code}",

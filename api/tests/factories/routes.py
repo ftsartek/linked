@@ -11,6 +11,9 @@ from litestar.params import Parameter
 
 from services.eve_sso import ScopeGroup
 
+# Fixed PKCE values for testing - in real usage these are cryptographically generated
+TEST_CODE_VERIFIER = "test_code_verifier_for_pkce_flow_in_integration_tests"
+
 
 @get("/test/auth-setup")
 async def auth_setup(
@@ -18,9 +21,9 @@ async def auth_setup(
     scope_groups: list[ScopeGroup] | None = Parameter(query="scopes", default=None),
     linking: bool = Parameter(query="linking", default=False),
 ) -> dict[str, str | list[str] | bool]:
-    """Set up oauth_state in session for testing authentication flow.
+    """Set up oauth_state and PKCE code_verifier in session for testing authentication flow.
 
-    This endpoint simulates what /auth/login does (setting oauth_state)
+    This endpoint simulates what /auth/login does (setting oauth_state and code_verifier)
     without requiring a browser redirect to EVE SSO.
 
     Args:
@@ -32,6 +35,7 @@ async def auth_setup(
     """
     state = "test_oauth_state"
     request.session["oauth_state"] = state
+    request.session["code_verifier"] = TEST_CODE_VERIFIER
     request.session["linking"] = linking
     if scope_groups:
         request.session["scope_groups"] = [str(g) for g in scope_groups]
