@@ -329,6 +329,7 @@ class AuthService:
     async def process_callback(
         self,
         code: str,
+        code_verifier: str,
         current_user: SessionUser | None,
         is_linking: bool,
     ) -> CallbackResult:
@@ -336,6 +337,7 @@ class AuthService:
 
         Args:
             code: Authorization code from EVE SSO
+            code_verifier: PKCE code verifier for token exchange
             current_user: Current session user (if authenticated)
             is_linking: Whether this is a character linking operation
 
@@ -346,7 +348,7 @@ class AuthService:
             ValueError: If linking but not logged in, or character belongs to another user
         """
         # Exchange code for tokens
-        tokens = await self.sso_service.exchange_code(code)
+        tokens = await self.sso_service.exchange_code(code, code_verifier)
 
         # Validate JWT and extract character info
         char_info = self.sso_service.validate_jwt(tokens.access_token)

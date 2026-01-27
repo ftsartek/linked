@@ -22,6 +22,8 @@ enabling feature-gating based on granted permissions.
 from __future__ import annotations
 
 import base64
+import hashlib
+import secrets
 from dataclasses import dataclass
 from enum import StrEnum
 from urllib.parse import urlencode
@@ -45,6 +47,29 @@ EVE_JWT_SUBJECT_PREFIX = "CHARACTER:EVE:"
 BASE_SCOPES = [
     "publicData",
 ]
+
+# PKCE code verifier length (43-128 characters per RFC 7636)
+PKCE_VERIFIER_LENGTH = 64
+
+
+def generate_pkce_pair() -> tuple[str, str]:
+    """Generate a PKCE code verifier and challenge pair.
+
+    Creates a cryptographically random code verifier and its corresponding
+    SHA-256 challenge for use in the OAuth2 authorization flow.
+
+    Returns:
+        Tuple of (code_verifier, code_challenge)
+    """
+    # Generate random bytes and encode as URL-safe base64 (no padding)
+    verifier_bytes = secrets.token_bytes(PKCE_VERIFIER_LENGTH)
+    code_verifier = base64.urlsafe_b64encode(verifier_bytes).rstrip(b"=").decode("ascii")
+
+    # Create SHA-256 hash of verifier, then base64url encode (no padding)
+    challenge_digest = hashlib.sha256(code_verifier.encode("ascii")).digest()
+    code_challenge = base64.urlsafe_b64encode(challenge_digest).rstrip(b"=").decode("ascii")
+
+    return code_verifier, code_challenge
 
 
 class _JWKSClientHolder:
@@ -198,22 +223,24 @@ class EveSSOService:
             await self._http_client.aclose()
             self._http_client = None
 
-    def get_authorization_url(self, state: str, scopes: list[str]) -> str:
-        """Build the EVE SSO authorization URL.
+    def get_authorization_url(self, state: str, scopes: list[str], code_challenge: str) -> str:
+        """Build the EVE SSO authorization URL with PKCE.
 
         Args:
             state: Random string for CSRF protection
-            scopes: List of ESI scopes to request (defaults to settings.eve_scopes)
+            scopes: List of ESI scopes to request
+            code_challenge: PKCE code challenge (SHA-256 hash of code verifier)
 
         Returns:
             Full authorization URL to redirect user to
         """
-
         params = {
             "response_type": "code",
             "redirect_uri": self.callback_url,
             "client_id": self.client_id,
             "state": state,
+            "code_challenge": code_challenge,
+            "code_challenge_method": "S256",
         }
 
         if scopes:
@@ -221,11 +248,12 @@ class EveSSOService:
 
         return f"{EVE_SSO_AUTHORIZE_URL}?{urlencode(params)}"
 
-    async def exchange_code(self, code: str) -> TokenResponse:
+    async def exchange_code(self, code: str, code_verifier: str) -> TokenResponse:
         """Exchange authorization code for access and refresh tokens.
 
         Args:
             code: Authorization code from SSO callback
+            code_verifier: PKCE code verifier (original random string)
 
         Returns:
             TokenResponse with access_token, refresh_token, etc.
@@ -245,6 +273,7 @@ class EveSSOService:
             data={
                 "grant_type": "authorization_code",
                 "code": code,
+                "code_verifier": code_verifier,
             },
         )
         response.raise_for_status()
