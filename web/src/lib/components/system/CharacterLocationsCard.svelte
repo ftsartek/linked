@@ -242,7 +242,8 @@
 							<div class="flex items-center gap-1 text-xs text-surface-400">
 								{#if char.structure_name}
 									<span class="truncate"
-										>{char.structure_name}{#if char.solar_system_name} - {char.solar_system_name}{/if}</span
+										>{char.structure_name}{#if char.solar_system_name}
+											- {char.solar_system_name}{/if}</span
 									>
 								{:else if char.station_name}
 									<span class="truncate">{char.station_name}</span>

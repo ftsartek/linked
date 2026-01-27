@@ -19,7 +19,6 @@ EVE_SSO_ISSUER = "https://login.eveonline.com"
 
 BASE_SCOPES = [
     "publicData",
-    "esi-search.search_structures.v1",
 ]
 
 
@@ -27,6 +26,7 @@ class ScopeGroup(StrEnum):
     """Optional ESI scope groups that can be requested during authorization."""
 
     LOCATION = "location"
+    SEARCH = "search"
 
 
 OPTIONAL_SCOPE_GROUPS: dict[ScopeGroup, list[str]] = {
@@ -35,7 +35,10 @@ OPTIONAL_SCOPE_GROUPS: dict[ScopeGroup, list[str]] = {
         "esi-location.read_online.v1",
         "esi-location.read_ship_type.v1",
         "esi-universe.read_structures.v1",
-    ]
+    ],
+    ScopeGroup.SEARCH: [
+        "esi-search.search_structures.v1",
+    ],
 }
 
 

@@ -51,6 +51,7 @@ class CharacterWithScopes:
     alliance_id: int | None
     date_created: datetime
     has_location_scope: bool
+    has_search_scope: bool
 
 
 @dataclass
@@ -152,6 +153,7 @@ class AuthService:
         refresh_token: str,
         scopes: list[str],
         has_location_scope: bool = False,
+        has_search_scope: bool = False,
     ) -> None:
         """Store encrypted refresh token with scope group flags.
 
@@ -160,6 +162,7 @@ class AuthService:
             refresh_token: The refresh token to encrypt and store
             scopes: List of granted scopes
             has_location_scope: Whether location scopes were granted
+            has_search_scope: Whether search scopes were granted
         """
         token = self.encryption_service.encrypt(refresh_token)
 
@@ -170,6 +173,7 @@ class AuthService:
             scopes,
             None,  # expires_at - refresh tokens don't have explicit expiry
             has_location_scope,
+            has_search_scope,
         )
 
     async def upsert_corporation(
@@ -259,7 +263,8 @@ class AuthService:
                 c.corporation_id,
                 c.alliance_id,
                 c.date_created,
-                COALESCE(rt.has_location_scope, FALSE) as has_location_scope
+                COALESCE(rt.has_location_scope, FALSE) as has_location_scope,
+                COALESCE(rt.has_search_scope, FALSE) as has_search_scope
             FROM character c
             LEFT JOIN refresh_token rt ON rt.character_id = c.id
             WHERE c.user_id = $1
@@ -275,6 +280,8 @@ class AuthService:
             scope_groups = []
             if row.has_location_scope:
                 scope_groups.append(ScopeGroup.LOCATION.value)
+            if row.has_search_scope:
+                scope_groups.append(ScopeGroup.SEARCH.value)
             result.append(
                 CharacterInfo(
                     id=row.id,
@@ -401,6 +408,7 @@ class AuthService:
             tokens.refresh_token,
             char_info.scopes,
             has_location_scope=has_scope_group(char_info.scopes, ScopeGroup.LOCATION),
+            has_search_scope=has_scope_group(char_info.scopes, ScopeGroup.SEARCH),
         )
 
         return user_id

@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { SvelteSet } from 'svelte/reactivity';
-	import { Dialog, Portal, Switch } from '@skeletonlabs/skeleton-svelte';
-	import { SCOPE_GROUPS, buildAuthUrl } from '$lib/helpers/scopeGroups';
+	import { Dialog, Portal, Switch, Tooltip } from '@skeletonlabs/skeleton-svelte';
+	import { CircleHelp } from 'lucide-svelte';
+	import { SCOPE_GROUPS, BASIC_SCOPES_DETAILS, buildAuthUrl } from '$lib/helpers/scopeGroups';
 
 	interface Props {
 		dialog: ReturnType<typeof import('@skeletonlabs/skeleton-svelte').useDialog>;
@@ -54,13 +55,65 @@
 					{description}
 				</Dialog.Description>
 
+				<!-- Basic scopes info -->
+				<div class="mb-3 rounded-lg border-2 border-surface-800 bg-black/40 p-3">
+					<div class="flex items-center gap-2">
+						<span class="font-medium text-white">Basic Permissions</span>
+						<Tooltip positioning={{ placement: 'right' }}>
+							<Tooltip.Trigger>
+								<span class="cursor-help text-surface-400 hover:text-surface-300">
+									<CircleHelp size={16} />
+								</span>
+							</Tooltip.Trigger>
+							<Portal>
+								<Tooltip.Positioner>
+									<Tooltip.Content
+										class="z-[100] max-w-xs rounded-lg border border-surface-600 bg-surface-800 p-2 text-xs shadow-xl"
+									>
+										<Tooltip.Arrow
+											class="[--arrow-background:var(--color-surface-800)] [--arrow-size:--spacing(2)]"
+										>
+											<Tooltip.ArrowTip />
+										</Tooltip.Arrow>
+										<span class="whitespace-pre-line text-white">{BASIC_SCOPES_DETAILS}</span>
+									</Tooltip.Content>
+								</Tooltip.Positioner>
+							</Portal>
+						</Tooltip>
+					</div>
+					<div class="text-sm text-surface-400">Always required for authentication</div>
+				</div>
+
 				<div class="space-y-3">
 					{#each SCOPE_GROUPS as scope (scope.id)}
 						<div
 							class="flex items-center justify-between gap-3 rounded-lg border-2 border-surface-800 bg-black/40 p-3"
 						>
 							<div class="flex-1">
-								<div class="font-medium text-white">{scope.name}</div>
+								<div class="flex items-center gap-2">
+									<span class="font-medium text-white">{scope.name}</span>
+									<Tooltip positioning={{ placement: 'right' }}>
+										<Tooltip.Trigger>
+											<span class="cursor-help text-surface-400 hover:text-surface-300">
+												<CircleHelp size={16} />
+											</span>
+										</Tooltip.Trigger>
+										<Portal>
+											<Tooltip.Positioner>
+												<Tooltip.Content
+													class="z-[100] max-w-xs rounded-lg border border-surface-600 bg-surface-800 p-2 text-xs shadow-xl"
+												>
+													<Tooltip.Arrow
+														class="[--arrow-background:var(--color-surface-800)] [--arrow-size:--spacing(2)]"
+													>
+														<Tooltip.ArrowTip />
+													</Tooltip.Arrow>
+													<span class="whitespace-pre-line text-white">{scope.details}</span>
+												</Tooltip.Content>
+											</Tooltip.Positioner>
+										</Portal>
+									</Tooltip>
+								</div>
 								<div class="text-sm text-surface-400">{scope.description}</div>
 							</div>
 							<Switch
