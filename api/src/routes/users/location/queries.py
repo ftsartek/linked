@@ -28,3 +28,15 @@ SELECT name FROM ship_type WHERE id = $1;
 GET_STATION_NAME = """
 SELECT name FROM npc_station WHERE id = $1;
 """
+
+# Update refresh token after rotation (preserves scopes and other metadata)
+UPDATE_REFRESH_TOKEN = """
+UPDATE refresh_token
+SET token = $2, date_updated = NOW()
+WHERE character_id = $1;
+"""
+
+# Delete refresh token when revoked
+DELETE_REFRESH_TOKEN = """
+DELETE FROM refresh_token WHERE character_id = $1;
+"""
