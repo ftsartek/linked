@@ -241,10 +241,7 @@
 
 							<div class="flex items-center gap-1 text-xs text-surface-400">
 								{#if char.structure_name}
-									<span class="truncate"
-										>{char.structure_name}{#if char.solar_system_name}
-											- {char.solar_system_name}{/if}</span
-									>
+									<span class="truncate">{char.structure_name}</span>
 								{:else if char.station_name}
 									<span class="truncate">{char.station_name}</span>
 								{:else if char.solar_system_name}
@@ -271,9 +268,6 @@
 								<span class="text-surface-500">
 									{formatLastUpdated(char.last_updated, now)}
 								</span>
-								{#if char.is_stale}
-									<span class="text-warning-500">(stale)</span>
-								{/if}
 							</div>
 						</div>
 					</div>
@@ -281,7 +275,7 @@
 
 				<!-- Characters with errors -->
 				{#each getLocationErrorsArray() as charError (charError.character_id)}
-					<div class="flex items-center gap-2 rounded-lg bg-surface-900/30 p-2 opacity-50">
+					<div class="flex items-center gap-2 rounded-lg bg-primary-950/30 p-2 opacity-50">
 						<!-- Portrait -->
 						<img
 							src={getCharacterPortrait(charError.character_id, 64)}

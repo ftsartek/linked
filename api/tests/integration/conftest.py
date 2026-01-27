@@ -30,6 +30,7 @@ class IntegrationTestState:
     user_id: UUID | None = None
     character_id: int | None = None
     character_name: str = TEST_CHARACTER_NAME
+    second_character_id: int | None = None
     map_id: UUID | None = None
     node_ids: list[UUID] = field(default_factory=list)
     link_ids: list[UUID] = field(default_factory=list)

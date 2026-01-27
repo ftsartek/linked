@@ -48,6 +48,22 @@ TEST3_ALLIANCE_ID = 99000001  # Same alliance as primary
 TEST3_CHARACTER_ID = 11111111
 TEST3_CHARACTER_NAME = "Corp Mate"
 
+# Fourth test user - for character linking tests (same corp/alliance as primary)
+TEST4_CHARACTER_ID = 44444444
+TEST4_CHARACTER_NAME = "Linked Alt"
+
+# Ship types for testing
+CAPSULE_TYPE_ID = 670
+
+# NPC station for location testing (Jita 4-4)
+JITA_44_STATION_ID = 60003760
+JITA_44_STATION_NAME = "Jita IV - Moon 4 - Caldari Navy Assembly Plant"
+
+# Player structure for location testing
+TEST_STRUCTURE_ID = 1000000000001
+TEST_STRUCTURE_NAME = "Test Fortizar"
+FORTIZAR_TYPE_ID = 35833
+
 # Pre-created map fixtures (UUIDs are deterministic for testing)
 # These maps are created by a fixture owner user, not by the test user
 FIXTURE_OWNER_USER_ID = "00000000-0000-0000-0000-000000000001"

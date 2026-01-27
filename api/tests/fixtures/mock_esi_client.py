@@ -7,12 +7,23 @@ without making real HTTP requests.
 from __future__ import annotations
 
 from esi_client import ESIClient
-from esi_client.models import ESIAlliance, ESICharacter, ESICorporation, ServerStatus
+from esi_client.models import (
+    ESIAlliance,
+    ESICharacter,
+    ESICharacterLocation,
+    ESICharacterOnline,
+    ESICharacterShip,
+    ESICorporation,
+    ServerStatus,
+)
+from esi_client.models.universe import ESIStructure
 from tests.factories.static_data import (
     AMARR_SYSTEM_ID,
     DODIXIE_SYSTEM_ID,
+    FORTIZAR_TYPE_ID,
     HED_GP_SYSTEM_ID,
     HEK_SYSTEM_ID,
+    JITA_44_STATION_ID,
     JITA_SYSTEM_ID,
     PERIMETER_SYSTEM_ID,
     PR_8CA_SYSTEM_ID,
@@ -21,6 +32,8 @@ from tests.factories.static_data import (
     TEST_CHARACTER_ID,
     TEST_CHARACTER_NAME,
     TEST_CORPORATION_ID,
+    TEST_STRUCTURE_ID,
+    TEST_STRUCTURE_NAME,
 )
 
 # Mock route data between k-space systems
@@ -142,6 +155,64 @@ class MockESIClient(ESIClient):
         # Generate a simple mock route for unknown pairs
         # This simulates a 3-jump route through fictional intermediates
         return [origin, origin + 1, destination]
+
+    async def get_character_location(
+        self,
+        access_token: str,  # noqa: ARG002
+        character_id: int,  # noqa: ARG002
+    ) -> ESICharacterLocation:
+        """Return mock character location in Jita at a structure."""
+        return ESICharacterLocation(
+            solar_system_id=JITA_SYSTEM_ID,
+            station_id=JITA_44_STATION_ID,
+            structure_id=TEST_STRUCTURE_ID,
+        )
+
+    async def get_character_online(
+        self,
+        access_token: str,  # noqa: ARG002
+        character_id: int,  # noqa: ARG002
+    ) -> ESICharacterOnline:
+        """Return mock online status."""
+        return ESICharacterOnline(
+            online=True,
+            last_login="2026-01-28T10:00:00Z",
+            last_logout=None,
+            logins=100,
+        )
+
+    async def get_character_ship(
+        self,
+        access_token: str,  # noqa: ARG002
+        character_id: int,  # noqa: ARG002
+    ) -> ESICharacterShip:
+        """Return mock ship data (Capsule)."""
+        return ESICharacterShip(
+            ship_item_id=1234567890,
+            ship_name="Test Pilot's Capsule",
+            ship_type_id=670,  # Capsule type ID
+        )
+
+    async def get_structure(
+        self,
+        access_token: str,  # noqa: ARG002
+        structure_id: int,
+    ) -> ESIStructure:
+        """Return mock structure data."""
+        if structure_id == TEST_STRUCTURE_ID:
+            return ESIStructure(
+                name=TEST_STRUCTURE_NAME,
+                owner_id=TEST_CORPORATION_ID,
+                solar_system_id=JITA_SYSTEM_ID,
+                type_id=FORTIZAR_TYPE_ID,
+            )
+        # Fallback for unknown structures
+        return ESIStructure(
+            name=f"Unknown Structure {structure_id}",
+            owner_id=TEST_CORPORATION_ID,
+            solar_system_id=JITA_SYSTEM_ID,
+            type_id=FORTIZAR_TYPE_ID,
+        )
 
 
 async def provide_mock_esi_client() -> MockESIClient:
