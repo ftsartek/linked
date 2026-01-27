@@ -2,41 +2,29 @@
 
 from __future__ import annotations
 
-import asyncclick as click
-import valkey.asyncio as valkey
-from litestar.channels import ChannelsPlugin
-from litestar.channels.backends.redis import RedisChannelsStreamBackend
-from sqlspec.adapters.asyncpg.driver import AsyncpgDriver
+from typing import TYPE_CHECKING
 
-from config.settings import Settings
-from database import provide_session
-from esi_client.client import ESIClient
-from routes.maps.publisher import EventPublisher
-from services.cleanup import (
-    DEFAULT_RETENTION_HOURS,
-    cleanup_all,
-    cleanup_links,
-    cleanup_maps,
-    cleanup_nodes,
-    cleanup_notes,
-    cleanup_signatures,
-)
-from services.lifecycle import (
-    DEFAULT_SIGNATURE_EXPIRY_DAYS,
-    LifecycleResult,
-    NoteLifecycleResult,
-    SignatureLifecycleResult,
-    expire_notes,
-    expire_old_signatures,
-    update_link_lifetimes,
-)
-from services.route_cache import TRADE_HUBS, RouteCacheService
-from utils.enums import RouteType
-from utils.valkey import EVENT_NAMESPACE
+import asyncclick as click
+
+if TYPE_CHECKING:
+    from sqlspec.adapters.asyncpg.driver import AsyncpgDriver
+
+    from config.settings import Settings
+    from esi_client.client import ESIClient
+    from routes.maps.publisher import EventPublisher
+    from services.lifecycle import LifecycleResult, NoteLifecycleResult, SignatureLifecycleResult
+    from utils.enums import RouteType
 
 
 async def _create_event_publisher(settings: Settings) -> EventPublisher:
     """Create an event publisher for cron context."""
+    import valkey.asyncio as valkey
+    from litestar.channels import ChannelsPlugin
+    from litestar.channels.backends.redis import RedisChannelsStreamBackend
+
+    from routes.maps.publisher import EventPublisher
+    from utils.valkey import EVENT_NAMESPACE
+
     valkey_client = valkey.from_url(settings.valkey.url, namespace=EVENT_NAMESPACE, decode_responses=False)
     channels_plugin = ChannelsPlugin(
         backend=RedisChannelsStreamBackend(
@@ -51,9 +39,13 @@ async def _create_event_publisher(settings: Settings) -> EventPublisher:
 
 
 @click.group()
-def cron() -> None:
+@click.pass_context
+def cron(ctx: click.Context) -> None:
     """Automated cron job commands."""
-    pass
+    from config.settings import get_settings
+
+    ctx.ensure_object(dict)
+    ctx.obj = get_settings()
 
 
 def _print_lifecycle_results(
@@ -150,7 +142,7 @@ def _print_note_lifecycle_results(
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 @click.option(
     "--signature-expiry-days",
-    default=DEFAULT_SIGNATURE_EXPIRY_DAYS,
+    default=7,  # DEFAULT_SIGNATURE_EXPIRY_DAYS from services.lifecycle
     show_default=True,
     help="Days after creation before signatures are soft-deleted",
 )
@@ -165,6 +157,9 @@ async def lifecycle(settings: Settings, verbose: bool, dry_run: bool, signature_
     Notes are soft-deleted when they pass their expiry date.
     When a link is soft-deleted, its associated signatures are also cascade-deleted.
     """
+    from database import provide_session
+    from services.lifecycle import expire_notes, expire_old_signatures, update_link_lifetimes
+
     # Only create event publisher if we're actually making changes
     event_publisher = None if dry_run else await _create_event_publisher(settings)
 
@@ -198,6 +193,14 @@ async def _run_individual_cleanups(
     flags: dict[str, bool],
 ) -> None:
     """Run individual cleanup operations based on flags."""
+    from services.cleanup import (
+        cleanup_links,
+        cleanup_maps,
+        cleanup_nodes,
+        cleanup_notes,
+        cleanup_signatures,
+    )
+
     # Define cleanup operations in FK order
     cleanup_ops = [
         ("notes", cleanup_notes),
@@ -226,7 +229,7 @@ async def _run_individual_cleanups(
 @click.option("--dry-run", is_flag=True, help="Show what would be done without making changes")
 @click.option(
     "--retention-hours",
-    default=DEFAULT_RETENTION_HOURS,
+    default=24,  # DEFAULT_RETENTION_HOURS from services.cleanup
     show_default=True,
     help="Hours to retain soft-deleted records",
 )
@@ -252,6 +255,9 @@ async def cleanup(
     This command should be run hourly (e.g., at minute 40).
     Deletes in FK order: notes -> signatures -> links -> nodes -> maps.
     """
+    from database import provide_session
+    from services.cleanup import cleanup_all
+
     # If no specific flags set, default to --all
     if not any([do_all, do_maps, do_links, do_nodes, do_signatures, do_notes]):
         do_all = True
@@ -318,6 +324,8 @@ async def _process_map_routes(
     verbose: bool,
 ) -> int:
     """Process route pre-fetching for a single map."""
+    from services.route_cache import TRADE_HUBS, RouteCacheService
+
     map_id = map_row["id"]
     map_name = map_row["name"]
 
@@ -383,6 +391,10 @@ async def prefetch_routes(
     This command can be run periodically (e.g., hourly) to ensure routes
     are cached before users need them.
     """
+    from database import provide_session
+    from esi_client.client import ESIClient
+    from utils.enums import RouteType
+
     route_type_enum = RouteType(route_type)
 
     if dry_run:
