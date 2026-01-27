@@ -148,9 +148,9 @@
 	<!-- Tab Bar (full width, fixed height to prevent jump) -->
 	<div class="flex h-12 flex-col overflow-hidden rounded-xl bg-black/75 backdrop-blur-2xl">
 		{#if loading}
-			<Progress value={null} class="h-1 w-full shrink-0">
-				<Progress.Track class="bg-transparent">
-					<Progress.Range class="bg-primary-500" />
+			<Progress value={null} class="h-0.5 w-full rounded-none">
+				<Progress.Track class="h-0.5 rounded-none bg-transparent">
+					<Progress.Range class="h-0.5 rounded-none bg-primary-300-700" />
 				</Progress.Track>
 			</Progress>
 		{/if}
