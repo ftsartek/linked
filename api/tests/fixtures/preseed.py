@@ -8,6 +8,7 @@ from tests.factories.static_data import (
     ALLIANCE_MAP_NODE_ID,
     ALLIANCE_SHARED_MAP_ID,
     ALLIANCE_SHARED_MAP_NAME,
+    CAPSULE_TYPE_ID,
     CORP_MAP_NODE_ID,
     CORP_SHARED_MAP_ID,
     CORP_SHARED_MAP_NAME,
@@ -15,6 +16,8 @@ from tests.factories.static_data import (
     HED_GP_SYSTEM_ID,
     J123456_SYSTEM_ID,
     J345678_SYSTEM_ID,
+    JITA_44_STATION_ID,
+    JITA_44_STATION_NAME,
     JITA_SYSTEM_ID,
     K162_WORMHOLE_ID,
     PUBLIC_MAP_DESCRIPTION,
@@ -143,6 +146,25 @@ async def preseed_test_data(session: AsyncpgDriver) -> None:
         (31000001, 2),
         (31000002, 3)
         ON CONFLICT DO NOTHING
+        """
+    )
+
+    # 6b. Insert NPC stations for location testing
+    await session.execute(
+        f"""
+        INSERT INTO npc_station (id, system_id, name) VALUES
+        ({JITA_44_STATION_ID}, {JITA_SYSTEM_ID}, '{JITA_44_STATION_NAME}')
+        ON CONFLICT (id) DO NOTHING
+        """
+    )
+
+    # 6c. Insert ship types for location testing
+    # Capsule group_id is 29 in EVE
+    await session.execute(
+        f"""
+        INSERT INTO ship_type (id, name, group_id) VALUES
+        ({CAPSULE_TYPE_ID}, 'Capsule', 29)
+        ON CONFLICT (id) DO NOTHING
         """
     )
 
