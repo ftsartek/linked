@@ -672,7 +672,11 @@ async def import_stargates(
 
 
 async def import_npc_stations(
-    session: AsyncpgDriver, sde_stations: dict, systems_data: list, type_names: dict[int, str]
+    session: AsyncpgDriver,
+    sde_stations: dict,
+    systems_data: list,
+    type_names: dict[int, str],
+    station_names: dict[int, str],
 ) -> None:
     """Import NPC stations from SDE npcStations.yaml."""
     click.echo(f"Importing {len(sde_stations)} NPC stations...")
@@ -690,6 +694,7 @@ async def import_npc_stations(
                 system_id,
                 type_id,
                 type_names.get(type_id) if type_id else None,
+                station_names.get(int(station_id)),
                 data.get("ownerID"),
                 data.get("celestialIndex"),
                 data.get("orbitID"),
@@ -705,12 +710,12 @@ async def import_npc_stations(
     if rows:
         await session.execute_many(
             """INSERT INTO npc_station
-                (id, system_id, type_id, type_name, owner_id, celestial_index, orbit_id, orbit_index,
+                (id, system_id, type_id, type_name, name, owner_id, celestial_index, orbit_id, orbit_index,
                  operation_id, reprocessing_efficiency, reprocessing_stations_take, pos_x, pos_y, pos_z)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             ON CONFLICT (id) DO UPDATE SET
                 system_id = EXCLUDED.system_id, type_id = EXCLUDED.type_id, type_name = EXCLUDED.type_name,
-                owner_id = EXCLUDED.owner_id, celestial_index = EXCLUDED.celestial_index,
+                name = EXCLUDED.name, owner_id = EXCLUDED.owner_id, celestial_index = EXCLUDED.celestial_index,
                 orbit_id = EXCLUDED.orbit_id, orbit_index = EXCLUDED.orbit_index,
                 operation_id = EXCLUDED.operation_id,
                 reprocessing_efficiency = EXCLUDED.reprocessing_efficiency,
@@ -718,6 +723,20 @@ async def import_npc_stations(
                 pos_x = EXCLUDED.pos_x, pos_y = EXCLUDED.pos_y, pos_z = EXCLUDED.pos_z""",
             rows,
         )
+
+
+async def import_ship_types(session: AsyncpgDriver, ship_types: dict[int, dict]) -> None:
+    """Import ship types into the ship_type table."""
+    if not ship_types:
+        click.echo("Skipping ship types import (no data)")
+        return
+    click.echo(f"Importing {len(ship_types)} ship types...")
+    rows = [(type_id, data["name"], data["group_id"]) for type_id, data in ship_types.items()]
+    await session.execute_many(
+        """INSERT INTO ship_type (id, name, group_id) VALUES ($1, $2, $3)
+           ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, group_id = EXCLUDED.group_id""",
+        rows,
+    )
 
 
 async def cleanup_orphaned_records(
@@ -773,6 +792,30 @@ def load_type_names(settings: Settings) -> dict[int, str]:
                 if type_id is not None:
                     type_names[int(type_id)] = name
     return type_names
+
+
+def load_ship_types(settings: Settings) -> dict[int, dict]:
+    """Load ship types from pre-generated JSON file."""
+    json_path = settings.data.sde_dir / "ship_types.json"
+    if not json_path.exists():
+        click.echo("  Warning: ship_types.json not found (run 'collect sde' to generate)")
+        return {}
+    click.echo("  Loading ship_types.json...")
+    with json_path.open("rb") as f:
+        # JSON keys are strings, convert to int
+        return {int(k): v for k, v in msgspec.json.decode(f.read()).items()}
+
+
+def load_station_names(settings: Settings) -> dict[int, str]:
+    """Load station names from pre-generated JSON file."""
+    json_path = settings.data.sde_dir / "station_names.json"
+    if not json_path.exists():
+        click.echo("  Warning: station_names.json not found (run 'collect station-names' to generate)")
+        return {}
+    click.echo("  Loading station_names.json...")
+    with json_path.open("rb") as f:
+        # JSON keys are strings, convert to int
+        return {int(k): v for k, v in msgspec.json.decode(f.read()).items()}
 
 
 def load_sde_celestial_data(
@@ -842,6 +885,12 @@ async def preseed(settings: Settings) -> None:
         settings
     )
 
+    # Load ship types for location display
+    ship_types = load_ship_types(settings)
+
+    # Load station names for location display
+    station_names = load_station_names(settings)
+
     # Build fallback lookup tables
     region_wh_class, region_faction, constellation_wh_class, constellation_faction = build_fallback_lookups(
         sde_regions, sde_constellations
@@ -881,7 +930,10 @@ async def preseed(settings: Settings) -> None:
         await import_moons(session, sde_moons, sde_planets, systems_data, type_names)
         await import_asteroid_belts(session, sde_belts, sde_planets, systems_data, type_names)
         await import_stargates(session, sde_stargates, systems_data, type_names)
-        await import_npc_stations(session, sde_stations, systems_data, type_names)
+        await import_npc_stations(session, sde_stations, systems_data, type_names, station_names)
+
+        # Import ship types for location display
+        await import_ship_types(session, ship_types)
 
         # Clean up orphaned records
         await cleanup_orphaned_records(

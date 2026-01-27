@@ -4,6 +4,7 @@ import asyncio
 import io
 import zipfile
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import Any
 
 import asyncclick as click
@@ -31,6 +32,7 @@ SDE_FILES = {
     "sde/fsd/universe/eve/mapStargates.jsonl": "mapStargates.jsonl",
     "sde/fsd/universe/eve/npcStations.jsonl": "npcStations.jsonl",
     "sde/fsd/types.jsonl": "types.jsonl",
+    "sde/fsd/groups.jsonl": "groups.jsonl",
 }
 
 # Conservative rate limit: max 20 concurrent requests
@@ -347,6 +349,136 @@ async def wormholes(settings: Settings, user_agent: str | None) -> None:
     info_path.write_bytes(msgspec.json.encode(wormhole_info))
     click.echo(f"Wrote {len(wormhole_info)} wormhole entries to {info_path}")
 
+    # Fetch station names from ESI
+    click.echo("Fetching station names...")
+    await fetch_station_names(settings, ua)
+
+
+async def fetch_station_names(settings: Settings, user_agent: str, batch_size: int = 1000) -> None:  # noqa: C901
+    """Fetch station names from ESI and save to station_names.json."""
+    sde_dir = settings.data.sde_dir
+    stations_path = sde_dir / "npcStations.jsonl"
+    output_path = sde_dir / "station_names.json"
+
+    if not stations_path.exists():
+        click.echo("  npcStations.jsonl not found, skipping station names")
+        return
+
+    # Load existing station names if available
+    existing_names: dict[int, str] = {}
+    if output_path.exists():
+        with output_path.open("rb") as f:
+            existing_names = {int(k): v for k, v in msgspec.json.decode(f.read()).items()}
+        click.echo(f"  Loaded {len(existing_names)} existing station names")
+
+    # Get station IDs from SDE
+    decoder = msgspec.json.Decoder()
+    station_ids: list[int] = []
+    with stations_path.open("rb") as f:
+        for line in f:
+            if line.strip():
+                entry = decoder.decode(line)
+                station_id = entry.get("_key")
+                if station_id is not None and station_id not in existing_names:
+                    station_ids.append(int(station_id))
+
+    if not station_ids:
+        click.echo("  All station names already collected")
+        return
+
+    click.echo(f"  Fetching names for {len(station_ids)} stations from ESI...")
+
+    # Batch requests to ESI (max 1000 IDs per request)
+    station_names: dict[int, str] = dict(existing_names)
+    async with ESIClient(user_agent) as client:
+        for i in range(0, len(station_ids), batch_size):
+            batch = station_ids[i : i + batch_size]
+            batch_num = i // batch_size + 1
+            total_batches = (len(station_ids) + batch_size - 1) // batch_size
+            click.echo(f"    Batch {batch_num}/{total_batches} ({len(batch)} stations)...")
+
+            try:
+                results = await client.resolve_ids_to_names(batch)
+                for result in results:
+                    if result.category == "station":
+                        station_names[result.id] = result.name
+            except Exception as e:
+                click.echo(f"    Error fetching batch: {e}", err=True)
+                continue
+
+    # Save to JSON
+    output_path.write_bytes(msgspec.json.encode(station_names))
+    click.echo(f"  Wrote {len(station_names)} station names to {output_path}")
+
+
+@collect.command("station-names")
+@click.option("--user-agent", envvar="ESI_USER_AGENT")
+@click.option("--batch-size", default=1000, help="Number of IDs per ESI request (max 1000)")
+@click.pass_obj
+async def station_names_cmd(settings: Settings, user_agent: str | None, batch_size: int) -> None:
+    """Fetch NPC station names from ESI and save to station_names.json."""
+    ua = user_agent or settings.esi.user_agent
+    await fetch_station_names(settings, ua, batch_size)
+
+
+def _generate_type_names(sde_dir: Path) -> None:
+    """Generate type_names.json from types.jsonl."""
+    types_path = sde_dir / "types.jsonl"
+    if not types_path.exists():
+        return
+
+    click.echo("Generating type_names.json from types.jsonl...")
+    type_names: dict[int, str] = {}
+    decoder = msgspec.json.Decoder()
+    with types_path.open("rb") as f:
+        for line in f:
+            if line.strip():
+                entry = decoder.decode(line)
+                type_id = entry.get("_key")
+                name = entry.get("name", {}).get("en", "")
+                if type_id is not None:
+                    type_names[int(type_id)] = name
+
+    type_names_path = sde_dir / "type_names.json"
+    type_names_path.write_bytes(msgspec.json.encode(type_names))
+    click.echo(f"  Wrote {len(type_names)} type names to {type_names_path}")
+
+
+def _generate_ship_types(sde_dir: Path) -> None:
+    """Generate ship_types.json (categoryID 6 = Ships) from types.jsonl and groups.jsonl."""
+    types_path = sde_dir / "types.jsonl"
+    groups_path = sde_dir / "groups.jsonl"
+    if not types_path.exists() or not groups_path.exists():
+        return
+
+    click.echo("Generating ship_types.json...")
+    decoder = msgspec.json.Decoder()
+
+    # Load groups to find ship groups (categoryID = 6)
+    ship_group_ids: set[int] = set()
+    with groups_path.open("rb") as f:
+        for line in f:
+            if line.strip():
+                entry = decoder.decode(line)
+                if entry.get("categoryID") == 6:
+                    ship_group_ids.add(entry.get("_key"))
+
+    # Filter types to only ships
+    ship_types: dict[int, dict] = {}
+    with types_path.open("rb") as f:
+        for line in f:
+            if line.strip():
+                entry = decoder.decode(line)
+                group_id = entry.get("groupID")
+                if group_id in ship_group_ids:
+                    type_id = entry.get("_key")
+                    name = entry.get("name", {}).get("en", "")
+                    ship_types[type_id] = {"name": name, "group_id": group_id}
+
+    ship_types_path = sde_dir / "ship_types.json"
+    ship_types_path.write_bytes(msgspec.json.encode(ship_types))
+    click.echo(f"  Wrote {len(ship_types)} ship types to {ship_types_path}")
+
 
 async def download_sde(settings: Settings) -> None:
     """Download and extract SDE data (shared logic for sde and all commands)."""
@@ -381,26 +513,9 @@ async def download_sde(settings: Settings) -> None:
 
     click.echo(f"SDE data extracted to {sde_dir}")
 
-    # Generate lightweight type_names.json from types.jsonl
-    types_path = sde_dir / "types.jsonl"
-    if types_path.exists():
-        click.echo("Generating type_names.json from types.jsonl...")
-        type_names: dict[int, str] = {}
-        decoder = msgspec.json.Decoder()
-        with types_path.open("rb") as f:
-            for line in f:
-                if line.strip():
-                    entry = decoder.decode(line)
-                    # SDE JSONL uses _key
-                    type_id = entry.get("_key")
-                    name = entry.get("name", {}).get("en", "")
-                    if type_id is not None:
-                        type_names[int(type_id)] = name
-
-        type_names_path = sde_dir / "type_names.json"
-        type_names_path.write_bytes(msgspec.json.encode(type_names))
-
-        click.echo(f"  Wrote {len(type_names)} type names to {type_names_path}")
+    # Generate derived JSON files
+    _generate_type_names(sde_dir)
+    _generate_ship_types(sde_dir)
 
 
 @collect.command("all")
