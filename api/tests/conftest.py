@@ -8,6 +8,14 @@ from collections.abc import AsyncIterator, Callable
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+# Set required environment variables before any settings are loaded
+os.environ.setdefault("CONFIG_FILE", str(Path(__file__).parent / "config.test.yaml"))
+# Generate a valid Fernet key for testing if not already set
+if "TOKEN_ENCRYPTION_KEY" not in os.environ:
+    from cryptography.fernet import Fernet
+
+    os.environ["TOKEN_ENCRYPTION_KEY"] = Fernet.generate_key().decode()
+
 import pytest
 from httpx import AsyncClient
 from litestar.testing import subprocess_async_client
@@ -19,10 +27,6 @@ from tests.fixtures.preseed import preseed_test_data
 
 if TYPE_CHECKING:
     pass
-
-
-# Set CONFIG_FILE before any settings are loaded
-os.environ["CONFIG_FILE"] = str(Path(__file__).parent / "config.test.yaml")
 
 # Register fixture modules for pytest discovery
 pytest_plugins = [

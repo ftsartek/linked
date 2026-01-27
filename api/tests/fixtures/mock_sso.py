@@ -9,7 +9,12 @@ from __future__ import annotations
 import base64
 import json
 
-from services.eve_sso import CharacterInfo, EveSSOService, TokenResponse
+from services.eve_sso import (
+    EVE_JWT_SUBJECT_PREFIX,
+    CharacterInfo,
+    EveSSOService,
+    TokenResponse,
+)
 
 
 class MockEveSSOService(EveSSOService):
@@ -51,7 +56,9 @@ class MockEveSSOService(EveSSOService):
 
         # Extract character ID from sub claim (format: "CHARACTER:EVE:<character_id>")
         sub = payload["sub"]
-        character_id = int(sub.split(":")[-1]) if sub.startswith("CHARACTER:EVE:") else int(sub)
+        character_id = (
+            int(sub.removeprefix(EVE_JWT_SUBJECT_PREFIX)) if sub.startswith(EVE_JWT_SUBJECT_PREFIX) else int(sub)
+        )
 
         # Get scopes (can be string or list)
         scopes = payload.get("scp", [])
@@ -123,7 +130,7 @@ def create_mock_jwt_payload(
         JWT payload dictionary
     """
     return {
-        "sub": f"CHARACTER:EVE:{character_id}",
+        "sub": f"{EVE_JWT_SUBJECT_PREFIX}{character_id}",
         "name": character_name,
         "scp": scopes or ["publicData"],
         "iss": "https://login.eveonline.com",
