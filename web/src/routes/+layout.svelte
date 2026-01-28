@@ -3,6 +3,7 @@
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.png';
 	import Navbar from '$lib/components/common/Navbar.svelte';
+	import Footer from '$lib/components/common/Footer.svelte';
 	import { apiClient } from '$lib/client/client';
 	import { user } from '$lib/stores/user';
 	import { serverStatus } from '$lib/stores/serverStatus';
@@ -37,7 +38,7 @@
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
-<main class="min-h-screen bg-[url('/eve.jpg')] bg-cover bg-fixed bg-center">
+<main class="flex min-h-screen flex-col bg-[url('/eve.jpg')] bg-cover bg-fixed bg-center">
 	<Toast.Group {toaster}>
 		{#snippet children(toast)}
 			<Toast {toast}>
@@ -50,5 +51,8 @@
 		{/snippet}
 	</Toast.Group>
 	<Navbar />
-	{@render children?.()}
+	<div class="flex flex-1 flex-col">
+		{@render children?.()}
+	</div>
+	<Footer />
 </main>
