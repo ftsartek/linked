@@ -1,6 +1,21 @@
+"""ESI (EVE Swagger Interface) HTTP client.
+
+This module provides an async HTTP client for interacting with EVE Online's
+ESI API, with features including:
+
+- ETag-based conditional caching for bandwidth efficiency
+- Automatic retry with exponential backoff for transient failures
+- Rate limit handling with Retry-After header support
+- LRU cache eviction to bound memory usage
+"""
+
 from __future__ import annotations
 
-from typing import TypeVar
+import asyncio
+import random
+from collections import OrderedDict
+from collections.abc import Awaitable, Callable
+from typing import TypeVar, cast
 
 import httpx
 import msgspec
@@ -31,6 +46,14 @@ T = TypeVar("T")
 # ESI compatibility date - update periodically to opt into API changes
 ESI_COMPATIBILITY_DATE = "2026-01-25"
 
+# ETag cache configuration - limits memory usage for long-running instances
+ETAG_CACHE_MAX_SIZE = 1000
+
+# Retry configuration for transient failures (5xx, rate limits)
+ESI_MAX_RETRIES = 3
+ESI_BASE_DELAY = 1.0  # seconds
+ESI_MAX_DELAY = 30.0  # seconds
+
 
 def _wrap_http_error(e: httpx.HTTPStatusError, path: str) -> ESIError:
     """Wrap an httpx.HTTPStatusError in a domain-specific ESI exception."""
@@ -51,13 +74,113 @@ def _wrap_http_error(e: httpx.HTTPStatusError, path: str) -> ESIError:
 
 
 class ESIClient:
+    """Async HTTP client for EVE Online's ESI API.
+
+    Usage:
+        async with ESIClient(user_agent, timeout) as client:
+            character = await client.get_character(12345)
+    """
+
     BASE_URL = "https://esi.evetech.net/latest"
 
     def __init__(self, user_agent: str, timeout: float = 30.0) -> None:
         self._user_agent = user_agent
         self._timeout = timeout
         self._client: httpx.AsyncClient | None = None
-        self._etag_cache: dict[str, tuple[str, bytes]] = {}
+        # OrderedDict for LRU cache - most recently used items at the end
+        self._etag_cache: OrderedDict[str, tuple[str, bytes]] = OrderedDict()
+
+    def _ensure_client(self) -> httpx.AsyncClient:
+        """Ensure HTTP client is initialized, raising if not.
+
+        Returns:
+            The initialized httpx.AsyncClient
+
+        Raises:
+            RuntimeError: If client not initialized via 'async with' context manager
+        """
+        if self._client is None:
+            msg = "Client not initialized. Use 'async with' context manager."
+            raise RuntimeError(msg)
+        return self._client
+
+    def _cache_etag(self, path: str, etag: str, body: bytes) -> None:
+        """Cache ETag and response body with LRU eviction.
+
+        Stores the ETag and response body for conditional GET requests.
+        Evicts least-recently-used entries when cache exceeds max size.
+
+        Args:
+            path: ESI API path
+            etag: ETag value from response header
+            body: Response body bytes
+        """
+        # Remove existing entry if present (will be re-added at end)
+        if path in self._etag_cache:
+            del self._etag_cache[path]
+
+        # Add to end (most recently used position)
+        self._etag_cache[path] = (etag, body)
+
+        # Evict oldest entries if over capacity
+        while len(self._etag_cache) > ETAG_CACHE_MAX_SIZE:
+            self._etag_cache.popitem(last=False)
+
+    def _get_cached_etag(self, path: str) -> tuple[str, bytes] | None:
+        """Get cached ETag and body, marking as recently used.
+
+        Args:
+            path: ESI API path
+
+        Returns:
+            Tuple of (etag, body) if cached, None otherwise
+        """
+        if path in self._etag_cache:
+            # Move to end to mark as recently used
+            self._etag_cache.move_to_end(path)
+            return self._etag_cache[path]
+        return None
+
+    async def _retry_with_backoff(self, func: Callable[[], Awaitable[T]]) -> T:
+        """Execute async function with exponential backoff retry.
+
+        Retries on ESIServerError (5xx) and ESIRateLimitError (429) with
+        exponential backoff. Respects Retry-After header when present.
+
+        Args:
+            func: Async function to execute
+
+        Returns:
+            Result of successful function call
+
+        Raises:
+            ESIError: If all retries exhausted
+        """
+        last_exception: ESIError | None = None
+
+        for attempt in range(ESI_MAX_RETRIES + 1):
+            try:
+                return await func()
+            except ESIRateLimitError as e:
+                last_exception = e
+                if attempt == ESI_MAX_RETRIES:
+                    raise
+                # Use Retry-After if provided, otherwise exponential backoff
+                if e.retry_after is not None:
+                    delay = float(e.retry_after)
+                else:
+                    delay = min(ESI_BASE_DELAY * (2**attempt) + random.uniform(0, 1), ESI_MAX_DELAY)
+                await asyncio.sleep(delay)
+            except ESIServerError as e:
+                last_exception = e
+                if attempt == ESI_MAX_RETRIES:
+                    raise
+                # Exponential backoff with jitter
+                delay = min(ESI_BASE_DELAY * (2**attempt) + random.uniform(0, 1), ESI_MAX_DELAY)
+                await asyncio.sleep(delay)
+
+        # Unreachable - loop always returns or raises. Raise to satisfy linter/type checker.
+        raise last_exception if last_exception else RuntimeError("Retry logic error")
 
     async def __aenter__(self) -> ESIClient:
         self._client = httpx.AsyncClient(
@@ -76,30 +199,56 @@ class ESIClient:
             self._client = None
 
     async def _get(self, path: str) -> bytes:
-        if self._client is None:
-            msg = "Client not initialized. Use 'async with' context manager."
-            raise RuntimeError(msg)
+        """Perform GET request with ETag-based conditional caching and retry.
 
-        headers: dict[str, str] = {}
-        if path in self._etag_cache:
-            etag, _ = self._etag_cache[path]
-            headers["If-None-Match"] = etag
+        ETag Caching Flow:
+        1. Check if we have a cached ETag for this path
+        2. If yes, send If-None-Match header with the cached ETag
+        3. If ESI responds with 304 Not Modified, return cached body
+        4. If ESI responds with 200 OK, cache the new ETag and body
 
-        response = await self._client.get(path, headers=headers)
+        This reduces bandwidth and load on ESI for unchanged resources.
+        ESI sets ETags on most endpoints and honors If-None-Match headers.
 
-        if response.status_code == 304:
-            _, cached_body = self._etag_cache[path]
-            return cached_body
+        Args:
+            path: ESI API path (e.g., "/universe/systems/30000142/")
 
-        try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as e:
-            raise _wrap_http_error(e, path) from e
+        Returns:
+            Response body as bytes
 
-        if etag := response.headers.get("ETag"):
-            self._etag_cache[path] = (etag, response.content)
+        Raises:
+            RuntimeError: If client not initialized
+            ESIError: If request fails after retries
+        """
+        client = self._ensure_client()
 
-        return response.content
+        async def _do_request() -> bytes:
+            headers: dict[str, str] = {}
+            cached = self._get_cached_etag(path)
+            if cached is not None:
+                etag, _ = cached
+                headers["If-None-Match"] = etag
+
+            response = await client.get(path, headers=headers)
+
+            if response.status_code == 304:
+                # Content unchanged, return cached body
+                _, cached_body = cached  # type: ignore[misc]
+                return cached_body
+
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                raise _wrap_http_error(e, path) from e
+
+            # Cache new ETag if present
+            if etag := response.headers.get("ETag"):
+                self._cache_etag(path, etag, response.content)
+
+            return response.content
+
+        # Cast needed because ty has trouble with generic return type inference
+        return cast(bytes, await self._retry_with_backoff(_do_request))
 
     async def _get_typed(self, path: str, response_type: type[T]) -> T:
         body = await self._get(path)
@@ -163,9 +312,7 @@ class ESIClient:
         Returns:
             ESISearchResponse with matching entity IDs per category
         """
-        if self._client is None:
-            msg = "Client not initialized. Use 'async with' context manager."
-            raise RuntimeError(msg)
+        client = self._ensure_client()
 
         params = {
             "categories": ",".join(categories),
@@ -174,7 +321,7 @@ class ESIClient:
         headers = {"Authorization": f"Bearer {access_token}"}
 
         path = f"/characters/{character_id}/search/"
-        response = await self._client.get(
+        response = await client.get(
             path,
             params=params,
             headers=headers,
@@ -202,14 +349,12 @@ class ESIClient:
 
         Requires: esi-location.read_location.v1 scope
         """
-        if self._client is None:
-            msg = "Client not initialized. Use 'async with' context manager."
-            raise RuntimeError(msg)
+        client = self._ensure_client()
 
         path = f"/characters/{character_id}/location/"
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        response = await self._client.get(path, headers=headers)
+        response = await client.get(path, headers=headers)
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
@@ -233,14 +378,12 @@ class ESIClient:
 
         Requires: esi-location.read_online.v1 scope
         """
-        if self._client is None:
-            msg = "Client not initialized. Use 'async with' context manager."
-            raise RuntimeError(msg)
+        client = self._ensure_client()
 
         path = f"/characters/{character_id}/online/"
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        response = await self._client.get(path, headers=headers)
+        response = await client.get(path, headers=headers)
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
@@ -264,14 +407,12 @@ class ESIClient:
 
         Requires: esi-location.read_ship_type.v1 scope
         """
-        if self._client is None:
-            msg = "Client not initialized. Use 'async with' context manager."
-            raise RuntimeError(msg)
+        client = self._ensure_client()
 
         path = f"/characters/{character_id}/ship/"
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        response = await self._client.get(path, headers=headers)
+        response = await client.get(path, headers=headers)
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
@@ -288,15 +429,13 @@ class ESIClient:
         Returns:
             List of ESINameResult with id, name, and category
         """
-        if self._client is None:
-            msg = "Client not initialized. Use 'async with' context manager."
-            raise RuntimeError(msg)
+        client = self._ensure_client()
 
         if not ids:
             return []
 
         path = "/universe/names/"
-        response = await self._client.post(
+        response = await client.post(
             path,
             content=msgspec.json.encode(ids),
             headers={"Content-Type": "application/json"},
@@ -324,14 +463,12 @@ class ESIClient:
         Returns:
             List of solar system IDs representing the route (includes origin and destination)
         """
-        if self._client is None:
-            msg = "Client not initialized. Use 'async with' context manager."
-            raise RuntimeError(msg)
+        client = self._ensure_client()
 
         path = f"/route/{origin}/{destination}/"
         params = {"flag": flag}
 
-        response = await self._client.get(path, params=params)
+        response = await client.get(path, params=params)
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
@@ -356,14 +493,12 @@ class ESIClient:
         Requires: esi-universe.read_structures.v1 scope
         Raises: ESIForbiddenError if user not on structure ACL
         """
-        if self._client is None:
-            msg = "Client not initialized. Use 'async with' context manager."
-            raise RuntimeError(msg)
+        client = self._ensure_client()
 
         path = f"/universe/structures/{structure_id}/"
         headers = {"Authorization": f"Bearer {access_token}"}
 
-        response = await self._client.get(path, headers=headers)
+        response = await client.get(path, headers=headers)
         try:
             response.raise_for_status()
         except httpx.HTTPStatusError as e:

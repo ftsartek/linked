@@ -14,7 +14,7 @@ from config import Settings
 from routes.auth.dependencies import ERR_AUTH_INVALID_STATE, auth_ext_rate_limit_config, auth_rate_limit_config
 from routes.auth.service import AuthService, UserInfo, provide_auth_service
 from services.encryption import provide_encryption_service
-from services.eve_sso import EveSSOService, ScopeGroup, build_scopes
+from services.eve_sso import EveSSOService, ScopeGroup, build_scopes, generate_pkce_pair
 
 
 class AuthController(Controller):
@@ -36,21 +36,24 @@ class AuthController(Controller):
     ) -> Redirect:
         """Initiate EVE SSO login flow.
 
-        Generates a random state parameter, stores it in session,
-        and redirects to EVE SSO authorization page.
+        Generates a random state parameter and PKCE code verifier,
+        stores them in session, and redirects to EVE SSO authorization page.
 
         Args:
             scope_groups: Optional list of additional scope groups to request.
                 Valid values: "location". Example: ?scopes=location
         """
         state = secrets.token_urlsafe(32)
+        code_verifier, code_challenge = generate_pkce_pair()
+
         request.session["oauth_state"] = state
+        request.session["code_verifier"] = code_verifier
         request.session["linking"] = False
         if scope_groups:
             request.session["scope_groups"] = [str(g) for g in scope_groups]
 
         scopes = build_scopes(scope_groups)
-        auth_url = sso_service.get_authorization_url(state, scopes=scopes)
+        auth_url = sso_service.get_authorization_url(state, scopes=scopes, code_challenge=code_challenge)
 
         return Redirect(path=auth_url)
 
@@ -71,13 +74,16 @@ class AuthController(Controller):
                 Valid values: "location". Example: ?scopes=location
         """
         state = secrets.token_urlsafe(32)
+        code_verifier, code_challenge = generate_pkce_pair()
+
         request.session["oauth_state"] = state
+        request.session["code_verifier"] = code_verifier
         request.session["linking"] = True
         if scope_groups:
             request.session["scope_groups"] = [str(g) for g in scope_groups]
 
         scopes = build_scopes(scope_groups)
-        auth_url = sso_service.get_authorization_url(state, scopes=scopes)
+        auth_url = sso_service.get_authorization_url(state, scopes=scopes, code_challenge=code_challenge)
 
         return Redirect(path=auth_url)
 
@@ -97,14 +103,21 @@ class AuthController(Controller):
         if not expected_state or oauth_state != expected_state:
             raise NotAuthorizedException(ERR_AUTH_INVALID_STATE)
 
-        # Clear state from session
+        # Extract PKCE code verifier
+        code_verifier = request.session.get("code_verifier")
+        if not code_verifier:
+            raise NotAuthorizedException("Missing PKCE code verifier")
+
+        # Clear OAuth state from session
         del request.session["oauth_state"]
+        del request.session["code_verifier"]
         is_linking = request.session.pop("linking", False)
         request.session.pop("scope_groups", None)  # Clean up scope groups
 
         try:
             result = await auth_service.process_callback(
                 code=code,
+                code_verifier=code_verifier,
                 current_user=request.user,
                 is_linking=is_linking,
             )

@@ -183,19 +183,11 @@
 	<div class="flex w-full flex-col border-b-2 border-primary-950/50">
 		<div class="flex flex-row items-center justify-between px-3 py-2">
 			<h3 class="text-sm font-semibold text-white">Character Locations</h3>
-			<button
-				type="button"
-				onclick={refreshAllLocations}
-				disabled={loading}
-				class="rounded border border-primary-500 px-2 py-0.5 text-xs text-primary-500 hover:bg-primary-500/10 disabled:opacity-50"
-			>
-				{loading ? 'Refreshing...' : 'Refresh'}
-			</button>
 		</div>
 		{#if loading}
-			<Progress value={null} class="h-1 w-full">
-				<Progress.Track class="bg-surface-800">
-					<Progress.Range class="bg-primary-500" />
+			<Progress value={null} class="h-0.5 w-full">
+				<Progress.Track class="h-0.5 rounded-none bg-transparent">
+					<Progress.Range class="h-0.5 rounded-none bg-primary-300-700" />
 				</Progress.Track>
 			</Progress>
 		{/if}
@@ -216,7 +208,7 @@
 				<!-- Characters with location data -->
 				{#each getLocationDataArray() as char (char.character_id)}
 					<div
-						class="flex items-center gap-2 rounded-lg bg-surface-900/50 p-2"
+						class="flex items-center gap-2 rounded-lg bg-primary-950/30 p-2"
 						class:opacity-60={char.is_stale}
 					>
 						<!-- Portrait -->
@@ -275,7 +267,7 @@
 
 				<!-- Characters with errors -->
 				{#each getLocationErrorsArray() as charError (charError.character_id)}
-					<div class="flex items-center gap-2 rounded-lg bg-primary-950/30 p-2 opacity-50">
+					<div class="flex items-center gap-2 rounded-lg bg-primary-950/30 p-2">
 						<!-- Portrait -->
 						<img
 							src={getCharacterPortrait(charError.character_id, 64)}

@@ -27,7 +27,7 @@ from routes.users.service import (
     provide_user_service,
 )
 from services.encryption import provide_encryption_service
-from services.eve_sso import EveSSOService, ScopeGroup, build_scopes
+from services.eve_sso import EveSSOService, ScopeGroup, build_scopes, generate_pkce_pair
 
 
 @dataclass
@@ -97,13 +97,16 @@ class UserController(Controller):
                 Valid values: "location". Example: ?scopes=location
         """
         state = secrets.token_urlsafe(32)
+        code_verifier, code_challenge = generate_pkce_pair()
+
         request.session["oauth_state"] = state
+        request.session["code_verifier"] = code_verifier
         request.session["linking"] = True
         if scope_groups:
             request.session["scope_groups"] = [str(g) for g in scope_groups]
 
         scopes = build_scopes(scope_groups)
-        auth_url = sso_service.get_authorization_url(state, scopes=scopes)
+        auth_url = sso_service.get_authorization_url(state, scopes=scopes, code_challenge=code_challenge)
 
         return Redirect(path=auth_url)
 

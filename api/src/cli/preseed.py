@@ -7,8 +7,6 @@ import asyncclick as click
 import msgspec
 import yaml
 
-from database import provide_session
-
 if TYPE_CHECKING:
     from sqlspec.adapters.asyncpg import AsyncpgDriver
 
@@ -861,9 +859,13 @@ def load_sde_celestial_data(
 
 
 @click.command()
-@click.pass_obj
-async def preseed(settings: Settings) -> None:
+async def preseed() -> None:
     """Import static universe data into the database."""
+    from config.settings import get_settings
+    from database import provide_session
+
+    settings = get_settings()
+
     click.echo("Loading data files...")
     # Curated data (manually maintained - YAML for human readability)
     effects_data = load_yaml_dict("effects.yaml", settings.data.curated_dir)

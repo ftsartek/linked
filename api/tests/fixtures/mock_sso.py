@@ -9,7 +9,12 @@ from __future__ import annotations
 import base64
 import json
 
-from services.eve_sso import CharacterInfo, EveSSOService, TokenResponse
+from services.eve_sso import (
+    EVE_JWT_SUBJECT_PREFIX,
+    CharacterInfo,
+    EveSSOService,
+    TokenResponse,
+)
 
 
 class MockEveSSOService(EveSSOService):
@@ -51,7 +56,9 @@ class MockEveSSOService(EveSSOService):
 
         # Extract character ID from sub claim (format: "CHARACTER:EVE:<character_id>")
         sub = payload["sub"]
-        character_id = int(sub.split(":")[-1]) if sub.startswith("CHARACTER:EVE:") else int(sub)
+        character_id = (
+            int(sub.removeprefix(EVE_JWT_SUBJECT_PREFIX)) if sub.startswith(EVE_JWT_SUBJECT_PREFIX) else int(sub)
+        )
 
         # Get scopes (can be string or list)
         scopes = payload.get("scp", [])
@@ -64,7 +71,7 @@ class MockEveSSOService(EveSSOService):
             scopes=scopes,
         )
 
-    async def exchange_code(self, code: str) -> TokenResponse:
+    async def exchange_code(self, code: str, code_verifier: str) -> TokenResponse:
         """Exchange authorization code for mock tokens.
 
         In test mode, we treat the code as a mock access token directly,
@@ -72,10 +79,13 @@ class MockEveSSOService(EveSSOService):
 
         Args:
             code: The authorization code (which is actually a mock access token)
+            code_verifier: PKCE code verifier (ignored in mock)
 
         Returns:
             TokenResponse with the code as both access and refresh token
         """
+        # In test mode, we don't validate the code_verifier
+        _ = code_verifier
         return TokenResponse(
             access_token=code,
             refresh_token=f"refresh_{code}",
@@ -123,7 +133,7 @@ def create_mock_jwt_payload(
         JWT payload dictionary
     """
     return {
-        "sub": f"CHARACTER:EVE:{character_id}",
+        "sub": f"{EVE_JWT_SUBJECT_PREFIX}{character_id}",
         "name": character_name,
         "scp": scopes or ["publicData"],
         "iss": "https://login.eveonline.com",

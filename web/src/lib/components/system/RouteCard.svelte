@@ -125,9 +125,9 @@
 			</div>
 		</div>
 		{#if loading}
-			<Progress value={null} class="h-1 w-full">
-				<Progress.Track class="bg-surface-800">
-					<Progress.Range class="bg-primary-500" />
+			<Progress value={null} class="h-0.5 w-full rounded-none">
+				<Progress.Track class="h-0.5 rounded-none bg-transparent">
+					<Progress.Range class="h-0.5 rounded-none bg-primary-300-700" />
 				</Progress.Track>
 			</Progress>
 		{/if}

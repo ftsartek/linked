@@ -157,9 +157,9 @@
 <section class="relative flex h-full flex-col rounded-xl bg-black/75 p-6 backdrop-blur-2xl">
 	{#if loading}
 		<div class="absolute top-0 right-0 left-0 z-10">
-			<Progress value={null} class="h-1 w-full rounded-none">
-				<Progress.Track class="h-1 rounded-none bg-transparent">
-					<Progress.Range class="h-1 rounded-none bg-primary-500" />
+			<Progress value={null} class="h-0.5 w-full rounded-none">
+				<Progress.Track class="h-0.5 rounded-none bg-transparent">
+					<Progress.Range class="h-0.5 rounded-none bg-primary-300-700" />
 				</Progress.Track>
 			</Progress>
 		</div>
@@ -240,9 +240,9 @@
 				<div class="relative flex-1 overflow-auto">
 					{#if searchingPublic}
 						<div class="absolute top-0 right-0 left-0 z-10">
-							<Progress value={null} class="h-1 w-full rounded-none">
-								<Progress.Track class="h-1 rounded-none bg-transparent">
-									<Progress.Range class="h-1 rounded-none bg-primary-500" />
+							<Progress value={null} class="h-0.5 w-full rounded-none">
+								<Progress.Track class="h-0.5 rounded-none bg-transparent">
+									<Progress.Range class="h-0.5 rounded-none bg-primary-300-700" />
 								</Progress.Track>
 							</Progress>
 						</div>

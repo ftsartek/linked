@@ -8,7 +8,6 @@ from os import getenv
 from pathlib import Path
 from typing import Literal
 
-from cryptography.fernet import Fernet
 from msgspec import Struct, field
 
 from .loader import ConfigLoader
@@ -92,8 +91,10 @@ class EVESSOSettings(BaseStruct):
     def __post_init__(self) -> None:
         self.token_encryption_key = getenv("TOKEN_ENCRYPTION_KEY", "") or self.token_encryption_key
         if not self.token_encryption_key:
-            warnings.warn("Token encryption key is not set, autogenerating.")
-            self.token_encryption_key = Fernet.generate_key().decode()
+            msg = (
+                "TOKEN_ENCRYPTION_KEY environment variable must be set. Generate a key with: linked generate-token-key"
+            )
+            raise ValueError(msg)
 
 
 class ValkeySettings(BaseStruct):

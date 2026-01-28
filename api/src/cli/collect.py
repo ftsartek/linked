@@ -82,9 +82,13 @@ def struct_to_dict(obj: object) -> dict:
 
 
 @click.group()
-def collect() -> None:
+@click.pass_context
+def collect(ctx: click.Context) -> None:
     """Collect static data from ESI."""
-    pass
+    from config.settings import get_settings
+
+    ctx.ensure_object(dict)
+    ctx.obj = get_settings()
 
 
 @collect.command()

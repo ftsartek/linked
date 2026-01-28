@@ -23,6 +23,10 @@ jobs:
         working-directory: api
         run: uv sync --all-groups
 
+      - name: Generate test encryption key
+        working-directory: api
+        run: echo "TOKEN_ENCRYPTION_KEY=$(uv run linked generate-token-key)" >> $GITHUB_ENV
+
       - name: Run tests
         working-directory: api
         run: uv run pytest tests/ -v --tb=short
