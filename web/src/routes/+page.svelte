@@ -27,7 +27,7 @@
 	});
 </script>
 
-<main class="flex min-h-screen flex-col items-center justify-center gap-8">
+<div class="flex flex-1 flex-col items-center justify-center gap-8">
 	<h1 class="text-4xl font-bold">Linked</h1>
 	<p class="text-surface-400">EVE Online Wormhole Mapping</p>
-</main>
+</div>
