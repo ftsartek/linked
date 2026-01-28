@@ -55,25 +55,21 @@
 	async function refreshCharacter(characterId: number) {
 		loadingChars.add(characterId);
 
-		const { data, error: apiError } = await apiClient.POST(
+		const { data, response } = await apiClient.POST(
 			'/users/characters/{character_id}/location/refresh',
 			{ params: { path: { character_id: characterId } } }
 		);
 
 		loadingChars.delete(characterId);
 
-		if (apiError || !data) {
-			// On error, schedule retry with offline interval
+		if (!data) {
+			// Network error or unexpected failure - schedule retry
 			scheduleCharacterRefresh(characterId, false);
 			return;
 		}
 
-		// Check if response is an error or location data
-		if ('error' in data) {
-			locationErrors.set(characterId, data as CharacterLocationError);
-			locationData.delete(characterId);
-			// Don't schedule refresh for scope/token errors
-		} else {
+		if (response.ok) {
+			// Success - we have valid location data
 			const charData = data as CharacterLocationData;
 			const previousData = locationData.get(characterId);
 			const wasOffline = previousData?.online === false;
@@ -88,6 +84,17 @@
 			} else {
 				// Schedule next refresh based on online status
 				scheduleCharacterRefresh(characterId, charData.online ?? null);
+			}
+		} else {
+			// Error response - store error and determine retry behavior by status code
+			const charError = data as CharacterLocationError;
+			locationErrors.set(characterId, charError);
+			locationData.delete(characterId);
+
+			// 503 (ESI error) and 424 (missing data) are transient - retry
+			// 403 (no scope/token issues) are persistent - no retry
+			if (response.status === 503 || response.status === 424) {
+				scheduleCharacterRefresh(characterId, false);
 			}
 		}
 	}
@@ -170,8 +177,12 @@
 				return 'No location scope';
 			case 'token_expired':
 				return 'Token expired';
+			case 'token_revoked':
+				return 'Token revoked';
 			case 'esi_error':
 				return 'ESI error';
+			case 'server_error':
+				return 'Server data unavailable';
 			default:
 				return errorCode;
 		}

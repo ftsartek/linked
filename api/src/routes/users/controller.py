@@ -4,12 +4,18 @@ import secrets
 from dataclasses import dataclass
 from uuid import UUID
 
-from litestar import Controller, Request, delete, get, patch, post, put
+from litestar import Controller, Request, Response, delete, get, patch, post, put
 from litestar.di import Provide
 from litestar.exceptions import ClientException, NotFoundException
+from litestar.openapi import ResponseSpec
 from litestar.params import Parameter
 from litestar.response import Redirect
-from litestar.status_codes import HTTP_204_NO_CONTENT
+from litestar.status_codes import (
+    HTTP_204_NO_CONTENT,
+    HTTP_403_FORBIDDEN,
+    HTTP_424_FAILED_DEPENDENCY,
+    HTTP_503_SERVICE_UNAVAILABLE,
+)
 
 from api.auth.guards import require_acl_access, require_auth
 from api.di.valkey import provide_location_cache
@@ -225,7 +231,23 @@ class UserController(Controller):
         }
         request.session["viewports"] = viewports
 
-    @post("/characters/{character_id:int}/location/refresh")
+    @post(
+        "/characters/{character_id:int}/location/refresh",
+        responses={
+            HTTP_403_FORBIDDEN: ResponseSpec(
+                data_container=CharacterLocationError,
+                description="No location scope or token expired/revoked",
+            ),
+            HTTP_424_FAILED_DEPENDENCY: ResponseSpec(
+                data_container=CharacterLocationError,
+                description="Missing reference data - ESI/ESD not synced",
+            ),
+            HTTP_503_SERVICE_UNAVAILABLE: ResponseSpec(
+                data_container=CharacterLocationError,
+                description="ESI service unavailable",
+            ),
+        },
+    )
     async def refresh_character_location(
         self,
         request: Request,
@@ -247,4 +269,17 @@ class UserController(Controller):
         result = await location_service.refresh_character_location(character_id, request.user.id)
         if result is None:
             raise NotFoundException(ERR_CHARACTER_NOT_FOUND)
+
+        # Return appropriate status codes for error types
+        if isinstance(result, CharacterLocationError):
+            if result.error in ("no_scope", "token_expired", "token_revoked"):
+                # Authorization/authentication failure
+                return Response(content=result, status_code=HTTP_403_FORBIDDEN)  # type: ignore[return-value]
+            if result.error == "server_error":
+                # Missing reference data - ESI/ESD not synced
+                return Response(content=result, status_code=HTTP_424_FAILED_DEPENDENCY)  # type: ignore[return-value]
+            if result.error == "esi_error":
+                # ESI service unavailable
+                return Response(content=result, status_code=HTTP_503_SERVICE_UNAVAILABLE)  # type: ignore[return-value]
+
         return result

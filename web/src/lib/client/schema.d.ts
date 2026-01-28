@@ -1925,7 +1925,7 @@ export interface components {
 		 * @description Optional ESI scope groups that can be requested during authorization.
 		 * @enum {string}
 		 */
-		ScopeGroup: 'location';
+		ScopeGroup: 'location' | 'search';
 		/** SearchSystemsSystemSearchResponseResponseBody */
 		SearchSystemsSystemSearchResponseResponseBody: {
 			systems: components['schemas']['SearchSystemsSystemSearchResponse_0SystemSearchResultResponseBody'][];
@@ -5348,6 +5348,33 @@ export interface operations {
 							  }
 							| unknown[];
 					};
+				};
+			};
+			/** @description No location scope or token expired/revoked */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['CharacterLocationError'];
+				};
+			};
+			/** @description Missing reference data - ESI/ESD not synced */
+			424: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['CharacterLocationError'];
+				};
+			};
+			/** @description ESI service unavailable */
+			503: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					'application/json': components['schemas']['CharacterLocationError'];
 				};
 			};
 		};

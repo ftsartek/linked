@@ -34,6 +34,18 @@ from esi_client.exceptions import ESIError, ESIForbiddenError
 logger = logging.getLogger(__name__)
 
 
+class ReferenceDataError(Exception):
+    """Raised when required reference data is missing from the database.
+
+    This indicates a server configuration issue - ESI/ESD data has not been
+    synced properly.
+    """
+
+    def __init__(self, missing: str) -> None:
+        self.missing = missing
+        super().__init__(f"Missing reference data: {missing}")
+
+
 class CachedData(Protocol):
     """Protocol for cached data with timestamp."""
 
@@ -477,10 +489,26 @@ class LocationService:
 
         Returns:
             Resolved names for system, station, structure, and ship type
+
+        Raises:
+            ReferenceDataError: If required reference data is missing from the database.
+                This indicates ESI/ESD data has not been synced properly.
         """
         system_name = await self._get_system_name(location.solar_system_id)
-        ship_type_name = await self._get_ship_type_name(ship.ship_type_id) if ship else None
-        station_name = await self._get_station_name(location.station_id) if location.station_id else None
+        if system_name is None:
+            raise ReferenceDataError(f"solar_system:{location.solar_system_id}")
+
+        ship_type_name: str | None = None
+        if ship:
+            ship_type_name = await self._get_ship_type_name(ship.ship_type_id)
+            if ship_type_name is None:
+                raise ReferenceDataError(f"ship_type:{ship.ship_type_id}")
+
+        station_name: str | None = None
+        if location.station_id:
+            station_name = await self._get_station_name(location.station_id)
+            if station_name is None:
+                raise ReferenceDataError(f"station:{location.station_id}")
 
         # Structure name requires access token for ESI lookup
         structure_name: str | None = None
@@ -589,7 +617,11 @@ class LocationService:
             return CharacterLocationError(character_id=char.id, character_name=char.name, error="esi_error")
 
         # Step 4: Resolve entity names
-        names = await self._resolve_location_names(state.location, state.ship, access_token)
+        try:
+            names = await self._resolve_location_names(state.location, state.ship, access_token)
+        except ReferenceDataError as e:
+            logger.error("Missing reference data for character %d: %s", char.id, e.missing)
+            return CharacterLocationError(character_id=char.id, character_name=char.name, error="server_error")
 
         # Step 5: Build and return response
         return self._build_location_response(char, state, names)
