@@ -39,6 +39,10 @@ class EventType(StrEnum):
     ACCESS_ALLIANCE_REVOKED = "access_alliance_revoked"
     # Error events
     SYNC_ERROR = "sync_error"
+    # Character location events
+    CHARACTER_ARRIVED = "character_arrived"
+    CHARACTER_LEFT = "character_left"
+    CHARACTER_UPDATED = "character_updated"
 
 
 # Event types that indicate access revocation
@@ -492,4 +496,64 @@ class MapEvent(msgspec.Struct):
                 "note_id": str(note_id),
             },
             user_id=user_id,
+        )
+
+    @classmethod
+    def character_arrived(
+        cls,
+        event_id: str,
+        map_id: UUID,
+        node_id: UUID,
+        character_data: dict[str, Any],
+    ) -> MapEvent:
+        """Create a character_arrived event when a character enters a system with a node."""
+        return cls(
+            event_id=event_id,
+            event_type=EventType.CHARACTER_ARRIVED,
+            map_id=map_id,
+            timestamp=datetime.now(UTC),
+            data={
+                "node_id": str(node_id),
+                **character_data,
+            },
+        )
+
+    @classmethod
+    def character_left(
+        cls,
+        event_id: str,
+        map_id: UUID,
+        node_id: UUID,
+        character_data: dict[str, Any],
+    ) -> MapEvent:
+        """Create a character_left event when a character leaves a system with a node."""
+        return cls(
+            event_id=event_id,
+            event_type=EventType.CHARACTER_LEFT,
+            map_id=map_id,
+            timestamp=datetime.now(UTC),
+            data={
+                "node_id": str(node_id),
+                **character_data,
+            },
+        )
+
+    @classmethod
+    def character_updated(
+        cls,
+        event_id: str,
+        map_id: UUID,
+        node_id: UUID,
+        character_data: dict[str, Any],
+    ) -> MapEvent:
+        """Create a character_updated event when a character's status changes in the same system."""
+        return cls(
+            event_id=event_id,
+            event_type=EventType.CHARACTER_UPDATED,
+            map_id=map_id,
+            timestamp=datetime.now(UTC),
+            data={
+                "node_id": str(node_id),
+                **character_data,
+            },
         )
