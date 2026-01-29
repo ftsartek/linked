@@ -428,7 +428,7 @@ class AuthService:
         # Check if location scope was removed (had it before, doesn't have it now)
         new_has_location = has_scope_group(char_info.scopes, ScopeGroup.LOCATION)
         if not new_has_location:
-            previous_has_location = await self.db_session.select_value(
+            previous_has_location = await self.db_session.select_value_or_none(
                 "SELECT has_location_scope FROM refresh_token WHERE character_id = $1",
                 char_info.character_id,
             )
