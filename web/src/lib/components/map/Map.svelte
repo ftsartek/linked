@@ -558,6 +558,18 @@
 					},
 					onNoteChange: () => {
 						triggerNoteRefresh();
+					},
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					onCharacterArrived: (nodeId, character) => {
+						// TODO: Update node character display when UI is implemented
+					},
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					onCharacterLeft: (nodeId, character) => {
+						// TODO: Update node character display when UI is implemented
+					},
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+					onCharacterUpdated: (nodeId, character) => {
+						// TODO: Update node character display when UI is implemented
 					}
 				}
 			});
