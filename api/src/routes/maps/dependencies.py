@@ -61,6 +61,17 @@ class AllianceAccessInfo(msgspec.Struct):
     read_only: bool
 
 
+class NodeCharacterLocation(msgspec.Struct):
+    """Character location data for nodes and SSE events."""
+
+    character_name: str
+    corporation_name: str | None
+    alliance_name: str | None
+    ship_type_name: str | None
+    online: bool | None
+    docked: bool
+
+
 class MapAccessResponse(msgspec.Struct):
     """Response containing all access entries for a map."""
 
@@ -132,6 +143,7 @@ class EnrichedNodeInfo(msgspec.Struct):
     wh_effect_buffs: dict[str, int | float] | None
     wh_effect_debuffs: dict[str, int | float] | None
     statics: list[StaticInfo] | None
+    characters: list[NodeCharacterLocation] | None = None
 
     @classmethod
     def from_source(cls, source: EnrichedNodeSourceData) -> EnrichedNodeInfo:

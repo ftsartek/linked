@@ -19,6 +19,7 @@ from litestar.status_codes import (
 
 from api.auth.guards import require_acl_access, require_auth
 from api.di.valkey import provide_location_cache
+from routes.maps.publisher import provide_event_publisher
 from routes.users.dependencies import ERR_CANNOT_DELETE_PRIMARY, ERR_CHARACTER_NOT_FOUND
 from routes.users.location import (
     CharacterLocationData,
@@ -84,6 +85,7 @@ class UserController(Controller):
         "encryption_service": Provide(provide_encryption_service),
         "location_service": Provide(provide_location_service),
         "location_cache": Provide(provide_location_cache),
+        "event_publisher": Provide(provide_event_publisher),
     }
 
     @get("/characters/link")
@@ -144,11 +146,13 @@ class UserController(Controller):
         self,
         request: Request,
         user_service: UserService,
+        location_service: LocationService,
         character_id: int,
     ) -> None:
         """Delete a character and its refresh token.
 
         Cannot delete the user's last remaining character or primary character.
+        Also clears location cache and emits CHARACTER_LEFT events if applicable.
         """
         if not await user_service.can_delete_character(request.user.id):
             raise ClientException(
@@ -158,6 +162,26 @@ class UserController(Controller):
         if await user_service.is_primary_character(request.user.id, character_id):
             raise ClientException(ERR_CANNOT_DELETE_PRIMARY)
 
+        # Get character info before deletion for cleanup
+        character = await user_service.get_character(character_id, request.user.id)
+        if character is None:
+            raise NotFoundException(ERR_CHARACTER_NOT_FOUND)
+
+        # Get user context for map access lookup
+        character_ctx = await user_service.get_character_context(request.user.id)
+
+        # Clear location cache and emit CHARACTER_LEFT events
+        await location_service.clear_character_location(
+            character_id=character_id,
+            character_name=character.name,
+            corporation_name=character.corporation_name,
+            alliance_name=character.alliance_name,
+            user_id=request.user.id,
+            corporation_id=character_ctx.corporation_id,
+            alliance_id=character_ctx.alliance_id,
+        )
+
+        # Delete the character
         deleted = await user_service.delete_character(character_id, request.user.id)
         if not deleted:
             raise NotFoundException(ERR_CHARACTER_NOT_FOUND)
@@ -252,6 +276,7 @@ class UserController(Controller):
         self,
         request: Request,
         location_service: LocationService,
+        user_service: UserService,
         character_id: int,
     ) -> CharacterLocationData | CharacterLocationError:
         """Refresh location data for a specific character.
@@ -263,9 +288,15 @@ class UserController(Controller):
         - Location: 10 second stale threshold
         - Online/Ship: 60 second stale threshold
 
+        On successful refresh, propagates location changes via SSE to
+        all maps the user has access to with location tracking enabled.
+
         Returns:
             CharacterLocationData on success, CharacterLocationError on scope/token issues
         """
+        # Get previous state for change detection
+        previous_state = await location_service.get_previous_state(character_id)
+
         result = await location_service.refresh_character_location(character_id, request.user.id)
         if result is None:
             raise NotFoundException(ERR_CHARACTER_NOT_FOUND)
@@ -278,8 +309,36 @@ class UserController(Controller):
             if result.error == "server_error":
                 # Missing reference data - ESI/ESD not synced
                 return Response(content=result, status_code=HTTP_424_FAILED_DEPENDENCY)  # type: ignore[return-value]
-            if result.error == "esi_error":
-                # ESI service unavailable
-                return Response(content=result, status_code=HTTP_503_SERVICE_UNAVAILABLE)  # type: ignore[return-value]
+            # ESI service unavailable
+            return Response(content=result, status_code=HTTP_503_SERVICE_UNAVAILABLE)  # type: ignore[return-value]
+
+        # On success (result is CharacterLocationData), store current state and propagate changes
+        current_docked = result.station_id is not None or result.structure_id is not None
+        await location_service.set_previous_state(
+            character_id,
+            result.solar_system_id,
+            result.ship_type_id,
+            result.online,
+            current_docked,
+        )
+
+        # Get user context for map access check
+        character_ctx = await user_service.get_character_context(request.user.id)
+
+        # Propagate location change to all relevant maps via SSE
+        await location_service.propagate_location_change(
+            user_id=request.user.id,
+            corporation_id=character_ctx.corporation_id,
+            alliance_id=character_ctx.alliance_id,
+            character_name=result.character_name,
+            corporation_name=result.corporation_name,
+            alliance_name=result.alliance_name,
+            previous_state=previous_state,
+            current_system_id=result.solar_system_id,
+            current_ship_type_id=result.ship_type_id,
+            current_ship_type_name=result.ship_type_name,
+            current_online=result.online,
+            current_docked=current_docked,
+        )
 
         return result

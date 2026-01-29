@@ -6,6 +6,8 @@ from uuid import UUID
 
 from sqlspec import AsyncDriverAdapterBase
 
+from services.route_base import RouteBaseService
+
 
 @dataclass
 class CharacterInfo:
@@ -14,7 +16,9 @@ class CharacterInfo:
     id: int
     name: str
     corporation_id: int | None
+    corporation_name: str | None
     alliance_id: int | None
+    alliance_name: str | None
     date_created: datetime
 
 
@@ -26,7 +30,9 @@ class CharacterWithOwner:
     user_id: UUID
     name: str
     corporation_id: int | None
+    corporation_name: str | None
     alliance_id: int | None
+    alliance_name: str | None
     date_created: datetime
 
 
@@ -39,16 +45,35 @@ class CharacterListResponse:
 
 # SQL Statements
 GET_USER_CHARACTERS = """\
-SELECT id, name, corporation_id, alliance_id, date_created
-FROM character
-WHERE user_id = $1
-ORDER BY name;
+SELECT
+    c.id,
+    c.name,
+    c.corporation_id,
+    corp.name AS corporation_name,
+    c.alliance_id,
+    a.name AS alliance_name,
+    c.date_created
+FROM character c
+LEFT JOIN corporation corp ON corp.id = c.corporation_id
+LEFT JOIN alliance a ON a.id = c.alliance_id
+WHERE c.user_id = $1
+ORDER BY c.name;
 """
 
 GET_CHARACTER_BY_ID = """\
-SELECT id, user_id, name, corporation_id, alliance_id, date_created
-FROM character
-WHERE id = $1;
+SELECT
+    c.id,
+    c.user_id,
+    c.name,
+    c.corporation_id,
+    corp.name AS corporation_name,
+    c.alliance_id,
+    a.name AS alliance_name,
+    c.date_created
+FROM character c
+LEFT JOIN corporation corp ON corp.id = c.corporation_id
+LEFT JOIN alliance a ON a.id = c.alliance_id
+WHERE c.id = $1;
 """
 
 COUNT_USER_CHARACTERS = """\
@@ -73,11 +98,11 @@ SELECT primary_character_id = $2 FROM "user" WHERE id = $1;
 """
 
 
-class UserService:
+class UserService(RouteBaseService):
     """User management business logic."""
 
     def __init__(self, db_session: AsyncDriverAdapterBase) -> None:
-        self.db_session = db_session
+        super().__init__(db_session)
 
     async def get_user_characters(self, user_id: UUID) -> list[CharacterInfo]:
         """Get all characters for a user."""
@@ -104,7 +129,9 @@ class UserService:
             id=result.id,
             name=result.name,
             corporation_id=result.corporation_id,
+            corporation_name=result.corporation_name,
             alliance_id=result.alliance_id,
+            alliance_name=result.alliance_name,
             date_created=result.date_created,
         )
 

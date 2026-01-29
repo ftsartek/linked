@@ -23,6 +23,7 @@ if TYPE_CHECKING:
         EnrichedNoteInfo,
         EnrichedSignatureInfo,
         MapInfo,
+        NodeCharacterLocation,
     )
 
 
@@ -430,6 +431,56 @@ class EventPublisher:
             map_id=map_id,
             note_id=response.note_id,
             user_id=user_id,
+        )
+        await self._publish(map_id, event)
+
+    # Character location events
+
+    async def character_arrived(
+        self,
+        map_id: UUID,
+        node_id: UUID,
+        character_data: NodeCharacterLocation,
+    ) -> None:
+        """Publish a character_arrived event."""
+        event_id = await self.get_next_event_id(map_id)
+        event = MapEvent.character_arrived(
+            event_id=event_id,
+            map_id=map_id,
+            node_id=node_id,
+            character_data=self._struct_to_dict(character_data),
+        )
+        await self._publish(map_id, event)
+
+    async def character_left(
+        self,
+        map_id: UUID,
+        node_id: UUID,
+        character_data: NodeCharacterLocation,
+    ) -> None:
+        """Publish a character_left event."""
+        event_id = await self.get_next_event_id(map_id)
+        event = MapEvent.character_left(
+            event_id=event_id,
+            map_id=map_id,
+            node_id=node_id,
+            character_data=self._struct_to_dict(character_data),
+        )
+        await self._publish(map_id, event)
+
+    async def character_updated(
+        self,
+        map_id: UUID,
+        node_id: UUID,
+        character_data: NodeCharacterLocation,
+    ) -> None:
+        """Publish a character_updated event."""
+        event_id = await self.get_next_event_id(map_id)
+        event = MapEvent.character_updated(
+            event_id=event_id,
+            map_id=map_id,
+            node_id=node_id,
+            character_data=self._struct_to_dict(character_data),
         )
         await self._publish(map_id, event)
 

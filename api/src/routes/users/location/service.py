@@ -12,6 +12,11 @@ from uuid import UUID
 
 import msgspec
 
+from routes.maps.dependencies import NodeCharacterLocation
+from routes.maps.queries import (
+    GET_NODES_FOR_SYSTEM_IN_MAPS,
+    GET_USER_MAPS_WITH_LOCATION_TRACKING,
+)
 from routes.users.location.queries import (
     DELETE_REFRESH_TOKEN,
     GET_CHARACTER_FOR_LOCATION,
@@ -25,6 +30,7 @@ if TYPE_CHECKING:
     from sqlspec import AsyncDriverAdapterBase
 
     from esi_client import ESIClient
+    from routes.maps.publisher import EventPublisher
     from services.encryption import EncryptionService
     from services.eve_sso import EveSSOService
     from utils.valkey import NamespacedValkey
@@ -72,6 +78,10 @@ STRUCTURE_NAME_TTL = 259200  # 3 days for known names
 STRUCTURE_UNKNOWN_TTL = 3600  # 1 hour for forbidden/unknown
 UNKNOWN_STRUCTURE_NAME = "Upwell Structure"
 
+# Propagation cache TTLs
+USER_MAPS_CACHE_TTL = 120  # 2 minutes
+PREVIOUS_STATE_TTL = 600  # 10 minutes
+
 
 class CachedLocation(msgspec.Struct):
     """Cached location data with timestamp."""
@@ -97,12 +107,44 @@ class CachedShip(msgspec.Struct):
     fetched_at: float
 
 
+class _MapIdRow(msgspec.Struct):
+    """Row for map ID query results."""
+
+    id: UUID
+
+
+class _NodeMapRow(msgspec.Struct):
+    """Row for node/map lookup results."""
+
+    node_id: UUID
+    map_id: UUID
+
+
+class CachedUserMaps(msgspec.Struct):
+    """Cached list of maps a user has access to with location tracking enabled."""
+
+    map_ids: list[str]
+    fetched_at: float
+
+
+class CachedPreviousState(msgspec.Struct):
+    """Previous state for change detection - avoids duplicate events."""
+
+    solar_system_id: int | None
+    ship_type_id: int | None
+    online: bool | None
+    docked: bool
+    fetched_at: float
+
+
 @dataclass
 class CharacterLocationData:
     """Combined location data for a character."""
 
     character_id: int
     character_name: str
+    corporation_name: str | None
+    alliance_name: str | None
     solar_system_id: int | None
     solar_system_name: str | None
     station_id: int | None
@@ -134,6 +176,8 @@ class CharacterWithToken:
     name: str
     token: bytes | None
     has_location_scope: bool
+    corporation_name: str | None
+    alliance_name: str | None
 
 
 @dataclass
@@ -174,12 +218,14 @@ class LocationService:
         sso_service: EveSSOService,
         esi_client: ESIClient,
         cache: NamespacedValkey,
+        event_publisher: EventPublisher | None = None,
     ) -> None:
         self.db_session = db_session
         self.encryption_service = encryption_service
         self.sso_service = sso_service
         self.esi_client = esi_client
         self.cache = cache
+        self.event_publisher = event_publisher
 
     # -------------------------------------------------------------------------
     # Cache key helpers
@@ -298,11 +344,21 @@ class LocationService:
         Called when ESI returns 403 Forbidden for location/online/ship endpoints,
         indicating the user has revoked the application's access.
 
+        Also clears location cache entries. Note: We can't emit CHARACTER_LEFT
+        events here because we don't have user context for map access lookup.
+        The character will disappear from nodes on next map load.
+
         Args:
             character_id: Character ID whose token should be deleted
         """
         logger.info("Invalidating revoked token for character %d", character_id)
         await self.db_session.execute(DELETE_REFRESH_TOKEN, character_id)
+
+        # Clear location cache entries
+        await self.cache.delete(f"{character_id}:position")
+        await self.cache.delete(f"{character_id}:online")
+        await self.cache.delete(f"{character_id}:ship")
+        await self.cache.delete(f"char_prev_loc:{character_id}")
 
     async def _get_access_token(self, encrypted_token: bytes, character_id: int) -> str | None:
         """Decrypt refresh token and get fresh access token.
@@ -555,6 +611,8 @@ class LocationService:
         return CharacterLocationData(
             character_id=char.id,
             character_name=char.name,
+            corporation_name=char.corporation_name,
+            alliance_name=char.alliance_name,
             solar_system_id=location.solar_system_id,
             solar_system_name=names.system_name,
             station_id=location.station_id,
@@ -652,3 +710,277 @@ class LocationService:
             return CharacterLocationError(character_id=char.id, character_name=char.name, error="no_scope")
 
         return await self._refresh_character_location(char)
+
+    # -------------------------------------------------------------------------
+    # Location propagation (SSE events)
+    # -------------------------------------------------------------------------
+
+    async def get_user_accessible_maps(
+        self,
+        user_id: UUID,
+        corporation_id: int | None,
+        alliance_id: int | None,
+    ) -> list[UUID]:
+        """Get maps the user can access with location_tracking_enabled.
+
+        Uses cache with 2-minute TTL.
+        """
+        cache_key = f"user_maps:{user_id}"
+        cached = cast(bytes | None, await self.cache.get(cache_key))
+
+        if cached:
+            data = msgspec.json.decode(cached, type=CachedUserMaps)
+            return [UUID(mid) for mid in data.map_ids]
+
+        # Query database
+        rows = await self.db_session.select(
+            GET_USER_MAPS_WITH_LOCATION_TRACKING,
+            user_id,
+            corporation_id,
+            alliance_id,
+            schema_type=_MapIdRow,
+        )
+        map_ids = [row.id for row in rows]
+
+        # Cache result
+        cache_data = CachedUserMaps(
+            map_ids=[str(mid) for mid in map_ids],
+            fetched_at=time.time(),
+        )
+        await self.cache.setex(
+            cache_key,
+            USER_MAPS_CACHE_TTL,
+            msgspec.json.encode(cache_data),
+        )
+
+        return map_ids
+
+    async def get_previous_state(self, character_id: int) -> CachedPreviousState | None:
+        """Get character's previous state from cache for change detection."""
+        cache_key = f"char_prev_loc:{character_id}"
+        cached = cast(bytes | None, await self.cache.get(cache_key))
+
+        if cached:
+            try:
+                return msgspec.json.decode(cached, type=CachedPreviousState)
+            except msgspec.DecodeError:
+                return None
+        return None
+
+    async def set_previous_state(
+        self,
+        character_id: int,
+        solar_system_id: int | None,
+        ship_type_id: int | None,
+        online: bool | None,
+        docked: bool,
+    ) -> None:
+        """Store character's current state as previous for next comparison."""
+        cache_key = f"char_prev_loc:{character_id}"
+        data = CachedPreviousState(
+            solar_system_id=solar_system_id,
+            ship_type_id=ship_type_id,
+            online=online,
+            docked=docked,
+            fetched_at=time.time(),
+        )
+        await self.cache.setex(
+            cache_key,
+            PREVIOUS_STATE_TTL,
+            msgspec.json.encode(data),
+        )
+
+    async def propagate_location_change(
+        self,
+        user_id: UUID,
+        corporation_id: int | None,
+        alliance_id: int | None,
+        character_name: str,
+        corporation_name: str | None,
+        alliance_name: str | None,
+        previous_state: CachedPreviousState | None,
+        current_system_id: int | None,
+        current_ship_type_id: int | None,
+        current_ship_type_name: str | None,
+        current_online: bool | None,
+        current_docked: bool,
+    ) -> None:
+        """Propagate location change to all relevant maps via SSE.
+
+        Determines which event type to emit based on what changed:
+        - System changed: CHARACTER_LEFT (old) + CHARACTER_ARRIVED (new)
+        - Same system, other changes: CHARACTER_UPDATED
+        - No changes: no events
+        """
+        if self.event_publisher is None:
+            return
+
+        previous_system_id = previous_state.solar_system_id if previous_state else None
+
+        # Determine what changed
+        system_changed = previous_system_id != current_system_id
+
+        if previous_state is not None and not system_changed:
+            # Same system - check if ship/online/docked changed
+            ship_changed = previous_state.ship_type_id != current_ship_type_id
+            online_changed = previous_state.online != current_online
+            docked_changed = previous_state.docked != current_docked
+
+            if not (ship_changed or online_changed or docked_changed):
+                # Nothing changed - no events needed
+                return
+
+        # Get maps this user can access
+        map_ids = await self.get_user_accessible_maps(user_id, corporation_id, alliance_id)
+        if not map_ids:
+            return
+
+        char_location = NodeCharacterLocation(
+            character_name=character_name,
+            corporation_name=corporation_name,
+            alliance_name=alliance_name,
+            ship_type_name=current_ship_type_name,
+            online=current_online,
+            docked=current_docked,
+        )
+
+        if system_changed:
+            # Emit "left" events for previous system
+            if previous_system_id is not None:
+                await self._emit_left_events(map_ids, previous_system_id, char_location)
+
+            # Emit "arrived" events for current system
+            if current_system_id is not None:
+                await self._emit_arrived_events(map_ids, current_system_id, char_location)
+        else:
+            # Same system - emit "updated" events
+            if current_system_id is not None:
+                await self._emit_updated_events(map_ids, current_system_id, char_location)
+
+    async def _emit_left_events(
+        self,
+        map_ids: list[UUID],
+        system_id: int,
+        char_location: NodeCharacterLocation,
+    ) -> None:
+        """Emit CHARACTER_LEFT events for nodes in the given system."""
+        if self.event_publisher is None:
+            return
+
+        nodes = await self.db_session.select(
+            GET_NODES_FOR_SYSTEM_IN_MAPS,
+            system_id,
+            map_ids,
+            schema_type=_NodeMapRow,
+        )
+
+        for node in nodes:
+            await self.event_publisher.character_left(
+                map_id=node.map_id,
+                node_id=node.node_id,
+                character_data=char_location,
+            )
+
+    async def _emit_arrived_events(
+        self,
+        map_ids: list[UUID],
+        system_id: int,
+        char_location: NodeCharacterLocation,
+    ) -> None:
+        """Emit CHARACTER_ARRIVED events for nodes in the given system."""
+        if self.event_publisher is None:
+            return
+
+        nodes = await self.db_session.select(
+            GET_NODES_FOR_SYSTEM_IN_MAPS,
+            system_id,
+            map_ids,
+            schema_type=_NodeMapRow,
+        )
+
+        for node in nodes:
+            await self.event_publisher.character_arrived(
+                map_id=node.map_id,
+                node_id=node.node_id,
+                character_data=char_location,
+            )
+
+    async def _emit_updated_events(
+        self,
+        map_ids: list[UUID],
+        system_id: int,
+        char_location: NodeCharacterLocation,
+    ) -> None:
+        """Emit CHARACTER_UPDATED events for nodes in the given system."""
+        if self.event_publisher is None:
+            return
+
+        nodes = await self.db_session.select(
+            GET_NODES_FOR_SYSTEM_IN_MAPS,
+            system_id,
+            map_ids,
+            schema_type=_NodeMapRow,
+        )
+
+        for node in nodes:
+            await self.event_publisher.character_updated(
+                map_id=node.map_id,
+                node_id=node.node_id,
+                character_data=char_location,
+            )
+
+    async def invalidate_user_maps_cache(self, user_id: UUID) -> None:
+        """Invalidate the user's accessible maps cache.
+
+        Should be called when access control changes occur.
+        """
+        cache_key = f"user_maps:{user_id}"
+        await self.cache.delete(cache_key)
+
+    async def clear_character_location(
+        self,
+        character_id: int,
+        character_name: str,
+        corporation_name: str | None,
+        alliance_name: str | None,
+        user_id: UUID,
+        corporation_id: int | None,
+        alliance_id: int | None,
+    ) -> None:
+        """Clear character location cache and emit CHARACTER_LEFT if on a map.
+
+        Called when:
+        - Character is deleted
+        - Location scope is removed
+
+        Args:
+            character_id: Character whose location to clear
+            character_name: Character name for SSE event
+            corporation_name: Corporation name for SSE event
+            alliance_name: Alliance name for SSE event
+            user_id: User ID for map access lookup
+            corporation_id: Corporation ID for map access lookup
+            alliance_id: Alliance ID for map access lookup
+        """
+        # Get previous state to know which system to emit leave from
+        previous_state = await self.get_previous_state(character_id)
+
+        # Clear all location cache entries
+        await self.cache.delete(f"{character_id}:position")
+        await self.cache.delete(f"{character_id}:online")
+        await self.cache.delete(f"{character_id}:ship")
+        await self.cache.delete(f"char_prev_loc:{character_id}")
+
+        # Emit CHARACTER_LEFT if they had a cached location
+        if previous_state and previous_state.solar_system_id and self.event_publisher:
+            map_ids = await self.get_user_accessible_maps(user_id, corporation_id, alliance_id)
+            if map_ids:
+                char_location = NodeCharacterLocation(
+                    character_name=character_name,
+                    corporation_name=corporation_name,
+                    alliance_name=alliance_name,
+                    ship_type_name=None,
+                    online=None,
+                    docked=previous_state.docked,
+                )
+                await self._emit_left_events(map_ids, previous_state.solar_system_id, char_location)

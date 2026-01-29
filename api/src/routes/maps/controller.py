@@ -13,6 +13,7 @@ from litestar.status_codes import HTTP_202_ACCEPTED, HTTP_204_NO_CONTENT, HTTP_4
 from valkey.asyncio import Valkey
 
 from api.auth.guards import require_acl_access, require_auth
+from api.di.valkey import provide_location_cache
 from routes.maps.dependencies import (
     ERR_LINK_NODE_MISMATCH,
     ERR_LINK_NOT_FOUND,
@@ -86,6 +87,7 @@ from routes.maps.service import (
     provide_map_service,
 )
 from services.instance_acl import InstanceACLService, provide_instance_acl_service
+from utils.valkey import NamespacedValkey
 
 
 class MapController(Controller):
@@ -97,6 +99,7 @@ class MapController(Controller):
         "map_service": Provide(provide_map_service),
         "event_publisher": Provide(provide_event_publisher),
         "acl_service": Provide(provide_instance_acl_service),
+        "location_cache": Provide(provide_location_cache),
     }
 
     @post("/")
@@ -275,6 +278,7 @@ class MapController(Controller):
         request: Request,
         map_service: MapService,
         valkey_client: Valkey,
+        location_cache: NamespacedValkey,
         map_id: UUID,
     ) -> MapDetailResponse:
         """Load a map with all its nodes and links."""
@@ -307,6 +311,10 @@ class MapController(Controller):
 
         nodes = await map_service.get_map_nodes(map_id)
         links = await map_service.get_map_links(map_id)
+
+        # Populate character locations on nodes if location tracking is enabled
+        if map_info.location_tracking_enabled:
+            await map_service.populate_node_character_locations(map_id, nodes, location_cache)
 
         return MapDetailResponse(map=map_info, nodes=nodes, links=links, last_event_id=last_event_id)
 

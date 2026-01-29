@@ -687,3 +687,58 @@ RETURNING id;
 GET_NOTE_MAP_ID = """
 SELECT map_id FROM note WHERE id = $1;
 """
+
+# Character location queries
+
+GET_USER_MAPS_WITH_LOCATION_TRACKING = """
+SELECT DISTINCT m.id
+FROM map m
+LEFT JOIN map_character mc ON m.id = mc.map_id
+    AND mc.character_id IN (SELECT id FROM character WHERE user_id = $1)
+LEFT JOIN map_corporation mcorp ON m.id = mcorp.map_id AND mcorp.corporation_id = $2
+LEFT JOIN map_alliance ma ON m.id = ma.map_id AND ma.alliance_id = $3
+LEFT JOIN map_subscription ms ON m.id = ms.map_id AND ms.user_id = $1
+WHERE m.location_tracking_enabled = true
+    AND m.date_deleted IS NULL
+    AND (
+        m.owner_id = $1
+        OR mc.map_id IS NOT NULL
+        OR mcorp.map_id IS NOT NULL
+        OR ma.map_id IS NOT NULL
+        OR (ms.map_id IS NOT NULL AND m.is_public = true)
+    );
+"""
+
+GET_NODES_FOR_SYSTEM_IN_MAPS = """
+SELECT n.id AS node_id, n.map_id
+FROM node n
+WHERE n.system_id = $1
+    AND n.map_id = ANY($2::uuid[])
+    AND n.date_deleted IS NULL;
+"""
+
+GET_MAP_CHARACTERS_WITH_LOCATION_SCOPE = """
+SELECT
+    c.id AS character_id,
+    c.name AS character_name,
+    corp.name AS corporation_name,
+    alliance.name AS alliance_name
+FROM character c
+JOIN refresh_token rt ON rt.character_id = c.id AND rt.has_location_scope = true
+LEFT JOIN corporation corp ON corp.id = c.corporation_id
+LEFT JOIN alliance ON alliance.id = c.alliance_id
+WHERE c.user_id IN (
+    SELECT DISTINCT u.id FROM "user" u
+    LEFT JOIN character uc ON uc.user_id = u.id
+    LEFT JOIN map_character mc ON mc.character_id = uc.id AND mc.map_id = $1
+    LEFT JOIN map_corporation mcorp ON mcorp.map_id = $1 AND mcorp.corporation_id = uc.corporation_id
+    LEFT JOIN map_alliance ma ON ma.map_id = $1 AND ma.alliance_id = uc.alliance_id
+    LEFT JOIN map_subscription ms ON ms.map_id = $1 AND ms.user_id = u.id
+    JOIN map m ON m.id = $1
+    WHERE m.owner_id = u.id
+        OR mc.map_id IS NOT NULL
+        OR mcorp.map_id IS NOT NULL
+        OR ma.map_id IS NOT NULL
+        OR (ms.map_id IS NOT NULL AND m.is_public = true)
+);
+"""

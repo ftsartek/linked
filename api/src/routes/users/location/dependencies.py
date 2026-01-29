@@ -5,6 +5,7 @@ from __future__ import annotations
 from sqlspec import AsyncDriverAdapterBase
 
 from esi_client import ESIClient
+from routes.maps.publisher import EventPublisher
 from routes.users.location.service import LocationService
 from services.encryption import EncryptionService
 from services.eve_sso import EveSSOService
@@ -17,6 +18,7 @@ async def provide_location_service(
     sso_service: EveSSOService,
     esi_client: ESIClient,
     location_cache: NamespacedValkey,
+    event_publisher: EventPublisher,
 ) -> LocationService:
     """Provide LocationService with injected dependencies."""
     return LocationService(
@@ -25,4 +27,5 @@ async def provide_location_service(
         sso_service,
         esi_client,
         location_cache,
+        event_publisher,
     )

@@ -36,6 +36,7 @@ from .dependencies import (
     EnrichedSignatureInfo,
     MapAccessResponse,
     MapInfo,
+    NodeCharacterLocation,
     NodeConnectionInfo,
     PublicMapInfo,
     SignatureUpsertResult,
@@ -59,6 +60,7 @@ from .queries import (
     GET_LINK_ENRICHED,
     GET_LINK_NODES,
     GET_MAP,
+    GET_MAP_CHARACTERS_WITH_LOCATION_SCOPE,
     GET_MAP_LINK_IDS,
     GET_MAP_LINKS,
     GET_MAP_NODE_IDS,
@@ -114,6 +116,40 @@ if TYPE_CHECKING:
 
 # Reason codes for sync errors
 SYNC_ERROR_INVALID_EVENT_ID = "invalid_event_id"
+
+
+class _CharacterRow(msgspec.Struct):
+    """Character row from GET_MAP_CHARACTERS_WITH_LOCATION_SCOPE query."""
+
+    character_id: int
+    character_name: str
+    corporation_name: str | None
+    alliance_name: str | None
+
+
+class _CachedPosition(msgspec.Struct):
+    """Cached position data structure (matches LocationService cache format)."""
+
+    solar_system_id: int
+    station_id: int | None
+    structure_id: int | None
+    fetched_at: float
+
+
+class _CachedOnline(msgspec.Struct):
+    """Cached online status (matches LocationService cache format)."""
+
+    online: bool
+    fetched_at: float
+
+
+class _CachedShip(msgspec.Struct):
+    """Cached ship data (matches LocationService cache format)."""
+
+    ship_type_id: int
+    ship_name: str
+    fetched_at: float
+
 
 # SSE response headers
 SSE_HEADERS = {"X-Accel-Buffering": "no", "Cache-Control": "no-cache"}
@@ -220,6 +256,117 @@ class MapService(RouteBaseService):
             map_id,
             schema_type=EnrichedLinkInfo,
         )
+
+    async def _parse_cached_location(
+        self,
+        char: _CharacterRow,
+        location_cache: Valkey,
+    ) -> tuple[_CachedPosition | None, bool | None, str | None]:
+        """Parse cached location data for a character.
+
+        Returns:
+            Tuple of (position, online, ship_type_name) or None values if not cached.
+        """
+        # Keys match LocationService._cache_key pattern: {character_id}:{data_type}
+        # The NamespacedValkey automatically adds the "location:" prefix
+        position_key = f"{char.character_id}:position"
+        online_key = f"{char.character_id}:online"
+        ship_key = f"{char.character_id}:ship"
+
+        position_data, online_data, ship_data = await asyncio.gather(
+            location_cache.get(position_key),
+            location_cache.get(online_key),
+            location_cache.get(ship_key),
+        )
+
+        if position_data is None:
+            return None, None, None
+
+        try:
+            position = msgspec.json.decode(position_data, type=_CachedPosition)
+        except msgspec.DecodeError:
+            return None, None, None
+
+        # Parse online status
+        online: bool | None = None
+        if online_data:
+            try:
+                online_cached = msgspec.json.decode(online_data, type=_CachedOnline)
+                online = online_cached.online
+            except msgspec.DecodeError:
+                pass
+
+        # Parse ship data
+        ship_type_name: str | None = None
+        if ship_data:
+            try:
+                ship_cached = msgspec.json.decode(ship_data, type=_CachedShip)
+                ship_type_name = await self.db_session.select_value(
+                    "SELECT name FROM ship_type WHERE id = $1",
+                    ship_cached.ship_type_id,
+                )
+            except msgspec.DecodeError:
+                pass
+
+        return position, online, ship_type_name
+
+    async def populate_node_character_locations(
+        self,
+        map_id: UUID,
+        nodes: list[EnrichedNodeInfo],
+        location_cache: Valkey,
+    ) -> None:
+        """Populate character locations on nodes from cache.
+
+        Uses cache-only approach: only shows characters who have recently
+        refreshed their location (within cache TTL).
+
+        Args:
+            map_id: The map to fetch character locations for
+            nodes: List of nodes to populate (modified in place)
+            location_cache: Valkey client with location namespace
+        """
+        char_rows = await self.db_session.select(
+            GET_MAP_CHARACTERS_WITH_LOCATION_SCOPE,
+            map_id,
+            schema_type=_CharacterRow,
+        )
+
+        if not char_rows:
+            return
+
+        # Build a map of system_id -> nodes for efficient lookup
+        system_to_nodes: dict[int, list[EnrichedNodeInfo]] = {}
+        for node in nodes:
+            if node.system_id not in system_to_nodes:
+                system_to_nodes[node.system_id] = []
+            system_to_nodes[node.system_id].append(node)
+
+        # For each character, check their cached location
+        for char in char_rows:
+            position, online, ship_type_name = await self._parse_cached_location(char, location_cache)
+
+            if position is None:
+                continue
+
+            matching_nodes = system_to_nodes.get(position.solar_system_id)
+            if not matching_nodes:
+                continue
+
+            docked = position.station_id is not None or position.structure_id is not None
+            char_location = NodeCharacterLocation(
+                character_name=char.character_name,
+                corporation_name=char.corporation_name,
+                alliance_name=char.alliance_name,
+                ship_type_name=ship_type_name,
+                online=online,
+                docked=docked,
+            )
+
+            for node in matching_nodes:
+                if node.characters is None:
+                    node.characters = []
+                node.characters.append(char_location)
 
     async def update_map(
         self,

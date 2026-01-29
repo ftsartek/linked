@@ -1,7 +1,7 @@
 import type { Node, Edge } from '@xyflow/svelte';
 import { getApiUrl } from '$lib/client/client';
 import type { NodeInfo, LinkInfo } from './mapHelpers';
-import type { MapInfo, EdgeType, Rankdir } from './mapTypes';
+import type { MapInfo, EdgeType, Rankdir, NodeCharacterLocation } from './mapTypes';
 
 export interface MapSSECallbacks {
 	onNodeCreated: (node: Node) => void;
@@ -16,6 +16,9 @@ export interface MapSSECallbacks {
 	onSyncError: (message: string) => void;
 	onSignatureChange: () => void;
 	onNoteChange: () => void;
+	onCharacterArrived: (nodeId: string, character: NodeCharacterLocation) => void;
+	onCharacterLeft: (nodeId: string, character: NodeCharacterLocation) => void;
+	onCharacterUpdated: (nodeId: string, character: NodeCharacterLocation) => void;
 	onConnected: () => void;
 	onError: () => void;
 }
@@ -148,6 +151,61 @@ export function createMapSSE(config: MapSSEConfig): () => void {
 
 	eventSource.addEventListener('note_deleted', () => {
 		callbacks.onNoteChange();
+	});
+
+	// Character location events
+	eventSource.addEventListener('character_arrived', (event) => {
+		try {
+			const data = JSON.parse(event.data);
+			const nodeId = data.data.node_id as string;
+			const character: NodeCharacterLocation = {
+				character_name: data.data.character_name,
+				corporation_name: data.data.corporation_name,
+				alliance_name: data.data.alliance_name,
+				ship_type_name: data.data.ship_type_name,
+				online: data.data.online,
+				docked: data.data.docked
+			};
+			callbacks.onCharacterArrived(nodeId, character);
+		} catch {
+			// Silently ignore parse errors for SSE events
+		}
+	});
+
+	eventSource.addEventListener('character_left', (event) => {
+		try {
+			const data = JSON.parse(event.data);
+			const nodeId = data.data.node_id as string;
+			const character: NodeCharacterLocation = {
+				character_name: data.data.character_name,
+				corporation_name: data.data.corporation_name,
+				alliance_name: data.data.alliance_name,
+				ship_type_name: data.data.ship_type_name,
+				online: data.data.online,
+				docked: data.data.docked
+			};
+			callbacks.onCharacterLeft(nodeId, character);
+		} catch {
+			// Silently ignore parse errors for SSE events
+		}
+	});
+
+	eventSource.addEventListener('character_updated', (event) => {
+		try {
+			const data = JSON.parse(event.data);
+			const nodeId = data.data.node_id as string;
+			const character: NodeCharacterLocation = {
+				character_name: data.data.character_name,
+				corporation_name: data.data.corporation_name,
+				alliance_name: data.data.alliance_name,
+				ship_type_name: data.data.ship_type_name,
+				online: data.data.online,
+				docked: data.data.docked
+			};
+			callbacks.onCharacterUpdated(nodeId, character);
+		} catch {
+			// Silently ignore parse errors for SSE events
+		}
 	});
 
 	// Map events

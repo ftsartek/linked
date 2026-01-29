@@ -29,3 +29,12 @@ export interface ShareableEntity {
 	name: string;
 	category: 'character' | 'corporation' | 'alliance';
 }
+
+export interface NodeCharacterLocation {
+	character_name: string;
+	corporation_name: string | null;
+	alliance_name: string | null;
+	ship_type_name: string | null;
+	online: boolean | null;
+	docked: boolean;
+}
