@@ -37,4 +37,5 @@ export interface NodeCharacterLocation {
 	ship_type_name: string | null;
 	online: boolean | null;
 	docked: boolean;
+	last_updated: string | null;
 }

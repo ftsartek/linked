@@ -32,7 +32,8 @@
 		transformNodes,
 		transformEdges,
 		getSystemClassId,
-		type LinkInfo
+		type LinkInfo,
+		type NodeInfo
 	} from '$lib/helpers/mapHelpers';
 	import type { MapInfo, Rankdir, LifetimeStatus } from '$lib/helpers/mapTypes';
 	import { type EdgeType } from '$lib/helpers/mapTypes';
@@ -559,17 +560,56 @@
 					onNoteChange: () => {
 						triggerNoteRefresh();
 					},
-					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					onCharacterArrived: (nodeId, character) => {
-						// TODO: Update node character display when UI is implemented
+						nodes = nodes.map((node) => {
+							if (node.id === nodeId) {
+								const currentCharacters = (node.data as NodeInfo).characters ?? [];
+								if (!currentCharacters.some((c) => c.character_name === character.character_name)) {
+									return {
+										...node,
+										data: {
+											...node.data,
+											characters: [...currentCharacters, character]
+										}
+									};
+								}
+							}
+							return node;
+						});
 					},
-					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					onCharacterLeft: (nodeId, character) => {
-						// TODO: Update node character display when UI is implemented
+						nodes = nodes.map((node) => {
+							if (node.id === nodeId) {
+								const currentCharacters = (node.data as NodeInfo).characters ?? [];
+								return {
+									...node,
+									data: {
+										...node.data,
+										characters: currentCharacters.filter(
+											(c) => c.character_name !== character.character_name
+										)
+									}
+								};
+							}
+							return node;
+						});
 					},
-					// eslint-disable-next-line @typescript-eslint/no-unused-vars
 					onCharacterUpdated: (nodeId, character) => {
-						// TODO: Update node character display when UI is implemented
+						nodes = nodes.map((node) => {
+							if (node.id === nodeId) {
+								const currentCharacters = (node.data as NodeInfo).characters ?? [];
+								return {
+									...node,
+									data: {
+										...node.data,
+										characters: currentCharacters.map((c) =>
+											c.character_name === character.character_name ? character : c
+										)
+									}
+								};
+							}
+							return node;
+						});
 					}
 				}
 			});

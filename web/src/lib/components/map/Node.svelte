@@ -12,6 +12,7 @@
 	import { Handle, Position, useConnection, useEdges } from '@xyflow/svelte';
 	import { Portal, Tooltip } from '@skeletonlabs/skeleton-svelte';
 	import { Sparkles, Lock } from 'lucide-svelte';
+	import CharacterIndicator from './CharacterIndicator.svelte';
 
 	type NodeData = components['schemas']['EnrichedNodeInfo'];
 
@@ -43,6 +44,7 @@
 	);
 
 	const hasStatics = $derived(data.statics && data.statics.length > 0);
+	const hasCharacters = $derived(data.characters && data.characters.length > 0);
 </script>
 
 <div
@@ -116,6 +118,10 @@
 
 		<!-- Modifiers (bottom right) -->
 		<div class="flex items-center gap-1">
+			{#if hasCharacters}
+				<CharacterIndicator characters={data.characters!} />
+			{/if}
+
 			{#if data.wh_effect_name}
 				<Tooltip positioning={{ placement: 'bottom' }}>
 					<Tooltip.Trigger>
