@@ -8,9 +8,13 @@ SELECT
     c.id,
     c.name,
     rt.token,
-    COALESCE(rt.has_location_scope, FALSE) as has_location_scope
+    COALESCE(rt.has_location_scope, FALSE) as has_location_scope,
+    corp.name AS corporation_name,
+    alliance.name AS alliance_name
 FROM character c
 LEFT JOIN refresh_token rt ON rt.character_id = c.id
+LEFT JOIN corporation corp ON corp.id = c.corporation_id
+LEFT JOIN alliance ON alliance.id = c.alliance_id
 WHERE c.id = $1 AND c.user_id = $2;
 """
 

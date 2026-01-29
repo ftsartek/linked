@@ -10,6 +10,7 @@ from litestar.params import Dependency, Parameter
 from litestar.response import Redirect
 
 from api.auth.guards import require_auth
+from api.di.valkey import provide_location_cache
 from config import Settings
 from routes.auth.dependencies import ERR_AUTH_INVALID_STATE, auth_ext_rate_limit_config, auth_rate_limit_config
 from routes.auth.service import AuthService, UserInfo, provide_auth_service
@@ -25,6 +26,7 @@ class AuthController(Controller):
     dependencies = {
         "encryption_service": Provide(provide_encryption_service),
         "auth_service": Provide(provide_auth_service),
+        "location_cache": Provide(provide_location_cache),
     }
 
     @get("/login")

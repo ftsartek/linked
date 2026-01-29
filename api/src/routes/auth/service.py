@@ -6,6 +6,7 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlspec import AsyncDriverAdapterBase
+from valkey.asyncio import Valkey
 
 from api.auth.middleware import SessionUser
 from database.models.alliance import INSERT_STMT as ALLIANCE_INSERT
@@ -94,12 +95,14 @@ class AuthService:
         encryption_service: EncryptionService,
         esi_client: ESIClient,
         acl_service: InstanceACLService,
+        location_cache: Valkey | None = None,
     ) -> None:
         self.db_session = db_session
         self.sso_service = sso_service
         self.encryption_service = encryption_service
         self.esi_client = esi_client
         self.acl_service = acl_service
+        self.location_cache = location_cache
 
     async def get_character_by_id(self, character_id: int) -> CharacterUserInfo | None:
         """Fetch character by EVE character ID.
@@ -175,6 +178,24 @@ class AuthService:
             has_location_scope,
             has_search_scope,
         )
+
+    async def _clear_location_cache(self, character_id: int) -> None:
+        """Clear location cache entries when scope is removed.
+
+        Called when a character re-authorizes without location scope
+        but previously had it. This ensures stale location data is removed.
+
+        Note: We can't emit CHARACTER_LEFT events here because we don't
+        have the full user context. The character will disappear from
+        nodes on next map load.
+        """
+        if self.location_cache is None:
+            return
+
+        await self.location_cache.delete(f"{character_id}:position")
+        await self.location_cache.delete(f"{character_id}:online")
+        await self.location_cache.delete(f"{character_id}:ship")
+        await self.location_cache.delete(f"char_prev_loc:{character_id}")
 
     async def upsert_corporation(
         self,
@@ -404,12 +425,23 @@ class AuthService:
         else:
             user_id = await self._handle_new_user_signup(char_info, corporation_id, alliance_id)
 
+        # Check if location scope was removed (had it before, doesn't have it now)
+        new_has_location = has_scope_group(char_info.scopes, ScopeGroup.LOCATION)
+        if not new_has_location:
+            previous_has_location = await self.db_session.select_value(
+                "SELECT has_location_scope FROM refresh_token WHERE character_id = $1",
+                char_info.character_id,
+            )
+            if previous_has_location:
+                # Location scope was removed - clear cached location data
+                await self._clear_location_cache(char_info.character_id)
+
         # Store encrypted refresh token with scope group flags
         await self.store_refresh_token(
             char_info.character_id,
             tokens.refresh_token,
             char_info.scopes,
-            has_location_scope=has_scope_group(char_info.scopes, ScopeGroup.LOCATION),
+            has_location_scope=new_has_location,
             has_search_scope=has_scope_group(char_info.scopes, ScopeGroup.SEARCH),
         )
 
@@ -545,7 +577,15 @@ async def provide_auth_service(
     sso_service: EveSSOService,
     encryption_service: EncryptionService,
     esi_client: ESIClient,
+    location_cache: Valkey,
 ) -> AuthService:
     """Provide AuthService with injected dependencies."""
     acl_service = InstanceACLService(db_session)
-    return AuthService(db_session, sso_service, encryption_service, esi_client, acl_service)
+    return AuthService(
+        db_session,
+        sso_service,
+        encryption_service,
+        esi_client,
+        acl_service,
+        location_cache,
+    )
