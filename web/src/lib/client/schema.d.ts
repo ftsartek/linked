@@ -1417,6 +1417,8 @@ export interface components {
 		CharacterLocationData: {
 			character_id: number;
 			character_name: string;
+			corporation_name?: string | null;
+			alliance_name?: string | null;
 			solar_system_id?: number | null;
 			solar_system_name?: string | null;
 			station_id?: number | null;
@@ -1642,6 +1644,7 @@ export interface components {
 				[key: string]: number;
 			} | null;
 			statics?: components['schemas']['StaticInfo'][] | null;
+			characters?: components['schemas']['NodeCharacterLocation'][] | null;
 		};
 		/** EnrichedNoteInfo */
 		EnrichedNoteInfo: {
@@ -1836,6 +1839,15 @@ export interface components {
 		/** MapListResponse */
 		MapListResponse: {
 			maps: components['schemas']['MapInfo'][];
+		};
+		/** NodeCharacterLocation */
+		NodeCharacterLocation: {
+			character_name: string;
+			corporation_name?: string | null;
+			alliance_name?: string | null;
+			ship_type_name?: string | null;
+			online?: boolean | null;
+			docked: boolean;
 		};
 		/** NodeConnectionInfo */
 		NodeConnectionInfo: {
@@ -2137,7 +2149,9 @@ export interface components {
 			id: number;
 			name: string;
 			corporation_id?: number | null;
+			corporation_name?: string | null;
 			alliance_id?: number | null;
+			alliance_name?: string | null;
 			/** Format: date-time */
 			date_created: string;
 		};
