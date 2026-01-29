@@ -70,6 +70,7 @@ class NodeCharacterLocation(msgspec.Struct):
     ship_type_name: str | None
     online: bool | None
     docked: bool
+    last_updated: datetime | None = None
 
 
 class MapAccessResponse(msgspec.Struct):

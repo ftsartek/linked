@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -354,6 +354,7 @@ class MapService(RouteBaseService):
                 continue
 
             docked = position.station_id is not None or position.structure_id is not None
+            last_updated = datetime.fromtimestamp(position.fetched_at, tz=UTC)
             char_location = NodeCharacterLocation(
                 character_name=char.character_name,
                 corporation_name=char.corporation_name,
@@ -361,6 +362,7 @@ class MapService(RouteBaseService):
                 ship_type_name=ship_type_name,
                 online=online,
                 docked=docked,
+                last_updated=last_updated,
             )
 
             for node in matching_nodes:
