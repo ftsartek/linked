@@ -22,6 +22,7 @@ export interface MapSettingsForm {
 	auto_layout: boolean;
 	node_sep: number;
 	rank_sep: number;
+	location_tracking_enabled: boolean;
 }
 
 export interface ShareableEntity {
