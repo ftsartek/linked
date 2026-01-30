@@ -304,7 +304,7 @@
 					{@const isEditing = editingNoteId === note.id}
 					{@const expiryText = formatExpiry(note.date_expires)}
 
-					<div class="rounded border border-none bg-primary-950/30 p-2">
+					<div class="rounded border border-none bg-primary-700/20 p-2">
 						{#if isEditing}
 							<!-- Editing mode -->
 							<div class="space-y-2">
@@ -407,7 +407,7 @@
 
 				{#if creating}
 					<!-- Creating new note -->
-					<div class="rounded border border-none bg-primary-950/30 p-2">
+					<div class="rounded border border-none bg-primary-700/20 p-2">
 						<div class="space-y-2">
 							<input
 								type="text"

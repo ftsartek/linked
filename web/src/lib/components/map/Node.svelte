@@ -49,9 +49,9 @@
 
 <div
 	class="relative box-border flex h-20 w-40 flex-col overflow-hidden rounded-md border-2 bg-surface-900 p-2 text-sm {isTarget
-		? 'border-dashed border-primary-500'
+		? 'border-dashed border-primary-400-600'
 		: selected
-			? 'border-primary-800'
+			? 'border-secondary-800'
 			: 'border-surface-800'}"
 >
 	<!-- Target handles: conditionally rendered based on connection state -->
