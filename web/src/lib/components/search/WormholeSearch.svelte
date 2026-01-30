@@ -145,7 +145,7 @@
 					{#each items as item (item.id)}
 						<Combobox.Item
 							item={{ value: String(item.id), label: item.code }}
-							class="cursor-pointer px-3 py-2 text-white hover:bg-primary-950/50 data-highlighted:bg-primary-950/30"
+							class="cursor-pointer px-3 py-2 text-white hover:bg-primary-950/50 data-highlighted:bg-primary-800/20"
 						>
 							<span>{item.code}</span>
 							{#if item.target}

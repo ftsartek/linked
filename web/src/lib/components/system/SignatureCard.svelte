@@ -451,7 +451,7 @@
 					{@const whDisplay = getSignatureWormholeDisplay(sig)}
 					{@const canExpand = !$mapSelection.isReadOnly}
 
-					<div class="rounded border border-none bg-primary-950/30">
+					<div class="rounded border border-none bg-primary-800/20">
 						<!-- Main row -->
 						<button
 							type="button"

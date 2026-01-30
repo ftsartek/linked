@@ -278,7 +278,7 @@
 
 				<!-- Characters with errors -->
 				{#each getLocationErrorsArray() as charError (charError.character_id)}
-					<div class="flex items-center gap-2 rounded-lg bg-primary-950/30 p-2">
+					<div class="flex items-center gap-2 rounded-lg bg-primary-800/20 p-2">
 						<!-- Portrait -->
 						<img
 							src={getCharacterPortrait(charError.character_id, 64)}
