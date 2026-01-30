@@ -403,7 +403,7 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
-	class="relative flex h-full min-h-80 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl focus:ring-2 focus:ring-primary-800 focus:outline-none"
+	class="relative flex h-full min-h-80 flex-col rounded-xl border-0 bg-surface-950/75 backdrop-blur-2xl focus:ring-2 focus:ring-primary-800 focus:outline-none"
 	tabindex="0"
 	onpaste={handlePaste}
 >

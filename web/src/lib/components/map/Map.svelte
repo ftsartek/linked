@@ -636,7 +636,7 @@
 					</Progress.Track>
 				</Progress>
 			</div>
-			<div class="h-full min-h-100 bg-black/75 backdrop-blur-2xl"></div>
+			<div class="h-full min-h-100 bg-surface-950/75 backdrop-blur-2xl"></div>
 		{:else if error}
 			<div class="flex h-full min-h-100 items-center justify-center">
 				<div class="rounded-lg bg-error-500/20 p-4 text-error-500">

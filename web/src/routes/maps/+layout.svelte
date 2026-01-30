@@ -99,7 +99,7 @@
 
 <div class="flex min-h-[calc(100vh-64px)] w-full flex-col gap-2 p-2">
 	<!-- Tab Bar (full width, fixed height to prevent jump) -->
-	<div class="flex h-12 flex-col overflow-hidden rounded-xl bg-black/75 backdrop-blur-2xl">
+	<div class="flex h-12 flex-col overflow-hidden rounded-xl bg-surface-950/75 backdrop-blur-2xl">
 		{#if loading}
 			<Progress value={null} class="h-0.5 w-full rounded-none">
 				<Progress.Track class="h-0.5 rounded-none bg-transparent">

@@ -27,7 +27,9 @@
 	}
 </script>
 
-<nav class="relative flex min-h-16 items-center justify-between bg-black/75 p-4 backdrop-blur-2xl">
+<nav
+	class="relative flex min-h-16 items-center justify-between bg-surface-950/75 p-4 backdrop-blur-2xl"
+>
 	<div class="flex items-center gap-4">
 		<a href={resolve('/maps')} class="text-xl font-bold">Linked</a>
 		{#if $user}

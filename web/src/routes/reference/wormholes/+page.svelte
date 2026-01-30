@@ -29,7 +29,7 @@
 
 <main class="min-h-screen p-6">
 	<div class="mx-auto max-w-[1600px]">
-		<section class="rounded-xl bg-black/75 p-6 backdrop-blur-2xl">
+		<section class="rounded-xl bg-surface-950/75 p-6 backdrop-blur-2xl">
 			<h1 class="mb-2 text-2xl font-bold">Wormhole Types Reference</h1>
 			<p class="mb-6 text-surface-400">
 				A reference table of wormhole types organized by source and destination class. Click a

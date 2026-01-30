@@ -265,7 +265,7 @@
 </script>
 
 <div
-	class="relative flex h-full min-h-80 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl"
+	class="relative flex h-full min-h-80 flex-col rounded-xl border-0 bg-surface-950/75 backdrop-blur-2xl"
 >
 	{#if loading}
 		<div class="absolute top-0 right-0 left-0 z-10">

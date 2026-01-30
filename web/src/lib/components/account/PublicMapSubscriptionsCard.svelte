@@ -36,7 +36,7 @@
 	});
 </script>
 
-<section class="relative flex h-full flex-col rounded-xl bg-black/75 p-6 backdrop-blur-2xl">
+<section class="relative flex h-full flex-col rounded-xl bg-surface-950/75 p-6 backdrop-blur-2xl">
 	{#if loadingSubscriptions}
 		<div class="absolute top-0 right-0 left-0 z-10">
 			<Progress value={null} class="h-0.5 w-full rounded-none">
