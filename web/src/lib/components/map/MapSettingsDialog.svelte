@@ -109,7 +109,7 @@
 							required
 							minlength="4"
 							class="mt-1 w-full rounded border-2 bg-black px-3 py-2 text-white focus:outline-none {isNameValid
-								? 'border-primary-950 focus:border-primary-800'
+								? 'border-secondary-950 focus:border-primary-800'
 								: 'border-error-500 focus:border-error-400'}"
 						/>
 						{#if !isNameValid && form.name.length > 0}
@@ -120,7 +120,7 @@
 						<span class="text-sm text-surface-300">Description</span>
 						<textarea
 							bind:value={form.description}
-							class="mt-1 w-full rounded border-2 border-primary-950 bg-black px-3 py-2 text-white focus:border-primary-800 focus:outline-none"
+							class="mt-1 w-full rounded border-2 border-secondary-950 bg-black px-3 py-2 text-white focus:border-primary-800 focus:outline-none"
 							rows="3"
 						></textarea>
 					</label>
@@ -132,7 +132,7 @@
 						<span class="text-sm text-surface-300">Edge Type</span>
 						<select
 							bind:value={form.edge_type}
-							class="mt-1 w-full rounded border-2 border-primary-950 bg-black px-3 py-2 text-white focus:border-primary-800 focus:outline-none"
+							class="mt-1 w-full rounded border-2 border-secondary-950 bg-black px-3 py-2 text-white focus:border-primary-800 focus:outline-none"
 						>
 							<option value="default">Default (Bezier)</option>
 							<option value="straight">Straight</option>

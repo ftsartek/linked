@@ -71,7 +71,7 @@
 	<button
 		bind:this={triggerElement}
 		type="button"
-		class="flex min-w-32 items-center justify-between gap-2 rounded border-2 border-primary-950 bg-black px-3 py-2 text-sm text-white hover:border-primary-800 focus:border-primary-800 focus:outline-none"
+		class="flex min-w-32 items-center justify-between gap-2 rounded border-2 border-secondary-950 bg-black px-3 py-2 text-sm text-white hover:border-primary-800 focus:border-primary-800 focus:outline-none"
 		onclick={() => (open = !open)}
 		onkeydown={handleKeydown}
 	>

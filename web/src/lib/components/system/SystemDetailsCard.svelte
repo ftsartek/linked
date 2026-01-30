@@ -50,10 +50,12 @@
 	}
 </script>
 
-<div class="flex h-full min-h-80 w-full flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl">
+<div
+	class="flex h-full min-h-80 w-full flex-col rounded-xl border-0 bg-surface-950/75 backdrop-blur-2xl"
+>
 	<!-- Header -->
 	<div
-		class="flex w-full flex-row items-center justify-between border-b-2 border-primary-950/50 px-3 py-2"
+		class="flex w-full flex-row items-center justify-between border-b-2 border-secondary-950/50 px-3 py-2"
 	>
 		<h3 class="text-sm font-semibold text-white">System Details</h3>
 		{#if $mapSelection.selectedNode}

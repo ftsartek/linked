@@ -111,7 +111,7 @@
 						bind:value={searchQuery}
 						oninput={handleSearch}
 						placeholder="Search maps by name or description..."
-						class="w-full rounded-lg border-2 border-primary-950 bg-black px-3 py-2 focus:border-primary-800 focus:outline-none"
+						class="w-full rounded-lg border-2 border-secondary-950 bg-black px-3 py-2 focus:border-primary-800 focus:outline-none"
 					/>
 				</div>
 

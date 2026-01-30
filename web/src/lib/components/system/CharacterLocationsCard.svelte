@@ -189,9 +189,9 @@
 	}
 </script>
 
-<div class="flex h-full min-h-80 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl">
+<div class="flex h-full min-h-80 flex-col rounded-xl border-0 bg-surface-950/75 backdrop-blur-2xl">
 	<!-- Header -->
-	<div class="flex w-full flex-col border-b-2 border-primary-950/50">
+	<div class="flex w-full flex-col border-b-2 border-secondary-950/50">
 		<div class="flex flex-row items-center justify-between px-3 py-2">
 			<h3 class="text-sm font-semibold text-white">Character Locations</h3>
 		</div>
@@ -219,7 +219,7 @@
 				<!-- Characters with location data -->
 				{#each getLocationDataArray() as char (char.character_id)}
 					<div
-						class="flex items-center gap-2 rounded-lg bg-primary-950/30 p-2"
+						class="flex items-center gap-2 rounded-lg bg-primary-700/15 p-2"
 						class:opacity-60={char.is_stale}
 					>
 						<!-- Portrait -->
@@ -278,7 +278,7 @@
 
 				<!-- Characters with errors -->
 				{#each getLocationErrorsArray() as charError (charError.character_id)}
-					<div class="flex items-center gap-2 rounded-lg bg-primary-950/30 p-2">
+					<div class="flex items-center gap-2 rounded-lg bg-primary-800/20 p-2">
 						<!-- Portrait -->
 						<img
 							src={getCharacterPortrait(charError.character_id, 64)}

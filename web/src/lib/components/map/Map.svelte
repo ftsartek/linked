@@ -627,7 +627,7 @@
 </script>
 
 <SvelteFlowProvider>
-	<div class="relative h-full min-h-100 w-full overflow-hidden rounded-xl">
+	<div class="relative h-full min-h-100 bg-surface-950/75 w-full overflow-hidden rounded-xl">
 		{#if loading}
 			<div class="absolute top-0 right-0 left-0 z-10">
 				<Progress value={null} class="h-0.5 w-full rounded-none">
@@ -636,9 +636,9 @@
 					</Progress.Track>
 				</Progress>
 			</div>
-			<div class="h-full min-h-100 bg-black/75 backdrop-blur-2xl"></div>
+			<div class="h-full min-h-100 backdrop-blur-2xl"></div>
 		{:else if error}
-			<div class="flex h-full min-h-100 items-center justify-center">
+			<div class="flex h-full min-h-100 backdrop-blur-2xl items-center justify-center">
 				<div class="rounded-lg bg-error-500/20 p-4 text-error-500">
 					{error}
 				</div>
@@ -669,7 +669,7 @@
 				onedgecontextmenu={handleEdgeContextMenu}
 				onselectionchange={handleSelectionChange}
 				onbeforedelete={handleBeforeDelete}
-				style="background-color: rgba(0, 0, 0, 0.75);"
+				style="background-color: rgba(0, 0, 0, 0);"
 				class="backdrop-blur-2xl"
 			>
 				<Background

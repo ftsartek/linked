@@ -154,7 +154,7 @@
 	});
 </script>
 
-<section class="relative flex h-full flex-col rounded-xl bg-black/75 p-6 backdrop-blur-2xl">
+<section class="relative flex h-full flex-col rounded-xl bg-surface-950/75 p-6 backdrop-blur-2xl">
 	{#if loading}
 		<div class="absolute top-0 right-0 left-0 z-10">
 			<Progress value={null} class="h-0.5 w-full rounded-none">
@@ -232,7 +232,7 @@
 						bind:value={searchQuery}
 						oninput={handleSearch}
 						placeholder="Search public maps..."
-						class="w-full rounded-lg border-2 border-primary-950 bg-black px-3 py-2 focus:border-primary-800 focus:outline-none"
+						class="w-full rounded-lg border-2 border-secondary-950 bg-black px-3 py-2 focus:border-primary-800 focus:outline-none"
 					/>
 				</div>
 
