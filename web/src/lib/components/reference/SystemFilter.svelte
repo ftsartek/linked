@@ -96,7 +96,7 @@
 	<select
 		bind:value={selectedEffect}
 		onchange={emitFilters}
-		class="rounded border-2 border-primary-950 bg-black px-3 py-2 text-sm text-white focus:border-primary-800 focus:outline-none"
+		class="rounded border-2 border-secondary-950 bg-black px-3 py-2 text-sm text-white focus:border-primary-800 focus:outline-none"
 	>
 		<option value="">All Effects</option>
 		{#each effects as effect (effect.id)}
@@ -107,7 +107,7 @@
 	<select
 		bind:value={selectedStaticClass}
 		onchange={emitFilters}
-		class="rounded border-2 border-primary-950 bg-black px-3 py-2 text-sm text-white focus:border-primary-800 focus:outline-none"
+		class="rounded border-2 border-secondary-950 bg-black px-3 py-2 text-sm text-white focus:border-primary-800 focus:outline-none"
 	>
 		<option value="">Static To: Any</option>
 		{#each staticClassOptions as s (s.value)}
@@ -118,7 +118,7 @@
 	<select
 		bind:value={selectedShattered}
 		onchange={emitFilters}
-		class="rounded border-2 border-primary-950 bg-black px-3 py-2 text-sm text-white focus:border-primary-800 focus:outline-none"
+		class="rounded border-2 border-secondary-950 bg-black px-3 py-2 text-sm text-white focus:border-primary-800 focus:outline-none"
 	>
 		<option value="">Shattered: Any</option>
 		<option value="true">Shattered Only</option>

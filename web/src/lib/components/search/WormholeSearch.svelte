@@ -108,7 +108,7 @@
 	<Combobox.Control>
 		<Combobox.Input
 			onkeydown={handleKeydown}
-			class="w-full rounded-lg border-2 border-primary-950 bg-black px-3 py-2 text-white placeholder-surface-400 focus:border-primary-800 focus:outline-none"
+			class="w-full rounded-lg border-2 border-secondary-950 bg-black px-3 py-2 text-white placeholder-surface-400 focus:border-primary-800 focus:outline-none"
 		/>
 		<Combobox.Trigger class="btn-icon preset-tonal-surface">
 			{#if loading}

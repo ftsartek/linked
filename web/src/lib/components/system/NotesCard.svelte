@@ -278,7 +278,7 @@
 	{/if}
 	<!-- Header -->
 	<div
-		class="flex w-full flex-row items-center justify-between border-b-2 border-primary-950/50 px-3 py-2"
+		class="flex w-full flex-row items-center justify-between border-b-2 border-secondary-950/50 px-3 py-2"
 	>
 		<h3 class="text-sm font-semibold text-white">Notes</h3>
 		{#if $mapSelection.selectedNode}
