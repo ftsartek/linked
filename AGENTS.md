@@ -60,9 +60,9 @@ Map data consists of Nodes (which relate to solar systems) and Connections (whic
 ### Styling
 
 The Web UI is styled using Tailwind + Skeleton - currently only dark mode support. The primary theming patterns used are:
-- `bg-black/75 backdrop-blur-2xl` for page-level components (no borders)
+- `bg-surface-950/75 backdrop-blur-2xl` for page-level components (no borders)
 - `bg-black/40 backdrop-blur-xs` for modal/dialog components and `bg-black/50 backdrop-blur-sm` for the modal/dialogs themselves (again, no borders)
-- `bg-black border-2 border-primary-950` for input components
+- `bg-black border-2 border-secondary-950` for input components
 - `hover:bg-primary-950/60` for hover states on dropdown selections, etc.
 - `
 

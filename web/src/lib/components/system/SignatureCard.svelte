@@ -403,7 +403,7 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div
-	class="relative flex h-full min-h-80 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl focus:ring-2 focus:ring-primary-800 focus:outline-none"
+	class="relative flex h-full min-h-80 flex-col rounded-xl border-0 bg-surface-950/75 backdrop-blur-2xl focus:ring-2 focus:ring-primary-800 focus:outline-none"
 	tabindex="0"
 	onpaste={handlePaste}
 >
@@ -418,7 +418,7 @@
 	{/if}
 	<!-- Header -->
 	<div
-		class="flex w-full flex-row items-center justify-between border-b-2 border-primary-950/50 px-3 py-2"
+		class="flex w-full flex-row items-center justify-between border-b-2 border-secondary-950/50 px-3 py-2"
 	>
 		<h3 class="text-sm font-semibold text-white">Signatures</h3>
 		{#if $mapSelection.selectedNode}
@@ -451,7 +451,7 @@
 					{@const whDisplay = getSignatureWormholeDisplay(sig)}
 					{@const canExpand = !$mapSelection.isReadOnly}
 
-					<div class="rounded border border-none bg-primary-950/30">
+					<div class="rounded border border-none bg-primary-800/20">
 						<!-- Main row -->
 						<button
 							type="button"

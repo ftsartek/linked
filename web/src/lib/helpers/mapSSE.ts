@@ -164,7 +164,8 @@ export function createMapSSE(config: MapSSEConfig): () => void {
 				alliance_name: data.data.alliance_name,
 				ship_type_name: data.data.ship_type_name,
 				online: data.data.online,
-				docked: data.data.docked
+				docked: data.data.docked,
+				last_updated: data.data.last_updated
 			};
 			callbacks.onCharacterArrived(nodeId, character);
 		} catch {
@@ -182,7 +183,8 @@ export function createMapSSE(config: MapSSEConfig): () => void {
 				alliance_name: data.data.alliance_name,
 				ship_type_name: data.data.ship_type_name,
 				online: data.data.online,
-				docked: data.data.docked
+				docked: data.data.docked,
+				last_updated: data.data.last_updated
 			};
 			callbacks.onCharacterLeft(nodeId, character);
 		} catch {
@@ -200,7 +202,8 @@ export function createMapSSE(config: MapSSEConfig): () => void {
 				alliance_name: data.data.alliance_name,
 				ship_type_name: data.data.ship_type_name,
 				online: data.data.online,
-				docked: data.data.docked
+				docked: data.data.docked,
+				last_updated: data.data.last_updated
 			};
 			callbacks.onCharacterUpdated(nodeId, character);
 		} catch {

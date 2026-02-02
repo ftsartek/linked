@@ -1848,6 +1848,7 @@ export interface components {
 			ship_type_name?: string | null;
 			online?: boolean | null;
 			docked: boolean;
+			last_updated?: string | null;
 		};
 		/** NodeConnectionInfo */
 		NodeConnectionInfo: {

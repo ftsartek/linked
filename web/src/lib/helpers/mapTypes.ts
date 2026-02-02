@@ -22,6 +22,7 @@ export interface MapSettingsForm {
 	auto_layout: boolean;
 	node_sep: number;
 	rank_sep: number;
+	location_tracking_enabled: boolean;
 }
 
 export interface ShareableEntity {
@@ -37,4 +38,5 @@ export interface NodeCharacterLocation {
 	ship_type_name: string | null;
 	online: boolean | null;
 	docked: boolean;
+	last_updated: string | null;
 }

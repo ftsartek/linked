@@ -12,6 +12,7 @@
 	import { Handle, Position, useConnection, useEdges } from '@xyflow/svelte';
 	import { Portal, Tooltip } from '@skeletonlabs/skeleton-svelte';
 	import { Sparkles, Lock } from 'lucide-svelte';
+	import CharacterIndicator from './CharacterIndicator.svelte';
 
 	type NodeData = components['schemas']['EnrichedNodeInfo'];
 
@@ -43,13 +44,14 @@
 	);
 
 	const hasStatics = $derived(data.statics && data.statics.length > 0);
+	const hasCharacters = $derived(data.characters && data.characters.length > 0);
 </script>
 
 <div
 	class="relative box-border flex h-20 w-40 flex-col overflow-hidden rounded-md border-2 bg-surface-900 p-2 text-sm {isTarget
-		? 'border-dashed border-primary-500'
+		? 'border-dashed border-primary-400-600'
 		: selected
-			? 'border-primary-800'
+			? 'border-secondary-800'
 			: 'border-surface-800'}"
 >
 	<!-- Target handles: conditionally rendered based on connection state -->
@@ -116,6 +118,10 @@
 
 		<!-- Modifiers (bottom right) -->
 		<div class="flex items-center gap-1">
+			{#if hasCharacters}
+				<CharacterIndicator characters={data.characters!} />
+			{/if}
+
 			{#if data.wh_effect_name}
 				<Tooltip positioning={{ placement: 'bottom' }}>
 					<Tooltip.Trigger>

@@ -106,7 +106,7 @@
 		<Combobox.Control>
 			<Combobox.Input
 				onkeydown={handleKeydown}
-				class="w-full rounded-sm border-2 border-primary-950 bg-black px-2 py-1 text-sm text-surface-100 placeholder-surface-400 focus:border-primary-800 focus:outline-none"
+				class="w-full rounded-sm border-2 border-secondary-950 bg-black px-2 py-1 text-sm text-surface-100 placeholder-surface-400 focus:border-primary-800 focus:outline-none"
 			/>
 		</Combobox.Control>
 		<Combobox.Positioner class="z-60">
@@ -121,7 +121,7 @@
 					{#each items as item (item.id)}
 						<Combobox.Item
 							item={{ value: String(item.id), label: item.name }}
-							class="cursor-pointer px-3 py-2 text-white hover:bg-primary-950/50 data-highlighted:bg-primary-950/30"
+							class="cursor-pointer px-3 py-2 text-white hover:bg-primary-950/50 data-highlighted:bg-primary-800/20"
 						>
 							<Combobox.ItemText>
 								{item.name}

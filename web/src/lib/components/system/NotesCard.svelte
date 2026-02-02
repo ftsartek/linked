@@ -265,7 +265,7 @@
 </script>
 
 <div
-	class="relative flex h-full min-h-80 flex-col rounded-xl border-0 bg-black/75 backdrop-blur-2xl"
+	class="relative flex h-full min-h-80 flex-col rounded-xl border-0 bg-surface-950/75 backdrop-blur-2xl"
 >
 	{#if loading}
 		<div class="absolute top-0 right-0 left-0 z-10">
@@ -278,7 +278,7 @@
 	{/if}
 	<!-- Header -->
 	<div
-		class="flex w-full flex-row items-center justify-between border-b-2 border-primary-950/50 px-3 py-2"
+		class="flex w-full flex-row items-center justify-between border-b-2 border-secondary-950/50 px-3 py-2"
 	>
 		<h3 class="text-sm font-semibold text-white">Notes</h3>
 		{#if $mapSelection.selectedNode}
@@ -304,7 +304,7 @@
 					{@const isEditing = editingNoteId === note.id}
 					{@const expiryText = formatExpiry(note.date_expires)}
 
-					<div class="rounded border border-none bg-primary-950/30 p-2">
+					<div class="rounded border border-none bg-primary-700/20 p-2">
 						{#if isEditing}
 							<!-- Editing mode -->
 							<div class="space-y-2">
@@ -407,7 +407,7 @@
 
 				{#if creating}
 					<!-- Creating new note -->
-					<div class="rounded border border-none bg-primary-950/30 p-2">
+					<div class="rounded border border-none bg-primary-700/20 p-2">
 						<div class="space-y-2">
 							<input
 								type="text"
