@@ -94,7 +94,7 @@ DEFAULT_SIGNATURE_EXPIRY_DAYS = 7
 
 # Note lifecycle queries
 GET_EXPIRED_NOTES = """
-SELECT id, map_id, node_id
+SELECT id, map_id
 FROM note
 WHERE date_deleted IS NULL AND date_expires IS NOT NULL AND date_expires < $1;
 """
