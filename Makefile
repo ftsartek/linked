@@ -1,4 +1,4 @@
-.PHONY: help dev dev-services dev-stop api web web-build postgres postgres-stop valkey valkey-stop migrations preseed schema clean cli test
+.PHONY: help dev dev-services dev-stop api web web-build postgres postgres-stop valkey valkey-stop migrations preseed schema clean cli test bump
 
 # Configuration
 POSTGRES_USER ?= linked
@@ -32,6 +32,9 @@ help:
 	@echo ""
 	@echo "CLI:"
 	@echo "  cli            - Run CLI command (make cli CMD=\"...\")"
+	@echo ""
+	@echo "Release:"
+	@echo "  bump           - Bump version (make bump VERSION=x.y.z)"
 	@echo ""
 	@echo "Cleanup:"
 	@echo "  postgres-stop  - Stop PostgreSQL container"
@@ -127,6 +130,17 @@ cli:
 # Run API integration tests
 test:
 	cd api && CONFIG_FILE=tests/config.test.yaml uv run pytest tests/ -v
+
+# Bump version across api and web
+bump:
+ifndef VERSION
+	$(error VERSION is required. Usage: make bump VERSION=x.y.z)
+endif
+	@sed -i 's/^version = ".*"/version = "$(VERSION)"/' api/pyproject.toml
+	@sed -i 's/"version": ".*"/"version": "$(VERSION)"/' web/package.json
+	cd api && uv lock
+	cd web && npm i
+	@echo "Bumped version to $(VERSION)"
 
 clean: postgres-stop valkey-stop
 	@echo "Cleanup complete"
